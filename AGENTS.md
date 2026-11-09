@@ -45,3 +45,22 @@ through it are attributed to the agent rather than to the repository's git user 
 one shared record of who decided what.
 
 <!-- motte:end -->
+
+## Every feature ships MCP tools
+
+Claude agents work with this app's data through the MCP server at `/api/mcp`
+(`packages/mcp`). **Any feature that adds or changes user-facing functionality
+must add or update the matching MCP tools in the same change.** A feature without
+its tools is not done.
+
+- Put the feature's tools in `packages/mcp/src/tools/<feature>.ts` as a
+  `ToolModule`, and add it to `toolModules` in `packages/mcp/src/tools/index.ts`.
+- Scope every query to `ctx.userId` (the verified token's user). Never accept a
+  user id as tool input.
+- Give each tool a `description` an agent can act on, a zod `inputSchema`, an
+  `outputSchema`, and `annotations` (`readOnlyHint`, `destructiveHint`, ...).
+  Return results with `json(...)` so callers get structured content.
+- Share data access with the UI (a function in the feature's package) rather
+  than duplicating queries in the tool.
+- Verify with `bun run mcp:smoke` (dev server running). It calls every no-arg
+  tool. Extend `packages/mcp/scripts/smoke.ts` when a tool needs arguments.

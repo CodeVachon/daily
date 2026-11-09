@@ -10,7 +10,7 @@ const tailnetHost = process.env.TAILSCALE_URL
   : undefined
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@workspace/ui", "@workspace/auth", "@workspace/db"],
+  transpilePackages: ["@workspace/ui", "@workspace/auth", "@workspace/db", "@workspace/mcp"],
   serverExternalPackages: ["postgres"],
   allowedDevOrigins: tailnetHost ? [tailnetHost] : [],
 }

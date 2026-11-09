@@ -18,7 +18,8 @@
     "tailnet:up": "scripts/tailscale.sh up",
     "tailnet:down": "scripts/tailscale.sh down",
     "tailnet:status": "scripts/tailscale.sh status",
-    "dev:tailnet": "scripts/tailscale.sh up && turbo dev"
+    "dev:tailnet": "scripts/tailscale.sh up && turbo dev",
+    "mcp:smoke": "bun run --cwd packages/mcp mcp:smoke"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

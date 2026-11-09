@@ -1,2 +1,4 @@
 {"at":"2026-11-09T22:41:53Z","id":1,"by":"Christopher Vachon","as":"user","type":"created","title":"Set up Drizzle/Postgres, varlock env, and GitHub-gated Better Auth","state":"Todo"}
 {"at":"2026-11-09T22:41:53Z","id":1,"by":"Christopher Vachon","as":"user","type":"state","from":"Todo","to":"Done"}
+{"at":"2026-11-09T23:54:43Z","id":2,"by":"Christopher Vachon","as":"user","type":"created","title":"MCP server for Claude agents (ping, whoami) with OAuth","state":"Todo"}
+{"at":"2026-11-09T23:54:43Z","id":2,"by":"Christopher Vachon","as":"user","type":"state","from":"Todo","to":"Done"}

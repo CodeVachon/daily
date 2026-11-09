@@ -1,0 +1,30 @@
+{
+  "name": "@workspace/mcp",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./next": "./src/next.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "mcp:smoke": "varlock run -- bun scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@better-auth/mcp": "^1.7.18",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "@workspace/auth": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10",
+    "typescript": "^5"
+  }
+}

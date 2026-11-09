@@ -25,7 +25,8 @@ import { Button } from "@workspace/ui/components/button";
 | Package | What |
 | --- | --- |
 | `packages/db` (`@workspace/db`) | Drizzle ORM + `postgres` driver, schema in `src/schema`, migrations in `drizzle/` |
-| `packages/auth` (`@workspace/auth`) | Better Auth (GitHub only), Drizzle adapter, allowlist gate |
+| `packages/auth` (`@workspace/auth`) | Better Auth (GitHub only), Drizzle adapter, allowlist gate, MCP OAuth server |
+| `packages/mcp` (`@workspace/mcp`) | MCP server (tools for Claude agents) mounted at `/api/mcp` |
 
 Env is managed by [varlock](https://varlock.dev). The shared schema is the root `.env.schema`
 (committed); each app/package `@import`s what it needs and generates a typed `env.ts`.
@@ -71,3 +72,26 @@ immediately).
 
 Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migrate`
 (`db:push` / `db:studio` are also available).
+
+## MCP server (for Claude agents)
+
+Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
+`https://<machine>.<tailnet>.ts.net/api/mcp` (Streamable HTTP, `POST` only).
+
+Tools today: `ping` (health check) and `whoami` (the user + OAuth client the agent is acting as).
+
+**Auth.** The app is its own OAuth 2.1 authorization server (`@better-auth/mcp`). When an MCP
+client connects, it opens a browser to `/sign-in` (GitHub, same allowlist) and then `/consent`.
+Tokens are JWTs bound to the `/api/mcp` resource and verified against `/api/auth/jwks`. Clients
+register via Client ID Metadata Documents (MCP 2026-07-28) or Dynamic Client Registration.
+
+**Connect Claude Code:**
+
+```bash
+claude mcp add --transport http daily "$(scripts/tailscale.sh url)/api/mcp"
+```
+
+Then run `/mcp` in Claude Code and authenticate.
+
+**Test:** `bun run mcp:smoke` with the dev server running. It runs the full OAuth flow with a
+throwaway user and calls every tool.

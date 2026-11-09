@@ -25,11 +25,11 @@ export default async function SignInPage({
     <div className="flex min-h-svh items-center justify-center p-6">
       <div className="flex w-full max-w-sm flex-col gap-4">
         <h1 className="font-heading text-xl">Sign in</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Access is limited to approved GitHub accounts.
         </p>
         {message && (
-          <p role="alert" className="text-destructive text-sm">
+          <p role="alert" className="text-sm text-destructive">
             {message}
           </p>
         )}

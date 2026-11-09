@@ -14,6 +14,8 @@
   "dependencies": {
     "@varlock/nextjs-integration": "^2.0.0",
     "@workspace/auth": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "@workspace/mcp": "workspace:*",
     "@workspace/ui": "workspace:*",
     "lucide-react": "^1.70.0",
     "next": "16.4.4",

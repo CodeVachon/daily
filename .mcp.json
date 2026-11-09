@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "motte": {
+      "command": "motte",
+      "args": [
+        "mcp"
+      ]
+    },
+    "fallow": {
+      "type": "stdio",
+      "command": "fallow-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

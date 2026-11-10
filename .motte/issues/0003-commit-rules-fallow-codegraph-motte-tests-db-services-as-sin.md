@@ -4,7 +4,7 @@ title: "Commit rules: fallow, codegraph, motte, tests, db services as single sou
 state: Done
 assignee: Christopher Vachon
 created: 2026-11-10T00:06:02Z
-updated: 2026-11-10T00:06:40Z
+updated: 2026-11-10T00:06:57Z
 ---
 
 ## Notes
@@ -20,3 +20,7 @@ DB boundary: packages/db client.ts private; exports services (createServices(db)
 ### 2026-11-10T00:06:40Z — Christopher Vachon (user)
 
 Fallow fixes: removed unused template deps (lucide-react, next-themes/zod/@turbo/gen from ui), added postcss-load-config, ignoreExports for varlock env.ts helper types, apps/web/env.ts now used by next.config. Complexity findings resolved via tests + extracting gate/claims/consent/theme-hotkey helpers. Verified: bun run check green, gate blocks with In Progress issue (exit 1), mcp:smoke passes against dev server.
+
+### 2026-11-10T00:06:57Z — Christopher Vachon (user)
+
+Follow-up: renamed vitest.config.ts -> .mts (root package.json has no type:module; Vite warned about loading ESM config as CJS).

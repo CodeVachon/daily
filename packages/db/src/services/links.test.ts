@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { agentActor, ForbiddenError, userActor, type Actor } from "../actor"
 import { NotFoundError, ValidationError } from "../errors"
 import { describeEvent } from "../events"
+import { taskLink } from "../schema"
 import { createTestDatabase, type TestDatabase } from "../testing"
 import type { RemoteState } from "./links"
 
@@ -156,6 +157,82 @@ describe("links", () => {
     expect(
       await t.services.links.findTasks(me.userId, "CodeVachon/daily#999")
     ).toEqual([])
+  })
+
+  it("knows which links are due for a sync", async () => {
+    const other = await t.seed.user()
+    const otherTask = await t.seed.task(other.id)
+    const fresh = await t.services.links.add(
+      userActor(other),
+      otherTask.number,
+      "o/r#1"
+    )
+    const settled = await t.services.links.add(
+      userActor(other),
+      otherTask.number,
+      "o/r#2"
+    )
+    const due = async (minutes: number) =>
+      (
+        await t.services.links.dueForSync({
+          now: new Date(Date.now() + minutes * 60_000),
+        })
+      )
+        .filter((d) => d.userId === other.id)
+        .map((d) => d.linkId)
+
+    // Never synced: due now, before anything else.
+    expect(await due(0)).toEqual([fresh.id, settled.id])
+
+    await t.services.links.recordSync(other.id, fresh.id, {
+      ok: true,
+      state: { ...open, kind: "issue" },
+    })
+    await t.services.links.recordSync(other.id, settled.id, {
+      ok: true,
+      state: { ...open, state: "merged", stateCategory: "merged" },
+    })
+    expect(await due(1)).toEqual([])
+    expect(await due(6)).toEqual([fresh.id])
+    expect(await due(6 * 60 + 1)).toEqual([fresh.id, settled.id])
+
+    await t.services.links.recordSync(other.id, fresh.id, {
+      ok: false,
+      error: "boom",
+    })
+    expect(await due(6)).toEqual([])
+    expect(await due(16)).toEqual([fresh.id])
+  })
+
+  it("skips links on deleted tasks", async () => {
+    const other = await t.seed.user()
+    const gone = await t.seed.task(other.id, { deletedAt: new Date() })
+    await t.db.insert(taskLink).values({
+      taskId: gone.id,
+      userId: other.id,
+      provider: "github",
+      kind: "issue",
+      key: "o/r#9",
+      url: "https://github.com/o/r/issues/9",
+      createdBy: userActor(other),
+    })
+    const due = await t.services.links.dueForSync()
+    expect(due.filter((d) => d.userId === other.id)).toEqual([])
+  })
+
+  it("gives board chips per task", async () => {
+    const id = (await t.services.tasks.get(me.userId, taskNumber)).id
+    const chips = await t.services.links.chipsForTasks(me.userId, [id, "x"])
+    expect(chips[id]).toEqual([
+      {
+        provider: "jira",
+        kind: "issue",
+        key: "PROJ-42",
+        state: null,
+        stateCategory: null,
+      },
+    ])
+    expect(await t.services.links.chipsForTasks(me.userId, [])).toEqual({})
   })
 
   it("keeps users' links apart", async () => {

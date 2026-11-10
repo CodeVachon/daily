@@ -54,6 +54,12 @@ export function pickResources(
   return wanted.map((ref) => find(ref)!)
 }
 
+/** What one sync pass did. */
+export interface SyncSummary {
+  checked: number
+  failed: number
+}
+
 export interface IntegrationsOptions {
   services: Pick<Services, "integrations" | "links">
   fetch?: Fetch
@@ -116,19 +122,47 @@ export function createIntegrations({
     }
   }
 
+  /**
+   * Fetch a link's current state now and record it (title, state; later
+   * changes go in the task's history). Returns the updated link.
+   */
+  async function refreshLink(userId: string, linkId: string) {
+    const link = await services.links.get(userId, linkId)
+    await services.links.recordSync(
+      userId,
+      linkId,
+      await fetchState(userId, link)
+    )
+    return services.links.get(userId, linkId)
+  }
+
   return {
+    refreshLink,
+
     /**
-     * Fetch a link's current state now and record it (title, state; later
-     * changes go in the task's history). Returns the updated link.
+     * One sync pass: refresh every link that's due (all users). Each
+     * provider's links go one at a time, to be gentle on rate limits;
+     * providers run side by side.
      */
-    async refreshLink(userId: string, linkId: string): Promise<TaskLink> {
-      const link = await services.links.get(userId, linkId)
-      await services.links.recordSync(
-        userId,
-        linkId,
-        await fetchState(userId, link)
+    async syncDue(
+      options: { now?: Date; limit?: number } = {}
+    ): Promise<SyncSummary> {
+      const due = await services.links.dueForSync(options)
+      const groups = new Map<string, typeof due>()
+      for (const d of due)
+        groups.set(d.provider, [...(groups.get(d.provider) ?? []), d])
+      const failures = await Promise.all(
+        [...groups.values()].map(async (links) => {
+          let failed = 0
+          for (const { userId, linkId } of links)
+            if ((await refreshLink(userId, linkId)).syncError) failed++
+          return failed
+        })
       )
-      return services.links.get(userId, linkId)
+      return {
+        checked: due.length,
+        failed: failures.reduce((a, b) => a + b, 0),
+      }
     },
 
     /** Every provider the user can connect, in display order. */

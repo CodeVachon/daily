@@ -139,6 +139,21 @@ never shown again or exposed to agents. Disconnecting deletes them but keeps the
 Changing `INTEGRATIONS_ENCRYPTION_KEY` makes stored credentials unreadable; reconnect each
 integration afterwards.
 
+### Sync worker
+
+Links on tasks (GitHub issues/PRs, Jira issues) fetch their title and state when added and on
+**Refresh**. `apps/worker` keeps them fresh in the background: every `SYNC_POLL_SECONDS` (60) it
+refreshes the links that are due: open/draft every 5 minutes, merged/done/closed every 6 hours,
+failing ones every 15 minutes (`packages/db/src/sync-policy.ts`). Only repositories/projects
+selected in Settings → Integrations are asked. Changes after the first sync appear in the task's
+activity as "sync".
+
+- **Dev:** `bun run dev` starts it with the web app (or `bun run --cwd apps/worker dev` alone).
+- **Production:** the `worker` service in `docker-compose.prod.yml` (`daily worker` in the image).
+  Run one; a Postgres advisory lock stops a second copy from syncing at the same time.
+- **Health:** `/api/health` includes `worker.lastBeatAt` and `worker.stale` (no pass in 5
+  minutes). It doesn't change the status code, so a stopped worker never restarts the web app.
+
 ## MCP server (for Claude agents)
 
 Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
@@ -195,11 +210,12 @@ One Docker image runs every role; the droplet's env file supplies all settings
 
 ```bash
 docker build -t daily --build-arg GIT_SHA=$(git rev-parse HEAD) .
-docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web
+docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web, worker
 ```
 
 - **Roles** (`docker/entrypoint.sh`): `web` (default, the Next.js standalone
-  server) and `migrate` (applies `packages/db/drizzle`, then exits). Both boot
+  server), `migrate` (applies `packages/db/drizzle`, then exits) and `worker`
+  (the link sync worker, `apps/worker` bundled as `worker.mjs`). All boot
   through `varlock run`, which validates the environment against `.env.schema`
   and exits with a clear message if anything is missing.
 - **No values are baked in.** `.env.schema` sets `@defaultDynamic=true`, so

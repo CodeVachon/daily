@@ -14,6 +14,7 @@ import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
 import { createTaskService } from "./tasks"
 import { createUserService } from "./users"
+import { createWorkerService } from "./worker"
 
 /**
  * Every data-access service. This is the single source of truth for data:
@@ -41,13 +42,21 @@ export function createServices(db: Database, options: ServiceOptions) {
     projects: createProjectService(db),
     settings: createSettingsService(db),
     tasks: createTaskService(db),
+    worker: createWorkerService(db),
   }
 }
 
 export type Services = ReturnType<typeof createServices>
 export type { UserProfile } from "./users"
 export type { IntegrationConnection } from "./integrations"
-export type { RemoteState, SyncResult, TaskLink } from "./links"
+export type {
+  DueLink,
+  LinkChip,
+  RemoteState,
+  SyncResult,
+  TaskLink,
+} from "./links"
+export type { WorkerStatus } from "./worker"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
 export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

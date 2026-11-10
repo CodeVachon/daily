@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import journal from "../../drizzle/meta/_journal.json" with { type: "json" }
 import { createTestDatabase, type TestDatabase } from "../testing"
+import { LINK_SYNC_JOB } from "../sync-policy"
 import { createHealthService } from "./health"
 
 let t: TestDatabase
@@ -17,7 +18,16 @@ describe("health", () => {
       ok: true,
       database: "up",
       migrations: { applied: expected, expected },
+      worker: { lastBeatAt: null, stale: true },
     })
+  })
+
+  it("reports the sync worker's heartbeat without affecting ok", async () => {
+    await t.services.worker.beat(LINK_SYNC_JOB, { checked: 1 })
+    const report = await t.services.health.check()
+    expect(report.ok).toBe(true)
+    expect(report.worker.stale).toBe(false)
+    expect(report.worker.lastBeatAt).toEqual(expect.any(String))
   })
 
   it("is not ok when a migration is missing", async () => {

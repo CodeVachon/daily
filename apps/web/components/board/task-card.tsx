@@ -22,7 +22,9 @@ import Link from "next/link"
 
 import { ColorBadge } from "@/components/color-badge"
 import { CompletionSummary } from "@/components/completion-summary"
+import { LinkIcon } from "@/components/link-icon"
 import type { BoardCard } from "@/lib/board"
+import { MAX_CARD_LINKS, type LinkBadge } from "@/lib/links"
 import { taskHref } from "@/lib/task-form"
 
 const PRIORITY_ICON: Record<Priority, React.ReactNode> = {
@@ -54,6 +56,22 @@ function DueBadge({ due }: { due: NonNullable<BoardCard["due"]> }) {
   )
 }
 
+/** Linked PRs / issues with their state; the first few, then "+n". */
+function LinkBadges({ links = [] }: { links?: LinkBadge[] }) {
+  const extra = links.length - MAX_CARD_LINKS
+  return (
+    <>
+      {links.slice(0, MAX_CARD_LINKS).map((link) => (
+        <Badge key={link.key} variant={link.variant} title={link.key}>
+          <LinkIcon icon={link.icon} />
+          {link.label}
+        </Badge>
+      ))}
+      {extra > 0 && <Badge variant="ghost">+{extra}</Badge>}
+    </>
+  )
+}
+
 function CardBadges({ card }: { card: BoardCard }) {
   return (
     <CardContent className="flex flex-wrap gap-1 empty:hidden">
@@ -68,6 +86,7 @@ function CardBadges({ card }: { card: BoardCard }) {
       {card.labels.map((label) => (
         <ColorBadge key={label.name} chip={label} />
       ))}
+      <LinkBadges links={card.links} />
     </CardContent>
   )
 }

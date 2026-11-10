@@ -7,7 +7,10 @@ export type {
   Services,
   UserProfile,
   IntegrationConnection,
+  DueLink,
+  LinkChip,
   RemoteState,
+  WorkerStatus,
   SyncResult,
   TaskLink,
   OAuthClientDisplay,
@@ -62,3 +65,4 @@ export {
   type ActorType,
   type SystemActorName,
 } from "./actor"
+export { LINK_SYNC_JOB, SYNC_INTERVALS } from "./sync-policy"

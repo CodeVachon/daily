@@ -54,5 +54,19 @@ services:
       # Loopback only; Caddy (#57) is the public entry point.
       - "127.0.0.1:${DAILY_WEB_PORT:-3000}:3000"
 
+  # Keeps linked GitHub/Jira items fresh. Run exactly one (it also takes a
+  # Postgres lock, so a second copy would only idle). /api/health shows its
+  # last heartbeat.
+  worker:
+    <<: *app
+    command: worker
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    # No HTTP port; the image's HEALTHCHECK is for the web role.
+    healthcheck:
+      disable: true
+
 volumes:
   postgres-data:

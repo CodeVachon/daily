@@ -2,6 +2,7 @@ export {
   createIntegrations,
   type Integrations,
   type IntegrationsOptions,
+  type SyncSummary,
 } from "./integrations"
 export { ProviderError } from "./http"
 export type {

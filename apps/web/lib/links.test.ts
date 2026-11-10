@@ -1,7 +1,7 @@
 import type { TaskLink } from "@workspace/db/core"
 import { describe, expect, it } from "vitest"
 
-import { toLinkView } from "./links"
+import { linkBadges, toLinkView } from "./links"
 
 const base: TaskLink = {
   id: "l1",
@@ -65,5 +65,31 @@ describe("toLinkView", () => {
       syncError: "CodeVachon/daily isn't selected in Settings > Integrations",
     })
     expect(view.state).toEqual({ label: "Not synced", variant: "destructive" })
+  })
+})
+
+describe("linkBadges", () => {
+  it("shows state once synced, else the key", () => {
+    expect(
+      linkBadges([
+        {
+          provider: "github",
+          kind: "pr",
+          key: "o/r#3",
+          state: "merged",
+          stateCategory: "merged",
+        },
+        {
+          provider: "jira",
+          kind: "issue",
+          key: "FIN-42",
+          state: null,
+          stateCategory: null,
+        },
+      ])
+    ).toEqual([
+      { key: "o/r#3", icon: "pr", label: "merged", variant: "default" },
+      { key: "FIN-42", icon: "jira", label: "FIN-42", variant: "outline" },
+    ])
   })
 })

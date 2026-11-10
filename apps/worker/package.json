@@ -1,0 +1,25 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "varlock run -- bun --watch src/main.ts",
+    "start": "varlock run -- bun src/main.ts",
+    "build": "bun build src/main.ts --target=node --format=esm --outfile=dist/worker.mjs",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "varlock codegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "@workspace/integrations": "workspace:*",
+    "varlock": "^1.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10",
+    "typescript": "^5"
+  }
+}

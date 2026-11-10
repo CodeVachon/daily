@@ -1,5 +1,5 @@
 // How a task's external links are shown (motte #41).
-import type { LinkStateCategory, TaskLink } from "@workspace/db/core"
+import type { LinkChip, LinkStateCategory, TaskLink } from "@workspace/db/core"
 
 type BadgeVariant = "default" | "secondary" | "outline"
 
@@ -40,4 +40,24 @@ export function toLinkView(link: TaskLink): LinkView {
     state: stateBadge(link),
     syncError: link.syncError,
   }
+}
+
+/** A link on a board card: icon plus its state (or key until synced). */
+export interface LinkBadge {
+  key: string
+  icon: LinkView["icon"]
+  label: string
+  variant: BadgeVariant
+}
+
+/** Board cards show this many links, then "+n". */
+export const MAX_CARD_LINKS = 2
+
+export function linkBadges(chips: LinkChip[]): LinkBadge[] {
+  return chips.map((chip) => ({
+    key: chip.key,
+    icon: chip.provider === "jira" ? "jira" : chip.kind,
+    label: chip.state ?? chip.key,
+    variant: chip.stateCategory ? STATE_VARIANT[chip.stateCategory] : "outline",
+  }))
 }

@@ -1,4 +1,4 @@
-import { db } from "./client"
+import { closeDatabase, db } from "./client"
 import { ENV } from "./env"
 import { createServices } from "./services"
 
@@ -8,4 +8,6 @@ export const services = createServices(db, {
 })
 
 export { authDatabaseAdapter } from "./auth-adapter"
+/** Close the connection pool (long-running processes shutting down). */
+export { closeDatabase }
 export * from "./core"

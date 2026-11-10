@@ -1,6 +1,8 @@
 import type { Priority, TaskSummary } from "@workspace/db/core"
 import { formatDue, isDueToday, isOverdue } from "@workspace/db/time"
 
+import type { LinkBadge } from "./links"
+
 interface Status {
   key: string
   name: string
@@ -48,6 +50,8 @@ export interface BoardCard {
   labels: Chip[]
   openBlockers: number
   completion: Completion | null
+  /** Linked GitHub/Jira items (added by the board page). */
+  links?: LinkBadge[]
 }
 
 /** Checklist items and subtasks done, combined, e.g. "(2/3)". */

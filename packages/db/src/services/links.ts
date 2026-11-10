@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm"
+import { and, asc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm"
 
 import { assertCanDelete, systemActor, type Actor } from "../actor"
 import type { Database } from "../database"
@@ -12,6 +12,7 @@ import {
 } from "../external-ref"
 import type { IntegrationProvider } from "../integration-inputs"
 import { task, taskLink } from "../schema"
+import { SYNC_INTERVALS } from "../sync-policy"
 import { recordEvents } from "./activity"
 import type { createIntegrationService } from "./integrations"
 import { createTaskService, type TaskRef } from "./tasks"
@@ -47,6 +48,30 @@ export interface RemoteState {
 export type SyncResult =
   { ok: true; state: RemoteState } | { ok: false; error: string }
 
+/** A link the sync worker should refresh now, and whose it is. */
+export interface DueLink {
+  userId: string
+  linkId: string
+  provider: IntegrationProvider
+}
+
+/** What a board card shows about a link. */
+export interface LinkChip {
+  provider: IntegrationProvider
+  kind: LinkKind
+  key: string
+  state: string | null
+  stateCategory: LinkStateCategory | null
+}
+
+// Seconds until a link is due again (see sync-policy.ts). Our own constants,
+// so they're inlined rather than bound (Postgres can't type bound CASE values).
+const seconds = (n: number) => sql.raw(String(Math.trunc(n)))
+const intervalSeconds = sql`case
+  when ${taskLink.syncError} is not null then ${seconds(SYNC_INTERVALS.failing)}
+  when ${taskLink.stateCategory} in ('merged', 'done', 'closed') then ${seconds(SYNC_INTERVALS.settled)}
+  else ${seconds(SYNC_INTERVALS.active)} end`
+
 const toLink = ({
   taskId: _,
   userId: __,
@@ -81,6 +106,62 @@ export function createLinkService(
   }
 
   return {
+    /**
+     * Links (every user's) whose last sync is older than their interval,
+     * never-synced first, then the stalest. Links on deleted tasks are skipped.
+     */
+    async dueForSync({ now = new Date(), limit = 100 } = {}): Promise<
+      DueLink[]
+    > {
+      return db
+        .select({
+          userId: taskLink.userId,
+          linkId: taskLink.id,
+          provider: taskLink.provider,
+        })
+        .from(taskLink)
+        .innerJoin(task, eq(task.id, taskLink.taskId))
+        .where(
+          and(
+            isNull(task.deletedAt),
+            or(
+              isNull(taskLink.lastSyncedAt),
+              lt(
+                taskLink.lastSyncedAt,
+                sql`${now.toISOString()}::timestamptz - make_interval(secs => ${intervalSeconds})`
+              )
+            )
+          )
+        )
+        .orderBy(sql`${taskLink.lastSyncedAt} asc nulls first`)
+        .limit(limit)
+    },
+
+    /** Link chips per task id, for board cards. */
+    async chipsForTasks(
+      userId: string,
+      taskIds: string[]
+    ): Promise<Record<string, LinkChip[]>> {
+      if (taskIds.length === 0) return {}
+      const rows = await db
+        .select({
+          taskId: taskLink.taskId,
+          provider: taskLink.provider,
+          kind: taskLink.kind,
+          key: taskLink.key,
+          state: taskLink.state,
+          stateCategory: taskLink.stateCategory,
+        })
+        .from(taskLink)
+        .where(
+          and(eq(taskLink.userId, userId), inArray(taskLink.taskId, taskIds))
+        )
+        .orderBy(asc(taskLink.createdAt))
+      const chips: Record<string, LinkChip[]> = {}
+      for (const { taskId, ...chip } of rows) (chips[taskId] ??= []).push(chip)
+      return chips
+    },
+
     /** One link. */
     async get(userId: string, linkId: string): Promise<TaskLink> {
       return toLink(await load(userId, linkId))

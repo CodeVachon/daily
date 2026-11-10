@@ -37,6 +37,15 @@ export type CoercedEnvSchema = {
   INTEGRATIONS_ENCRYPTION_KEY: string;
   
   /**
+   * **SYNC_POLL_SECONDS**  
+   * Seconds between the sync worker's passes (apps/worker). Each pass refreshes  
+   * only the links that are due (packages/db/src/sync-policy.ts), so this is how  
+   * quickly newly due links are picked up.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  SYNC_POLL_SECONDS: number;
+  
+  /**
    * **TAILSCALE_URL**  
    * This machine's tailnet HTTPS URL, auto-detected from the running Tailscale  
    * (e.g. https://my-mac.tailnet-name.ts.net). Empty if Tailscale isn't connected.  
@@ -92,7 +101,7 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_da9f25bd = CoercedEnvSchema;
+type _CoercedEnvSchema_6623f371 = CoercedEnvSchema;
 
 export type EnvSchemaAsStrings = {
   [Property in keyof CoercedEnvSchema]:
@@ -100,9 +109,9 @@ export type EnvSchemaAsStrings = {
       : (NonNullable<CoercedEnvSchema[Property]> extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_da9f25bd = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_6623f371 = EnvSchemaAsStrings;
 
-export type PublicCoercedEnvSchema = Readonly<Pick<CoercedEnvSchema, 'APP_ENV' | 'TAILSCALE_URL' | 'BETTER_AUTH_URL' | 'GITHUB_CLIENT_ID' | 'AUTH_GITHUB_ALLOWED_USERS' | 'APP_VERSION' | 'APP_COMMIT'>>;
+export type PublicCoercedEnvSchema = Readonly<Pick<CoercedEnvSchema, 'APP_ENV' | 'SYNC_POLL_SECONDS' | 'TAILSCALE_URL' | 'BETTER_AUTH_URL' | 'GITHUB_CLIENT_ID' | 'AUTH_GITHUB_ALLOWED_USERS' | 'APP_VERSION' | 'APP_COMMIT'>>;
 
 // re-export of the runtime ENV proxy, typed to this package's schema
 export const ENV = _ENV as unknown as Readonly<CoercedEnvSchema>;

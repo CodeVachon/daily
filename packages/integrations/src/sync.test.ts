@@ -221,4 +221,15 @@ describe("refreshLink", () => {
       (await integrations().refreshLink(userId, link.id)).syncError
     ).toMatch(/GitHub returned 404/)
   })
+
+  it("syncs whatever is due in one pass", async () => {
+    await add("CodeVachon/daily#5")
+    // Only the new #5 is due now (it 404s); 20 minutes on, #3, #4 and #5 are.
+    expect(await integrations().syncDue()).toEqual({ checked: 1, failed: 1 })
+    const later = new Date(Date.now() + 20 * 60_000)
+    expect(await integrations().syncDue({ now: later })).toEqual({
+      checked: 3,
+      failed: 2,
+    })
+  })
 })

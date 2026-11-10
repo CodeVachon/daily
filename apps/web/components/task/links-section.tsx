@@ -7,31 +7,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip"
-import {
-  CircleAlertIcon,
-  CircleDotIcon,
-  GitPullRequestIcon,
-  RefreshCwIcon,
-  TicketIcon,
-  XIcon,
-} from "lucide-react"
+import { CircleAlertIcon, RefreshCwIcon, XIcon } from "lucide-react"
 
 import {
   addLinkAction,
   refreshLinksAction,
   removeLinkAction,
 } from "@/app/(app)/tasks/link-actions"
+import { LinkIcon } from "@/components/link-icon"
 import type { LinkView } from "@/lib/links"
 
 import { AddInput } from "./add-input"
 import { Section } from "./section"
 import { useAction } from "./use-action"
-
-const ICONS: Record<LinkView["icon"], React.ReactNode> = {
-  pr: <GitPullRequestIcon aria-label="Pull request" />,
-  issue: <CircleDotIcon aria-label="GitHub issue" />,
-  jira: <TicketIcon aria-label="Jira issue" />,
-}
 
 /** The state badge; hovering it explains a failed sync. */
 function StateBadge({ link }: { link: LinkView }) {
@@ -63,7 +51,9 @@ function LinkRow({
 }) {
   return (
     <li className="group flex min-w-0 items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0">
-      <span className="text-muted-foreground">{ICONS[link.icon]}</span>
+      <span className="text-muted-foreground">
+        <LinkIcon icon={link.icon} />
+      </span>
       <a
         href={link.url}
         target="_blank"

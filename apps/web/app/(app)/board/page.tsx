@@ -8,6 +8,7 @@ import { FilterBar } from "@/components/filter-bar"
 import { boardItems, groupByStatus, toBoardCard } from "@/lib/board"
 import { drawerHref, drawerTask, searchWithoutDrawer } from "@/lib/drawer"
 import { parseFilters, toListInput } from "@/lib/filters"
+import { linkBadges } from "@/lib/links"
 import { requireSession } from "@/lib/session"
 import { loadTaskOptions } from "@/lib/task-options"
 
@@ -29,6 +30,10 @@ export default async function BoardPage({
   const columns = groupByStatus(options.statuses, tasks, {
     showCancelled: filters.cancelled,
   })
+  const chips = await services.links.chipsForTasks(
+    user.id,
+    tasks.map((t) => t.id)
+  )
   const now = new Date()
   const cards = Object.fromEntries(
     tasks.map((task) => [
@@ -36,6 +41,7 @@ export default async function BoardPage({
       {
         ...toBoardCard(task, now, options.timezone),
         href: drawerHref("/board", search, task.number),
+        links: linkBadges(chips[task.id] ?? []),
       },
     ])
   )

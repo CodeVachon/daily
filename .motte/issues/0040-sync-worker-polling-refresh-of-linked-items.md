@@ -1,12 +1,13 @@
 ---
 id: 40
 title: "Sync worker: polling refresh of linked items"
-state: Todo
+state: Done
 parent: 10
+assignee: Christopher Vachon
 labels: [integrations, infra]
 blockedBy: [39]
 created: 2026-11-10T00:35:07Z
-updated: 2026-11-10T14:37:54Z
+updated: 2026-11-10T15:26:59Z
 ---
 
 ## Description
@@ -33,3 +34,7 @@ Production is public on a domain (#50 ADR), so provider webhooks become possible
 ### 2026-11-10T14:37:54Z — Christopher Vachon (user)
 
 From #41: also ship refresh_link (MCP) and a Refresh button on the task's Links section, plus link state badges on board cards, once sync fills remote state. Only sync links whose repo (GitHub owner/repo) or project (Jira key prefix) is selected in Settings > Integrations; others show 'not in scope'.
+
+### 2026-11-10T15:26:59Z — Christopher Vachon (user)
+
+Done. apps/worker (bun; bundled to worker.mjs for the image): runWorker loop (injected deps, tested) every SYNC_POLL_SECONDS (60), each pass inside services.worker.exclusive('link-sync') = pg_try_advisory_xact_lock held for the pass's transaction (one instance syncs; others log 'skipped'), then a worker_heartbeat row. integrations.syncDue: services.links.dueForSync (SQL CASE: failing 15m, merged/done/closed 6h, else 5m; never-synced first; skips deleted tasks) → refreshLink per link, one at a time per provider, providers in parallel. /api/health adds worker {lastBeatAt, stale} without affecting ok (a dead worker must not restart web). SIGTERM/SIGINT abort the sleep; verified graceful stop locally (varlock run) and in the image (docker stop → exit 0). Compose: worker service, restart unless-stopped, healthcheck disabled (image HEALTHCHECK is web's). Board cards show up to 2 link badges (icon + state, key until synced) then +n. Not done: rate-limit/ETag handling (single user, low volume); webhooks later.

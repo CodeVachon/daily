@@ -14,6 +14,7 @@ export type {
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
 export { COLORS } from "./catalog-inputs"
+export { describeEvent, type TaskEvent, type TaskEventPayload } from "./events"
 export {
   PRIORITIES,
   STATUS_CATEGORIES,

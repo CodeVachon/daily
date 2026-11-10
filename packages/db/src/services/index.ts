@@ -3,6 +3,7 @@ import { createActivityService } from "./activity"
 import { createActorService } from "./actors"
 import { createOAuthClientService } from "./oauth-clients"
 import { createSettingsService } from "./settings"
+import { createTaskService } from "./tasks"
 import { createUserService } from "./users"
 
 /**
@@ -16,6 +17,7 @@ export function createServices(db: Database) {
     users: createUserService(db),
     oauthClients: createOAuthClientService(db),
     settings: createSettingsService(db),
+    tasks: createTaskService(db),
   }
 }
 

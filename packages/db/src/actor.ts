@@ -49,16 +49,26 @@ export class ForbiddenError extends Error {
   }
 }
 
+/** Throws unless the change is made by the user themselves. */
+function assertIsUser(actor: Actor, action: string): void {
+  if (actor.type !== "user") {
+    throw new ForbiddenError(
+      `${actor.label} (${actor.type}) cannot ${action}; only the user can.`,
+      actor
+    )
+  }
+}
+
 /**
  * Deletion policy: only the user may delete or remove data (always a soft
  * delete). Agents and system jobs never can. Every delete/remove service
  * method calls this first.
  */
 export function assertCanDelete(actor: Actor, what = "data"): void {
-  if (actor.type !== "user") {
-    throw new ForbiddenError(
-      `${actor.label} (${actor.type}) cannot delete ${what}; only the user can.`,
-      actor
-    )
-  }
+  assertIsUser(actor, `delete ${what}`)
+}
+
+/** Restoring from the Trash is also the user's call alone. */
+export function assertCanRestore(actor: Actor, what = "data"): void {
+  assertIsUser(actor, `restore ${what}`)
 }

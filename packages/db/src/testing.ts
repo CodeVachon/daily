@@ -1,6 +1,7 @@
 import { PGlite } from "@electric-sql/pglite"
 import { drizzle } from "drizzle-orm/pglite"
 import { migrate } from "drizzle-orm/pglite/migrator"
+import { generateKeyBetween } from "fractional-indexing"
 import { fileURLToPath } from "node:url"
 
 import * as schema from "./schema"
@@ -41,6 +42,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   const db = drizzle({ client, schema, casing: "snake_case" })
   await migrate(db, { migrationsFolder })
   let n = 0
+  let position: string | null = null
   return {
     services: createServices(db),
     db,
@@ -66,6 +68,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
       },
       async task(userId, overrides = {}) {
         n += 1
+        position = generateKeyBetween(position, null)
         const actor = {
           type: "user" as const,
           userId,
@@ -79,7 +82,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
             number: n,
             title: `Task ${n}`,
             statusKey: "todo",
-            boardPosition: `a${n}`,
+            boardPosition: position,
             createdBy: actor,
             updatedBy: actor,
             ...overrides,

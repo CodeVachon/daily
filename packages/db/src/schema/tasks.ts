@@ -3,6 +3,7 @@ import { relations, sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
   check,
+  customType,
   date,
   index,
   integer,
@@ -17,6 +18,9 @@ import {
 
 import type { Actor } from "../actor"
 import { user } from "./auth"
+
+/** Postgres full-text vector (read-only, generated). */
+const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" })
 
 const id = () =>
   text()
@@ -125,6 +129,11 @@ export const task = pgTable(
     /** Fractional index within the status column (lexicographic order). */
     boardPosition: text().notNull(),
     completedAt: timestamp({ withTimezone: true }),
+    /** Full-text index over title (weighted A) and description (B). */
+    search: tsvector().generatedAlwaysAs(
+      (): ReturnType<typeof sql> =>
+        sql`setweight(to_tsvector('english', coalesce(${task.title}, '')), 'A') || setweight(to_tsvector('english', coalesce(${task.description}, '')), 'B')`
+    ),
     createdBy: jsonb().$type<Actor>().notNull(),
     updatedBy: jsonb().$type<Actor>().notNull(),
     ...timestamps,
@@ -137,6 +146,7 @@ export const task = pgTable(
     index("task_due_at_idx").on(t.userId, t.dueAt),
     index("task_project_idx").on(t.projectId),
     index("task_parent_idx").on(t.parentTaskId),
+    index("task_search_idx").using("gin", t.search),
     check("task_due_one_kind", sql`${t.dueDate} is null or ${t.dueAt} is null`),
     check(
       "task_due_at_has_zone",

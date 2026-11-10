@@ -21,8 +21,10 @@
     "better-auth": "^1.7.18",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.4",
+    "fractional-indexing": "^4.0.0",
     "postgres": "^4.1.0",
-    "varlock": "^1.24.0"
+    "varlock": "^1.24.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.16",

@@ -1,7 +1,9 @@
 import type { Database } from "../database"
 import { createActivityService } from "./activity"
 import { createActorService } from "./actors"
+import { createLabelService } from "./labels"
 import { createOAuthClientService } from "./oauth-clients"
+import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
 import { createTaskService } from "./tasks"
 import { createUserService } from "./users"
@@ -15,7 +17,9 @@ export function createServices(db: Database) {
     activity: createActivityService(db),
     actors: createActorService(db),
     users: createUserService(db),
+    labels: createLabelService(db),
     oauthClients: createOAuthClientService(db),
+    projects: createProjectService(db),
     settings: createSettingsService(db),
     tasks: createTaskService(db),
   }

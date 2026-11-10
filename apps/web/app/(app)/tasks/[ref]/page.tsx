@@ -4,8 +4,13 @@ import { notFound } from "next/navigation"
 
 import { PageHeader } from "@/components/page-header"
 import { ActivityTimeline } from "@/components/task/activity-timeline"
+import { ChecklistSection } from "@/components/task/checklist-section"
+import { CommentsSection } from "@/components/task/comments-section"
+import { DependenciesSection } from "@/components/task/dependencies-section"
+import { SubtasksSection } from "@/components/task/subtasks-section"
 import { TaskEditor } from "@/components/task/task-editor"
 import { toTimeline } from "@/lib/activity"
+import { toCommentView } from "@/lib/comments"
 import { requireSession } from "@/lib/session"
 import { loadTaskOptions } from "@/lib/task-options"
 
@@ -37,16 +42,20 @@ export default async function TaskPage({
     loadTask(user.id, ref),
     loadTaskOptions(user.id),
   ])
-  const timeline = toTimeline(
-    await services.activity.forTask(user.id, task.id, 50),
-    {
-      now: new Date(),
-      timezone: options.timezone,
-      statusNames: Object.fromEntries(
-        options.statuses.map((s) => [s.key, s.name])
-      ),
-    }
-  )
+  const [events, checklist, comments, dependencies] = await Promise.all([
+    services.activity.forTask(user.id, task.id, 50),
+    services.checklist.list(user.id, task.id),
+    services.comments.list(user.id, task.id),
+    services.dependencies.list(user.id, task.id),
+  ])
+  const now = new Date()
+  const timeline = toTimeline(events, {
+    now,
+    timezone: options.timezone,
+    statusNames: Object.fromEntries(
+      options.statuses.map((s) => [s.key, s.name])
+    ),
+  })
 
   return (
     <>
@@ -61,7 +70,30 @@ export default async function TaskPage({
           task={task}
           options={options}
         />
-        <div className="mt-10 max-w-2xl">
+        <div className="mt-8 grid max-w-2xl gap-8">
+          <ChecklistSection
+            taskId={task.id}
+            items={checklist.map(({ id, text, done }) => ({ id, text, done }))}
+          />
+          <SubtasksSection
+            taskId={task.id}
+            subtasks={task.subtasks.map(({ id, number, title, status }) => ({
+              id,
+              number,
+              title,
+              status: { name: status.name, category: status.category },
+            }))}
+          />
+          <DependenciesSection
+            taskId={task.id}
+            blockedBy={dependencies.blockedBy.map(
+              ({ id, number, title, open }) => ({ id, number, title, open })
+            )}
+          />
+          <CommentsSection
+            taskId={task.id}
+            comments={comments.map((c) => toCommentView(c, user.id, now))}
+          />
           <ActivityTimeline entries={timeline} />
         </div>
       </div>

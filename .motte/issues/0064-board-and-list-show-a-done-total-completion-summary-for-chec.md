@@ -1,5 +1,5 @@
 ---
-id: 63
+id: 64
 title: "Board and list: show a (done/total) completion summary for checklist items and subtasks"
 state: Done
 assignee: Christopher Vachon

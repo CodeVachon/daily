@@ -24,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const SETTINGS_SECTIONS = [
   { title: "Appearance", href: "/settings" },
   { title: "Labels", href: "/settings/labels" },
+  { title: "About", href: "/settings/about" },
 ]
 
 /** Whether a nav item is the current page (or a page under it). */

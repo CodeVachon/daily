@@ -1,0 +1,17 @@
+# Build context for the production image: source only, no secrets or outputs.
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/storybook-static
+**/*.tsbuildinfo
+.git
+.codegraph
+.fallow
+.orca
+.motte
+docs
+# Secrets: the image never contains env values (they come from the env file).
+**/.env*
+!**/.env.schema

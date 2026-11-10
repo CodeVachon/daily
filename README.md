@@ -17,7 +17,7 @@ This will place the ui components in the `packages/ui/src/components` directory.
 To use the components in your app, import them from the `ui` package.
 
 ```tsx
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 ```
 
 ## Storybook
@@ -34,11 +34,11 @@ docs over MCP at http://localhost:6006/mcp.
 
 ## Database & auth
 
-| Package | What |
-| --- | --- |
-| `packages/db` (`@workspace/db`) | Drizzle ORM + `postgres` driver, schema in `src/schema`, migrations in `drizzle/` |
-| `packages/auth` (`@workspace/auth`) | Better Auth (GitHub only), Drizzle adapter, allowlist gate, MCP OAuth server |
-| `packages/mcp` (`@workspace/mcp`) | MCP server (tools for Claude agents) mounted at `/api/mcp` |
+| Package                             | What                                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `packages/db` (`@workspace/db`)     | Drizzle ORM + `postgres` driver, schema in `src/schema`, migrations in `drizzle/` |
+| `packages/auth` (`@workspace/auth`) | Better Auth (GitHub only), Drizzle adapter, allowlist gate, MCP OAuth server      |
+| `packages/mcp` (`@workspace/mcp`)   | MCP server (tools for Claude agents) mounted at `/api/mcp`                        |
 
 Env is managed by [varlock](https://varlock.dev). The shared schema is the root `.env.schema`
 (committed); each app/package `@import`s what it needs and generates a typed `env.ts`.
@@ -68,13 +68,13 @@ OAuth App has exactly one callback URL.
    **Settings → Developer settings → OAuth Apps** instead.
 2. Fill in:
 
-   | Field | Value |
-   | --- | --- |
-   | Application name | `Daily (local)`, or `Daily` for production. Shown on GitHub's consent screen. |
-   | Homepage URL | The app's base URL, the same as `BETTER_AUTH_URL`. Locally: your tailnet URL from `scripts/tailscale.sh url`, e.g. `https://artimis.tail756ed3.ts.net`. Production: your DigitalOcean domain. |
-   | Application description | Optional. |
-   | Authorization callback URL | `<BETTER_AUTH_URL>/api/auth/callback/github`, e.g. `https://artimis.tail756ed3.ts.net/api/auth/callback/github`. Must match exactly: scheme, host, no trailing slash. |
-   | Enable Device Flow | Leave **off**. |
+   | Field                      | Value                                                                                                                                                                                         |
+   | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Application name           | `Daily (local)`, or `Daily` for production. Shown on GitHub's consent screen.                                                                                                                 |
+   | Homepage URL               | The app's base URL, the same as `BETTER_AUTH_URL`. Locally: your tailnet URL from `scripts/tailscale.sh url`, e.g. `https://artimis.tail756ed3.ts.net`. Production: your DigitalOcean domain. |
+   | Application description    | Optional.                                                                                                                                                                                     |
+   | Authorization callback URL | `<BETTER_AUTH_URL>/api/auth/callback/github`, e.g. `https://artimis.tail756ed3.ts.net/api/auth/callback/github`. Must match exactly: scheme, host, no trailing slash.                         |
+   | Enable Device Flow         | Leave **off**.                                                                                                                                                                                |
 
 3. Click **Register application**, then copy the **Client ID**, and **Generate a new client secret**
    and copy it immediately (GitHub only shows it once).
@@ -127,13 +127,13 @@ Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
 
 What agents can do (everything is attributed to the agent in task history; agents can never delete):
 
-| Area | Tools |
-| --- | --- |
-| System | `ping`, `whoami` |
-| Tasks | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks` |
-| Collaboration | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
-| Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels` |
-| History | `get_activity`, `get_updates_since` |
+| Area              | Tools                                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| System            | `ping`, `whoami`                                                                                                                                                          |
+| Tasks             | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks`                                                                      |
+| Collaboration     | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
+| Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels`                                                     |
+| History           | `get_activity`, `get_updates_since`                                                                                                                                       |
 
 Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as
 Markdown). Tasks are referred to as `#12`; due dates are plain strings in the user's current time
@@ -165,6 +165,32 @@ URL yourself and paste the final `127.0.0.1` callback URL back into the terminal
 
 **Test:** `bun run mcp:smoke` with the dev server running. It runs the full OAuth flow with a
 throwaway user and calls every tool.
+
+## Production image
+
+One Docker image runs every role; the droplet's env file supplies all settings
+(see `docs/adr/0001-production-deployment.md`).
+
+```bash
+docker build -t daily --build-arg GIT_SHA=$(git rev-parse HEAD) .
+docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web
+```
+
+- **Roles** (`docker/entrypoint.sh`): `web` (default, the Next.js standalone
+  server) and `migrate` (applies `packages/db/drizzle`, then exits). Both boot
+  through `varlock run`, which validates the environment against `.env.schema`
+  and exits with a clear message if anything is missing.
+- **No values are baked in.** `.env.schema` sets `@defaultDynamic=true`, so
+  nothing is inlined at build time; the build uses throwaway placeholders.
+- **Production env:** `APP_ENV=production`, `BETTER_AUTH_URL` (required,
+  `https://<domain>`), `DATABASE_URL` (`postgres://daily:<password>@postgres:5432/daily`),
+  `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`,
+  `GITHUB_CLIENT_SECRET`, `AUTH_GITHUB_ALLOWED_USERS`. Tailscale detection
+  never runs outside development.
+- **Health:** `GET /api/health` returns 200 when the database answers and every
+  migration in the image is applied, else 503. The image's `HEALTHCHECK` uses it.
+- **Local trial:** `DAILY_IMAGE=daily DAILY_ENV_FILE=./prod.env DAILY_WEB_PORT=3100
+docker compose -p daily-prodtest -f docker-compose.prod.yml up -d --wait`.
 
 ## Development workflow
 

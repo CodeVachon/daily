@@ -20,3 +20,6 @@ const client = globalForDb.pgClient ?? createClient()
 if (ENV.APP_ENV !== "production") globalForDb.pgClient = client
 
 export const db = drizzle({ client, schema, casing: "snake_case" })
+
+/** Close the pool (one-shot scripts such as migrations). */
+export const closeDatabase = () => client.end({ timeout: 5 })

@@ -6,7 +6,7 @@ import type { Actor, TaskDetail, TaskSummary } from "@workspace/db/core"
 import { formatDue, type Due } from "@workspace/db/time"
 import { z } from "zod"
 
-const actorOutput = z.object({
+export const actorOutput = z.object({
   type: z.enum(["user", "agent", "system"]),
   name: z.string(),
 })
@@ -56,7 +56,7 @@ export const taskDetailOutput = taskSummaryOutput.extend({
   ),
 })
 
-const serializeActor = (actor: Actor) => ({
+export const serializeActor = (actor: Actor) => ({
   type: actor.type,
   name: actor.label,
 })

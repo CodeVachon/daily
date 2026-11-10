@@ -1,5 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/server"
-import { ForbiddenError, NotFoundError, ValidationError } from "@workspace/db/core"
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@workspace/db/core"
 import { z } from "zod"
 
 import type { McpContext } from "../context"

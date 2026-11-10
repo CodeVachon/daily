@@ -7,6 +7,7 @@ import { parseDue } from "@workspace/db/time"
 import { z } from "zod"
 
 import type { McpContext } from "../context"
+import { taskRef } from "./inputs"
 import { ensureLabelIds, resolveProjectId } from "./resolve"
 import {
   serializeTask,
@@ -26,11 +27,6 @@ const write = {
   destructiveHint: false,
   openWorldHint: false,
 }
-
-/** "#12", "12", 12 or a task id. */
-const taskRef = z
-  .union([z.string().min(1), z.number().int().positive()])
-  .describe('Task number ("#12" or 12) or id')
 
 const status = z
   .string()

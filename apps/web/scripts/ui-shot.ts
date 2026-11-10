@@ -113,7 +113,8 @@ async function seed(userId: string, name: string) {
     ok: true,
     state: {
       kind: "pr",
-      title: "Production Docker image and release workflow",
+      title:
+        "Production Docker image and release workflow, with a title long enough to need truncating in the drawer",
       state: "merged",
       stateCategory: "merged",
       assignee: "codevachon",

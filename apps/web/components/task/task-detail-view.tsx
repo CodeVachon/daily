@@ -18,7 +18,8 @@ export function TaskDetailView({ data }: { data: TaskDetailData }) {
         task={task}
         options={data.options}
       />
-      <div className="mt-8 grid max-w-2xl gap-8">
+      {/* minmax(0,1fr): long unbreakable content (links) truncates instead of widening the page. */}
+      <div className="mt-8 grid max-w-2xl grid-cols-[minmax(0,1fr)] gap-8">
         <ChecklistSection taskId={task.id} items={data.checklist} />
         <SubtasksSection taskId={task.id} subtasks={data.subtasks} />
         <DependenciesSection taskId={task.id} blockedBy={data.blockedBy} />

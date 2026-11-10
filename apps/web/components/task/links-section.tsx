@@ -33,23 +33,25 @@ const ICONS: Record<LinkView["icon"], React.ReactNode> = {
   jira: <TicketIcon aria-label="Jira issue" />,
 }
 
-function SyncError({ message }: { message: string | null }) {
-  if (!message) return null
+/** The state badge; hovering it explains a failed sync. */
+function StateBadge({ link }: { link: LinkView }) {
+  if (!link.state) return null
+  const badge = (
+    <Badge variant={link.state.variant} className="shrink-0">
+      {link.syncError && <CircleAlertIcon />}
+      {link.state.label}
+    </Badge>
+  )
+  if (!link.syncError) return badge
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <CircleAlertIcon
-            className="size-4 shrink-0 text-destructive"
-            aria-label={`Sync failed: ${message}`}
-          />
-        }
-      />
-      <TooltipContent>Sync failed: {message}</TooltipContent>
+      <TooltipTrigger render={<span tabIndex={0} />}>{badge}</TooltipTrigger>
+      <TooltipContent>Sync failed: {link.syncError}</TooltipContent>
     </Tooltip>
   )
 }
 
+/** "KEY - Title" (truncated) … state … unlink. */
 function LinkRow({
   link,
   onRemove,
@@ -60,24 +62,19 @@ function LinkRow({
   disabled: boolean
 }) {
   return (
-    <li className="group flex items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0">
+    <li className="group flex min-w-0 items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0">
       <span className="text-muted-foreground">{ICONS[link.icon]}</span>
       <a
         href={link.url}
         target="_blank"
         rel="noreferrer"
         className="min-w-0 flex-1 truncate hover:underline"
-        title={link.url}
+        title={link.title ? `${link.key} - ${link.title}` : link.url}
       >
-        {link.label}
-        {link.label !== link.key && (
-          <span className="ml-1.5 text-muted-foreground">{link.key}</span>
-        )}
+        <span className="font-medium">{link.key}</span>
+        {link.title && <> - {link.title}</>}
       </a>
-      <SyncError message={link.syncError} />
-      {link.state && (
-        <Badge variant={link.state.variant}>{link.state.label}</Badge>
-      )}
+      <StateBadge link={link} />
       <Button
         variant="ghost"
         size="icon-xs"

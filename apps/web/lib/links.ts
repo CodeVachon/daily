@@ -15,11 +15,19 @@ export interface LinkView {
   id: string
   url: string
   key: string
-  /** The remote title once synced, else the key. */
-  label: string
+  /** The remote title; null until synced. */
+  title: string | null
   icon: "pr" | "issue" | "jira"
-  state: { label: string; variant: BadgeVariant } | null
+  /** The remote state, or "Not synced" (with the reason) when it failed. */
+  state: { label: string; variant: BadgeVariant | "destructive" } | null
   syncError: string | null
+}
+
+function stateBadge(link: TaskLink): LinkView["state"] {
+  if (link.state && link.stateCategory)
+    return { label: link.state, variant: STATE_VARIANT[link.stateCategory] }
+  if (link.syncError) return { label: "Not synced", variant: "destructive" }
+  return null
 }
 
 export function toLinkView(link: TaskLink): LinkView {
@@ -27,12 +35,9 @@ export function toLinkView(link: TaskLink): LinkView {
     id: link.id,
     url: link.url,
     key: link.key,
-    label: link.title ?? link.key,
+    title: link.title,
     icon: link.provider === "jira" ? "jira" : link.kind,
-    state:
-      link.state && link.stateCategory
-        ? { label: link.state, variant: STATE_VARIANT[link.stateCategory] }
-        : null,
+    state: stateBadge(link),
     syncError: link.syncError,
   }
 }

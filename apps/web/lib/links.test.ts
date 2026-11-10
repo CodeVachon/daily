@@ -21,12 +21,12 @@ const base: TaskLink = {
 }
 
 describe("toLinkView", () => {
-  it("shows the key until the first sync", () => {
+  it("has no title or state until the first sync", () => {
     expect(toLinkView(base)).toEqual({
       id: "l1",
       url: base.url,
       key: "CodeVachon/daily#3",
-      label: "CodeVachon/daily#3",
+      title: null,
       icon: "pr",
       state: null,
       syncError: null,
@@ -40,7 +40,7 @@ describe("toLinkView", () => {
       state: "merged",
       stateCategory: "merged",
     })
-    expect(view.label).toBe("Add links")
+    expect(view.title).toBe("Add links")
     expect(view.state).toEqual({ label: "merged", variant: "default" })
   })
 
@@ -57,5 +57,13 @@ describe("toLinkView", () => {
     expect(jira.state?.variant).toBe("outline")
     expect(jira.syncError).toBe("Jira returned 404")
     expect(toLinkView({ ...base, kind: "issue" }).icon).toBe("issue")
+  })
+
+  it("says it isn't synced when the first sync failed", () => {
+    const view = toLinkView({
+      ...base,
+      syncError: "CodeVachon/daily isn't selected in Settings > Integrations",
+    })
+    expect(view.state).toEqual({ label: "Not synced", variant: "destructive" })
   })
 })

@@ -23,6 +23,7 @@ import Link from "next/link"
 import { ColorBadge } from "@/components/color-badge"
 import { CompletionSummary } from "@/components/completion-summary"
 import { LinkIcon } from "@/components/link-icon"
+import { useLiveFlash } from "@/components/live-updates"
 import type { BoardCard } from "@/lib/board"
 import { MAX_CARD_LINKS, type LinkBadge } from "@/lib/links"
 import { taskHref } from "@/lib/task-form"
@@ -108,12 +109,15 @@ export function TaskCard({
     accept: "item",
   })
 
+  const flash = useLiveFlash(card.id)
+
   return (
     <Card
       ref={ref}
       size="sm"
+      data-flash={flash || undefined}
       className={cn(
-        "cursor-grab touch-none select-none",
+        "cursor-grab touch-none ring-primary transition-shadow duration-700 select-none data-flash:ring-2",
         isDragging && "opacity-50"
       )}
     >

@@ -9,6 +9,7 @@ import { toast } from "sonner"
 
 import { moveTaskAction } from "@/app/(app)/tasks/actions"
 import { dropTarget, type BoardCard, type BoardItems } from "@/lib/board"
+import { LIVE_HOLD_ATTRIBUTE } from "@/lib/live"
 
 import { TaskCard } from "./task-card"
 
@@ -93,6 +94,8 @@ export function KanbanBoard({
   return (
     <DragDropProvider
       onDragStart={() => {
+        // Hold live refreshes until the drop (they'd reset the arrangement).
+        document.body.dataset[LIVE_HOLD_ATTRIBUTE] = "drag"
         before.current = items
         latest.current = items
       }}
@@ -101,6 +104,7 @@ export function KanbanBoard({
         setItems(latest.current)
       }}
       onDragEnd={(event) => {
+        delete document.body.dataset[LIVE_HOLD_ATTRIBUTE]
         if (event.canceled) return setItems(before.current)
         const id = event.operation.source?.id
         if (id !== undefined) void save(String(id), latest.current)

@@ -3,6 +3,7 @@ import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
 import { themeCss } from "@workspace/ui/lib/themes"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import { LiveUpdates } from "@/components/live-updates"
 import { requireSession } from "@/lib/session"
 
 /** Everything behind sign-in: sidebar navigation around the page. */
@@ -25,6 +26,7 @@ export default async function AppLayout({
       />
       {/* min-w-0: let the page shrink to the window so only wide content (the board) scrolls. */}
       <SidebarInset className="min-w-0">{children}</SidebarInset>
+      <LiveUpdates />
     </SidebarProvider>
   )
 }

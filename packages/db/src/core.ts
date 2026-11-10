@@ -6,6 +6,7 @@
 export type {
   Services,
   UserProfile,
+  IntegrationConnection,
   OAuthClientDisplay,
   TaskDetail,
   TaskRef,
@@ -14,6 +15,12 @@ export type {
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
 export { COLORS } from "./catalog-inputs"
+export {
+  INTEGRATION_PROVIDERS,
+  integrationResource,
+  type IntegrationProvider,
+  type IntegrationResource,
+} from "./integration-inputs"
 export {
   ACCENT_COLORS,
   applyAppearance,

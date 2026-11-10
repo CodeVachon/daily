@@ -113,3 +113,8 @@
 {"at":"2026-11-10T03:25:53Z","id":51,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
 {"at":"2026-11-10T03:31:37Z","id":63,"by":"claude-code","as":"agent","type":"created","title":"Release workflow: versioned Docker image on GitHub Release; version shown in Settings","state":"Todo"}
 {"at":"2026-11-10T03:35:32Z","id":63,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T13:42:45Z","id":37,"by":"claude-code","as":"agent","type":"title","from":"Encrypted provider connections (OAuth token storage)","to":"Encrypted integration credentials (API tokens) and selected resources"}
+{"at":"2026-11-10T13:42:50Z","id":38,"by":"claude-code","as":"agent","type":"title","from":"Settings > Integrations: OAuth connect flows for GitHub, Atlassian and Linear","to":"Settings > Integrations: enter GitHub/Jira credentials and choose repositories/projects"}
+{"at":"2026-11-10T13:42:50Z","id":37,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-10T13:42:50Z","id":37,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-10T13:44:57Z","id":37,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

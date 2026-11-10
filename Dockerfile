@@ -24,6 +24,7 @@ RUN APP_ENV=production \
     BETTER_AUTH_SECRET=build-placeholder-auth-secret-not-real \
     GITHUB_CLIENT_ID=build-placeholder-client-id \
     GITHUB_CLIENT_SECRET=build-placeholder-client-secret-not-real \
+    INTEGRATIONS_ENCRYPTION_KEY=YnVpbGQtcGxhY2Vob2xkZXIta2V5LW5vdC1yZWFsISE= \
     bun run --cwd apps/web build \
  && bun run --cwd packages/db build:migrate
 

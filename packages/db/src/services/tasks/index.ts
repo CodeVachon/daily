@@ -52,6 +52,15 @@ const hydrate = {
     columns: { deletedAt: true },
     with: { status: { columns: { category: true } } },
   },
+  blockers: {
+    columns: {},
+    with: {
+      blockedByTask: {
+        columns: { deletedAt: true },
+        with: { status: { columns: { category: true } } },
+      },
+    },
+  },
 } as const
 
 /** How far up a parent chain we look before assuming a cycle. */

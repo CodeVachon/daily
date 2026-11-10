@@ -3,6 +3,7 @@ import { createActivityService } from "./activity"
 import { createActorService } from "./actors"
 import { createChecklistService } from "./checklist"
 import { createCommentService } from "./comments"
+import { createDependencyService } from "./dependencies"
 import { createLabelService } from "./labels"
 import { createOAuthClientService } from "./oauth-clients"
 import { createProjectService } from "./projects"
@@ -20,6 +21,7 @@ export function createServices(db: Database) {
     actors: createActorService(db),
     checklist: createChecklistService(db),
     comments: createCommentService(db),
+    dependencies: createDependencyService(db),
     users: createUserService(db),
     labels: createLabelService(db),
     oauthClients: createOAuthClientService(db),

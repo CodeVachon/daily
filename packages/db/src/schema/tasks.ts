@@ -203,6 +203,39 @@ export const taskChecklistItemRelations = relations(
   })
 )
 
+/** "task_id is blocked by blocked_by_task_id" (motte #18). Cycles rejected in the service. */
+export const taskDependency = pgTable(
+  "task_dependency",
+  {
+    taskId: text()
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    blockedByTaskId: text()
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    createdBy: jsonb().$type<Actor>().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.taskId, t.blockedByTaskId] }),
+    index("task_dependency_blocked_by_idx").on(t.blockedByTaskId),
+    check("task_dependency_not_self", sql`${t.taskId} <> ${t.blockedByTaskId}`),
+  ]
+)
+
+export const taskDependencyRelations = relations(taskDependency, ({ one }) => ({
+  task: one(task, {
+    fields: [taskDependency.taskId],
+    references: [task.id],
+    relationName: "blockers",
+  }),
+  blockedByTask: one(task, {
+    fields: [taskDependency.blockedByTaskId],
+    references: [task.id],
+    relationName: "blocking",
+  }),
+}))
+
 export const taskRelations = relations(task, ({ one, many }) => ({
   status: one(taskStatus, {
     fields: [task.statusKey],
@@ -217,6 +250,8 @@ export const taskRelations = relations(task, ({ one, many }) => ({
   subtasks: many(task, { relationName: "subtasks" }),
   labels: many(taskLabel),
   checklistItems: many(taskChecklistItem),
+  blockers: many(taskDependency, { relationName: "blockers" }),
+  blocking: many(taskDependency, { relationName: "blocking" }),
 }))
 
 export const taskLabelRelations = relations(taskLabel, ({ one }) => ({

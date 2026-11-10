@@ -57,6 +57,13 @@
       "when": 1794273500153,
       "tag": "0007_yielding_sinister_six",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794273649610,
+      "tag": "0008_dapper_moondragon",
+      "breakpoints": true
     }
   ]
 }

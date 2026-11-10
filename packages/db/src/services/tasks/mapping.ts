@@ -57,6 +57,8 @@ export interface TaskSummary {
   createdBy: Actor
   updatedBy: Actor
   deletedAt: Date | null
+  /** Blocking tasks that aren't done or cancelled yet. */
+  openBlockers: number
   /** Checklist items, and subtasks (cancelled ones don't count). */
   progress: { checklist: Progress; subtasks: Progress }
 }
@@ -96,7 +98,16 @@ export interface HydratedRow extends DueColumns {
   labels: { label: TaskLabelInfo & { deletedAt: Date | null } }[]
   checklistItems: { done: boolean; deletedAt: Date | null }[]
   subtasks: { deletedAt?: Date | null; status: { category: StatusCategory } }[]
+  blockers: {
+    blockedByTask: {
+      deletedAt: Date | null
+      status: { category: StatusCategory }
+    }
+  }[]
 }
+
+const isOpen = (category: StatusCategory) =>
+  category === "open" || category === "active"
 
 function progressOf(row: HydratedRow): TaskSummary["progress"] {
   const items = row.checklistItems.filter((item) => !item.deletedAt)
@@ -142,6 +153,10 @@ export function toSummary(row: HydratedRow): TaskSummary {
     createdBy: row.createdBy,
     updatedBy: row.updatedBy,
     deletedAt: row.deletedAt,
+    openBlockers: row.blockers.filter(
+      ({ blockedByTask }) =>
+        !blockedByTask.deletedAt && isOpen(blockedByTask.status.category)
+    ).length,
     progress: progressOf(row),
   }
 }

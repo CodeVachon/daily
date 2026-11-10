@@ -1,5 +1,5 @@
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server"
-import type { Services } from "@workspace/db"
+import type { Services } from "@workspace/db/core"
 
 import { contextFromAuthInfo, type McpContext } from "./context"
 import { toolModules } from "./tools"

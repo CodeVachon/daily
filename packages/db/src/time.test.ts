@@ -8,6 +8,7 @@ import {
   isDueToday,
   isOverdue,
   isValidTimeZone,
+  parseDue,
   timeZoneLabel,
   todayInterval,
   weekInterval,
@@ -138,5 +139,42 @@ describe("timeZoneLabel", () => {
     expect(timeZoneLabel(PT, new Date("2026-11-13T12:00:00Z"))).toBe(
       "Pacific Time"
     )
+  })
+})
+
+describe("parseDue", () => {
+  it("reads a bare date as a floating date", () => {
+    expect(parseDue("2026-11-14", ET)).toEqual({
+      kind: "date",
+      date: "2026-11-14",
+    })
+  })
+
+  it("reads an ISO instant with an offset as that moment", () => {
+    expect(parseDue("2026-11-14T17:00:00-05:00", PT)).toEqual({
+      kind: "instant",
+      at: new Date("2026-11-14T22:00:00Z"),
+      timezone: PT,
+    })
+    expect(parseDue("2026-11-14T22:00:00Z", ET)).toMatchObject({
+      at: new Date("2026-11-14T22:00:00Z"),
+    })
+  })
+
+  it("reads a local date-time in the given zone (DST-aware)", () => {
+    expect(parseDue("2026-11-14T17:00", PT)).toEqual({
+      kind: "instant",
+      at: new Date("2026-11-15T01:00:00Z"),
+      timezone: PT,
+    })
+    expect(parseDue("2026-07-01 09:30", ET)).toMatchObject({
+      at: new Date("2026-07-01T13:30:00Z"),
+    })
+  })
+
+  it("rejects junk and unknown zones", () => {
+    expect(() => parseDue("next friday", ET)).toThrow(/Can't read/)
+    expect(() => parseDue("2026-13-45", ET)).toThrow(RangeError)
+    expect(() => parseDue("2026-11-14", "Nope/Nope")).toThrow(RangeError)
   })
 })

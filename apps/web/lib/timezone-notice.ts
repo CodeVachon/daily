@@ -1,4 +1,4 @@
-import type { TimezoneUpdate } from "@workspace/db"
+import type { TimezoneUpdate } from "@workspace/db/core"
 import { timeZoneLabel } from "@workspace/db/time"
 
 /**

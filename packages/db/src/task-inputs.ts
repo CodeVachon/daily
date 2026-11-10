@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { isValidTimeZone } from "./time"
 
-const PRIORITIES = ["none", "urgent", "high", "medium", "low"] as const
+export const PRIORITIES = ["none", "urgent", "high", "medium", "low"] as const
 export type Priority = (typeof PRIORITIES)[number]
 
 export const STATUS_CATEGORIES = [

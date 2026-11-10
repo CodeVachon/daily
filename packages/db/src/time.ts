@@ -41,6 +41,44 @@ function assertTimeZone(timezone: string): void {
     throw new RangeError(`Unknown time zone: ${timezone}`)
 }
 
+const OFFSET = /(Z|[+-]\d{2}:?\d{2})$/i
+const LOCAL_DATE_TIME =
+  /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/
+
+/**
+ * Parse a due date the way people and agents write it:
+ * - `2026-11-14` → floating date (that day wherever I am)
+ * - `2026-11-14T17:00-05:00` (or `Z`) → that exact instant
+ * - `2026-11-14T17:00` (no offset) → 5pm in `timezone`
+ * The instant remembers `timezone` as the zone it was set in.
+ */
+export function parseDue(value: string, timezone: string): Due {
+  assertTimeZone(timezone)
+  const text = value.trim()
+  if (CALENDAR_DATE.test(text)) {
+    dayInterval(text, timezone) // validates the date
+    return { kind: "date", date: text }
+  }
+  const local = LOCAL_DATE_TIME.exec(text)
+  if (local && !OFFSET.test(text)) {
+    const [y, mo, d, h, mi, sec] = local
+      .slice(1)
+      .map((part) => Number(part ?? 0)) as number[]
+    return {
+      kind: "instant",
+      at: new Date(+new TZDate(y!, mo! - 1, d!, h!, mi!, sec!, timezone)),
+      timezone,
+    }
+  }
+  const at = new Date(text)
+  if (Number.isNaN(+at)) {
+    throw new RangeError(
+      `Can't read "${value}" as a date (use YYYY-MM-DD or an ISO 8601 date-time)`
+    )
+  }
+  return { kind: "instant", at, timezone }
+}
+
 /** The calendar date an instant falls on in `timezone`. */
 export function calendarDateIn(at: Date, timezone: string): CalendarDate {
   assertTimeZone(timezone)
@@ -54,6 +92,10 @@ export function dayInterval(date: CalendarDate, timezone: string): Interval {
     throw new RangeError(`Not a calendar date: ${date}`)
   const [y, m, d] = date.split("-").map(Number) as [number, number, number]
   const start = new TZDate(y, m - 1, d, timezone)
+  // Reject dates that roll over (2026-02-30, 2026-13-01 …).
+  if (format(start, "yyyy-MM-dd", { in: tz(timezone) }) !== date) {
+    throw new RangeError(`Not a real calendar date: ${date}`)
+  }
   return { start: new Date(+start), end: new Date(+addDays(start, 1)) }
 }
 

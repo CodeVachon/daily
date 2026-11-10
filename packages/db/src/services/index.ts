@@ -35,3 +35,4 @@ export type Services = ReturnType<typeof createServices>
 export type { UserProfile } from "./users"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
+export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

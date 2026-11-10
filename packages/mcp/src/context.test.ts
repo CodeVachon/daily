@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import type { Services } from "@workspace/db"
+import type { Services } from "@workspace/db/core"
 import { createTestDatabase, type TestDatabase } from "@workspace/db/testing"
 
 import { authInfoFromClaims, bearerToken, contextFromAuthInfo } from "./context"

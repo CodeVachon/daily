@@ -1,5 +1,5 @@
 import type { AuthInfo } from "@modelcontextprotocol/server"
-import type { Actor, Services } from "@workspace/db"
+import type { Actor, Services } from "@workspace/db/core"
 
 /**
  * Who is calling a tool, and the data services to serve them with. Built from

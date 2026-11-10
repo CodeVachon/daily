@@ -1,3 +1,4 @@
+import { createChangeFeed, type Listen } from "../changes"
 import type { KeySource } from "../crypto"
 import type { Database } from "../database"
 import { createActivityService } from "./activity"
@@ -23,6 +24,8 @@ import { createWorkerService } from "./worker"
 export interface ServiceOptions {
   /** INTEGRATIONS_ENCRYPTION_KEY, read only when a credential is used. */
   encryptionKey: KeySource
+  /** LISTEN on a dedicated connection, for the live change feed. */
+  listen: Listen
 }
 
 export function createServices(db: Database, options: ServiceOptions) {
@@ -30,6 +33,8 @@ export function createServices(db: Database, options: ServiceOptions) {
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
+    /** Live task changes from every process (web, MCP, sync worker). */
+    changes: createChangeFeed(options.listen),
     checklist: createChecklistService(db),
     comments: createCommentService(db),
     dependencies: createDependencyService(db),

@@ -1,10 +1,11 @@
-import { closeDatabase, db } from "./client"
+import { closeDatabase, db, listen } from "./client"
 import { ENV } from "./env"
 import { createServices } from "./services"
 
 /** App-wide services bound to the real database. */
 export const services = createServices(db, {
   encryptionKey: () => ENV.INTEGRATIONS_ENCRYPTION_KEY,
+  listen,
 })
 
 export { authDatabaseAdapter } from "./auth-adapter"

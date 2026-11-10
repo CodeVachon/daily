@@ -11,8 +11,7 @@ import {
 } from "drizzle-orm/pg-core"
 
 import type { TaskEventPayload } from "../events"
-import { user } from "./auth"
-import { task } from "./tasks"
+import { taskOwned } from "./columns"
 
 export const actorType = pgEnum("actor_type", ["user", "agent", "system"])
 
@@ -29,12 +28,7 @@ export const taskEvent = pgTable(
   {
     /** Monotonic cursor for "changes since" paging. */
     seq: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
-    taskId: text()
-      .notNull()
-      .references(() => task.id, { onDelete: "cascade" }),
-    userId: text()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    ...taskOwned(),
     at: timestamp({ withTimezone: true }).defaultNow().notNull(),
     ...actorColumns,
     type: text().$type<TaskEventPayload["type"]>().notNull(),

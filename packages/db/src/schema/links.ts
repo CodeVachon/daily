@@ -12,7 +12,7 @@ import {
 import type { Actor } from "../actor"
 import type { LinkKind, LinkStateCategory } from "../external-ref"
 import type { IntegrationProvider } from "../integration-inputs"
-import { user } from "./auth"
+import { taskOwned } from "./columns"
 import { task } from "./tasks"
 
 /**
@@ -25,12 +25,7 @@ export const taskLink = pgTable(
     id: text()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    taskId: text()
-      .notNull()
-      .references(() => task.id, { onDelete: "cascade" }),
-    userId: text()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    ...taskOwned(),
     provider: text().$type<IntegrationProvider>().notNull(),
     kind: text().$type<LinkKind>().notNull(),
     /** "owner/repo#12", "PROJ-42". */

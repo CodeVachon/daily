@@ -20,6 +20,7 @@ export type {
   TimezoneUpdate,
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
+export type { ChangeFeed, TaskChange } from "./changes"
 export { COLORS } from "./catalog-inputs"
 export {
   LINK_KINDS,

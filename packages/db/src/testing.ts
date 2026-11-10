@@ -47,7 +47,13 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   let n = 0
   let position: string | null = null
   return {
-    services: createServices(db, { encryptionKey: () => TEST_KEY }),
+    services: createServices(db, {
+      encryptionKey: () => TEST_KEY,
+      listen: async (channel, onPayload) => {
+        const stop = await client.listen(channel, onPayload)
+        return stop
+      },
+    }),
     db,
     seed: {
       async user(overrides = {}) {

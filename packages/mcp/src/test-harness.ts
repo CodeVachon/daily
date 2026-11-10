@@ -22,6 +22,7 @@ export interface McpHarness {
 export async function createMcpHarness({
   userName = "Chris",
   timezone = "America/Toronto",
+  version = undefined as string | undefined,
 } = {}): Promise<McpHarness> {
   const t = await createTestDatabase()
   const user = await t.seed.user({ name: userName })
@@ -32,7 +33,7 @@ export async function createMcpHarness({
     redirectUris: ["http://127.0.0.1:1/cb"],
   })
   await t.services.settings.reportTimezone(user.id, timezone)
-  const handler = createMcpRequestHandler(t.services)
+  const handler = createMcpRequestHandler(t.services, version)
 
   async function rpc(method: string, params: object = {}, sub = user.id) {
     const response = await handler.fetch(

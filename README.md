@@ -192,6 +192,21 @@ docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot)
 - **Local trial:** `DAILY_IMAGE=daily DAILY_ENV_FILE=./prod.env DAILY_WEB_PORT=3100
 docker compose -p daily-prodtest -f docker-compose.prod.yml up -d --wait`.
 
+### Releases
+
+Publishing a GitHub Release builds and pushes the image
+(`.github/workflows/release.yml`):
+
+```bash
+gh release create v0.1.0 --generate-notes      # tag must be vX.Y.Z (or vX.Y.Z-rc.N)
+```
+
+The workflow runs the checks, then pushes `ghcr.io/codevachon/daily` tagged
+`0.1.0`, `0.1`, `latest` (stable releases only) and `sha-<short>`. The version
+and commit are baked in (`APP_VERSION`, `APP_COMMIT`) and shown in
+**Settings → About**; MCP clients see the version in `initialize`. To rebuild an
+existing tag, run the workflow manually with that tag. Local builds report `dev`.
+
 ## Development workflow
 
 Rules for every commit are in `AGENTS.md` ("Commit rules") and enforced by a pre-commit hook that

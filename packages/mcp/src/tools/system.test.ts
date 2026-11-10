@@ -42,3 +42,24 @@ describe("system tools", () => {
     expect(result.content[0].text).toMatch(/no longer exists/)
   })
 })
+
+describe("server info", () => {
+  const initialize = (harness: McpHarness) =>
+    harness.rpc("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "test", version: "0" },
+    })
+
+  it("reports the app's release version", async () => {
+    const release = await createMcpHarness({ version: "1.2.0" })
+    const { result } = await initialize(release)
+    expect(result.serverInfo).toMatchObject({ name: "daily", version: "1.2.0" })
+    await release.t.close()
+  })
+
+  it("reports dev when no version is given", async () => {
+    const { result } = await initialize(h)
+    expect(result.serverInfo.version).toBe("dev")
+  })
+})

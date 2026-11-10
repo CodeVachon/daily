@@ -1,6 +1,6 @@
 # Production image for Daily: one image, roles picked by docker/entrypoint.sh.
 #
-#   docker build -t daily --build-arg GIT_SHA=$(git rev-parse HEAD) .
+#   docker build -t daily --build-arg APP_VERSION=1.2.0 --build-arg GIT_SHA=$(git rev-parse HEAD) .
 #   docker run --env-file daily.env daily [web|migrate]
 #
 # No env values are baked in: the env file is passed at run time and varlock
@@ -29,8 +29,10 @@ RUN APP_ENV=production \
 
 # ---- runtime ----------------------------------------------------------------
 FROM node:22-slim AS runtime
-ARG GIT_SHA=unknown
+ARG APP_VERSION=dev
+ARG GIT_SHA=
 LABEL org.opencontainers.image.source="https://github.com/CodeVachon/daily" \
+      org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.revision="${GIT_SHA}"
 
 ENV NODE_ENV=production \
@@ -38,7 +40,8 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     PORT=3000 \
     NEXT_TELEMETRY_DISABLED=1 \
-    DAILY_GIT_SHA=${GIT_SHA}
+    APP_VERSION=${APP_VERSION} \
+    APP_COMMIT=${GIT_SHA}
 
 # varlock resolves and validates the env when each role boots.
 RUN npm install --global --no-fund --no-audit varlock@1.24.0 \

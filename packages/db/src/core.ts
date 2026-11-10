@@ -13,6 +13,7 @@ export type {
   TimezoneUpdate,
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
+export { COLORS } from "./catalog-inputs"
 export {
   PRIORITIES,
   STATUS_CATEGORIES,

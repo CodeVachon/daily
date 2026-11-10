@@ -2,7 +2,7 @@
 import { z } from "zod"
 
 /** Preset palette; the UI maps these to theme colours. */
-const COLORS = [
+export const COLORS = [
   "gray",
   "red",
   "orange",

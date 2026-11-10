@@ -35,6 +35,11 @@ export interface TaskLabelInfo {
   color: string | null
 }
 
+export interface Progress {
+  done: number
+  total: number
+}
+
 export interface TaskSummary {
   id: string
   number: number
@@ -52,6 +57,8 @@ export interface TaskSummary {
   createdBy: Actor
   updatedBy: Actor
   deletedAt: Date | null
+  /** Checklist items, and subtasks (cancelled ones don't count). */
+  progress: { checklist: Progress; subtasks: Progress }
 }
 
 export interface TaskDetail extends TaskSummary {
@@ -87,6 +94,25 @@ export interface HydratedRow extends DueColumns {
     deletedAt: Date | null
   } | null
   labels: { label: TaskLabelInfo & { deletedAt: Date | null } }[]
+  checklistItems: { done: boolean; deletedAt: Date | null }[]
+  subtasks: { deletedAt?: Date | null; status: { category: StatusCategory } }[]
+}
+
+function progressOf(row: HydratedRow): TaskSummary["progress"] {
+  const items = row.checklistItems.filter((item) => !item.deletedAt)
+  const subtasks = row.subtasks.filter(
+    (sub) => !sub.deletedAt && sub.status.category !== "cancelled"
+  )
+  return {
+    checklist: {
+      done: items.filter((item) => item.done).length,
+      total: items.length,
+    },
+    subtasks: {
+      done: subtasks.filter((sub) => sub.status.category === "done").length,
+      total: subtasks.length,
+    },
+  }
 }
 
 export function toSummary(row: HydratedRow): TaskSummary {
@@ -116,6 +142,7 @@ export function toSummary(row: HydratedRow): TaskSummary {
     createdBy: row.createdBy,
     updatedBy: row.updatedBy,
     deletedAt: row.deletedAt,
+    progress: progressOf(row),
   }
 }
 

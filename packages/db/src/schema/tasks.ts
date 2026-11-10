@@ -2,6 +2,7 @@
 import { relations, sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
+  boolean,
   check,
   customType,
   date,
@@ -173,6 +174,35 @@ export const taskLabel = pgTable(
   (t) => [primaryKey({ columns: [t.taskId, t.labelId] }), index().on(t.labelId)]
 )
 
+/** Checklist items inside a task (motte #17). */
+export const taskChecklistItem = pgTable(
+  "task_checklist_item",
+  {
+    id: id(),
+    taskId: text()
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    text: text().notNull(),
+    done: boolean().notNull().default(false),
+    /** Fractional index (lexicographic order). */
+    position: text().notNull(),
+    createdBy: jsonb().$type<Actor>().notNull(),
+    ...timestamps,
+    ...softDelete,
+  },
+  (t) => [index("task_checklist_item_task_idx").on(t.taskId, t.position)]
+)
+
+export const taskChecklistItemRelations = relations(
+  taskChecklistItem,
+  ({ one }) => ({
+    task: one(task, {
+      fields: [taskChecklistItem.taskId],
+      references: [task.id],
+    }),
+  })
+)
+
 export const taskRelations = relations(task, ({ one, many }) => ({
   status: one(taskStatus, {
     fields: [task.statusKey],
@@ -186,6 +216,7 @@ export const taskRelations = relations(task, ({ one, many }) => ({
   }),
   subtasks: many(task, { relationName: "subtasks" }),
   labels: many(taskLabel),
+  checklistItems: many(taskChecklistItem),
 }))
 
 export const taskLabelRelations = relations(taskLabel, ({ one }) => ({

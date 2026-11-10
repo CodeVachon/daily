@@ -47,7 +47,15 @@ const hydrate = {
       },
     },
   },
+  checklistItems: { columns: { done: true, deletedAt: true } },
+  subtasks: {
+    columns: { deletedAt: true },
+    with: { status: { columns: { category: true } } },
+  },
 } as const
+
+/** How far up a parent chain we look before assuming a cycle. */
+const MAX_DEPTH = 100
 
 export function createTaskService(db: Database) {
   const settings = createSettingsService(db)
@@ -150,7 +158,8 @@ export function createTaskService(db: Database) {
     const input = createTaskInput.parse(raw)
     const status = await resolveStatus(input.status)
     await assertProject(actor.userId, input.projectId)
-    if (input.parentTaskId) await load(actor.userId, input.parentTaskId)
+    if (input.parentTaskId)
+      input.parentTaskId = (await load(actor.userId, input.parentTaskId)).id
 
     const id = await db.transaction(async (tx) => {
       const [last] = await tx
@@ -179,6 +188,11 @@ export function createTaskService(db: Database) {
         })
         .returning({ id: task.id })
       await recordEvents(tx, actor, row!.id, [{ type: "created" }])
+      if (input.parentTaskId) {
+        await recordEvents(tx, actor, input.parentTaskId, [
+          { type: "subtask_added", subtaskId: row!.id, title: input.title },
+        ])
+      }
       return row!.id
     })
     return get(actor.userId, id)
@@ -305,6 +319,67 @@ export function createTaskService(db: Database) {
     }
   }
 
+  /** True when `ancestorId` is `taskId` or one of its parents. */
+  async function isAncestor(
+    ancestorId: string,
+    taskId: string
+  ): Promise<boolean> {
+    let current: string | null = taskId
+    for (let depth = 0; current && depth < MAX_DEPTH; depth++) {
+      if (current === ancestorId) return true
+      const [row]: { parent: string | null }[] = await db
+        .select({ parent: task.parentTaskId })
+        .from(task)
+        .where(eq(task.id, current))
+      current = row?.parent ?? null
+    }
+    return current !== null
+  }
+
+  /** Make a task a subtask of another (or top-level with null). Rejects cycles. */
+  async function setParent(
+    actor: Actor,
+    ref: TaskRef,
+    parentRef: TaskRef | null
+  ): Promise<TaskDetail> {
+    const child = await load(actor.userId, ref)
+    const parent =
+      parentRef === null ? null : await load(actor.userId, parentRef)
+    if (parent && (await isAncestor(child.id, parent.id))) {
+      throw new ValidationError(
+        `#${parent.number} is #${child.number} or one of its subtasks`
+      )
+    }
+    const parentId = parent?.id ?? null
+    if (parentId === child.parentTaskId) return get(actor.userId, child.id)
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(task)
+        .set({ parentTaskId: parentId, updatedBy: actor })
+        .where(eq(task.id, child.id))
+      await recordEvents(tx, actor, child.id, [
+        {
+          type: "updated",
+          changes: [
+            { field: "parentTaskId", from: child.parentTaskId, to: parentId },
+          ],
+        },
+      ])
+      if (child.parentTaskId) {
+        await recordEvents(tx, actor, child.parentTaskId, [
+          { type: "subtask_detached", subtaskId: child.id, title: child.title },
+        ])
+      }
+      if (parentId) {
+        await recordEvents(tx, actor, parentId, [
+          { type: "subtask_added", subtaskId: child.id, title: child.title },
+        ])
+      }
+    })
+    return get(actor.userId, child.id)
+  }
+
   async function softDelete(actor: Actor, ref: TaskRef): Promise<void> {
     assertCanDelete(actor, "tasks")
     const current = await load(actor.userId, ref)
@@ -338,6 +413,7 @@ export function createTaskService(db: Database) {
     create,
     update,
     move,
+    setParent,
     list,
     softDelete,
     restore,

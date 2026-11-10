@@ -1,6 +1,7 @@
 import type { Database } from "../database"
 import { createActivityService } from "./activity"
 import { createActorService } from "./actors"
+import { createChecklistService } from "./checklist"
 import { createCommentService } from "./comments"
 import { createLabelService } from "./labels"
 import { createOAuthClientService } from "./oauth-clients"
@@ -17,6 +18,7 @@ export function createServices(db: Database) {
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
+    checklist: createChecklistService(db),
     comments: createCommentService(db),
     users: createUserService(db),
     labels: createLabelService(db),

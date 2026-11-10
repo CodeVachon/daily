@@ -77,6 +77,20 @@ async function seed(userId: string, name: string) {
   })
   await make("Wait on vendor reply", { status: "blocked" })
   await make("Ship release 1.4", { status: "done" })
+  const labels = [
+    await services.labels.create(me, { name: "finance", color: "green" }),
+    await services.labels.create(me, { name: "waiting", color: "amber" }),
+  ]
+  await services.labels.setForTask(
+    me,
+    (await services.tasks.get(userId, 3)).id,
+    labels.map((l) => l.id)
+  )
+  await services.labels.setForTask(
+    me,
+    (await services.tasks.get(userId, 5)).id,
+    [labels[1]!.id]
+  )
   // An agent's change, so history shows agent attribution.
   const claude = agentActor(userId, "ui-shot-agent", "Claude Code")
   await services.tasks.update(claude, 3, {

@@ -29,6 +29,12 @@ export function groupByStatus<S extends Status>(
     }))
 }
 
+/** A project or label as a coloured chip. */
+export interface Chip {
+  name: string
+  color: string | null
+}
+
 /** What a board card shows; computed on the server in the user's zone. */
 export interface BoardCard {
   id: string
@@ -36,8 +42,8 @@ export interface BoardCard {
   title: string
   priority: Priority
   due: { label: string; overdue: boolean; today: boolean } | null
-  project: string | null
-  labels: string[]
+  project: Chip | null
+  labels: Chip[]
   openBlockers: number
   checklist: { done: number; total: number } | null
   subtasks: { done: number; total: number } | null
@@ -62,8 +68,11 @@ export function toBoardCard(
       overdue: !finished && isOverdue(task.due, now, timezone),
       today: !finished && isDueToday(task.due, now, timezone),
     },
-    project: task.project?.name ?? null,
-    labels: task.labels.map((label) => label.name),
+    project: task.project && {
+      name: task.project.name,
+      color: task.project.color,
+    },
+    labels: task.labels.map(({ name, color }) => ({ name, color })),
     openBlockers: task.openBlockers,
     checklist: progress(task.progress.checklist),
     subtasks: progress(task.progress.subtasks),

@@ -51,8 +51,8 @@ describe("toBoardCard", () => {
     title: "Ship",
     priority: "high",
     status: { key: "todo", category: "open" },
-    project: { id: "p", name: "Appello", color: null },
-    labels: [{ id: "l", name: "work", color: null }],
+    project: { id: "p", name: "Appello", color: "blue" },
+    labels: [{ id: "l", name: "work", color: "green" }],
     openBlockers: 1,
     progress: {
       checklist: { done: 1, total: 3 },
@@ -73,8 +73,8 @@ describe("toBoardCard", () => {
     expect(overdue).toMatchObject({
       number: 7,
       due: { label: "Thu, Nov 12", overdue: true, today: false },
-      project: "Appello",
-      labels: ["work"],
+      project: { name: "Appello", color: "blue" },
+      labels: [{ name: "work", color: "green" }],
       openBlockers: 1,
       checklist: { done: 1, total: 3 },
       subtasks: null,

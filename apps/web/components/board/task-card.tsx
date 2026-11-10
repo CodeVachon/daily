@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
+import { ColorBadge } from "@/components/color-badge"
 import type { BoardCard } from "@/lib/board"
 import { taskHref } from "@/lib/task-form"
 
@@ -80,11 +81,9 @@ function CardBadges({ card }: { card: BoardCard }) {
           Blocked by {card.openBlockers}
         </Badge>
       )}
-      {card.project && <Badge variant="secondary">{card.project}</Badge>}
+      {card.project && <ColorBadge chip={card.project} fallback="secondary" />}
       {card.labels.map((label) => (
-        <Badge key={label} variant="outline">
-          {label}
-        </Badge>
+        <ColorBadge key={label.name} chip={label} />
       ))}
       <Progress icon={<ListChecksIcon />} value={card.checklist} />
       <Progress icon={<ListTreeIcon />} value={card.subtasks} />

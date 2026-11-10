@@ -1,5 +1,4 @@
 import { services } from "@workspace/db"
-import type { TaskSummary } from "@workspace/db/core"
 import { Badge } from "@workspace/ui/components/badge"
 import {
   Table,
@@ -9,61 +8,58 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
+import { cn } from "@workspace/ui/lib/utils"
 import Link from "next/link"
 
+import { ColorBadge } from "@/components/color-badge"
 import { FilterBar } from "@/components/filter-bar"
 import { PageHeader } from "@/components/page-header"
 import { NewTaskDialog } from "@/components/task/new-task-dialog"
-import { relativeTime } from "@/lib/activity"
-import { toBoardCard } from "@/lib/board"
+import type { Chip } from "@/lib/board"
 import { parseFilters, toListInput } from "@/lib/filters"
 import { requireSession } from "@/lib/session"
-import { PRIORITY_OPTIONS, taskHref } from "@/lib/task-form"
+import { taskHref } from "@/lib/task-form"
+import { toTaskRow, type TaskRowView } from "@/lib/task-list"
 import { loadTaskOptions } from "@/lib/task-options"
 
 export const metadata = { title: "Tasks · Daily" }
 
-/** Priority column text; blank for "no priority" to keep the table quiet. */
-const priorityLabel: Record<string, string> = {
-  ...Object.fromEntries(PRIORITY_OPTIONS.map((p) => [p.value, p.label])),
-  none: "",
+function ChipsCell({
+  chips,
+  fallback,
+}: {
+  chips: Chip[]
+  fallback?: "outline" | "secondary"
+}) {
+  return (
+    <TableCell className="space-x-1">
+      {chips.map((chip) => (
+        <ColorBadge key={chip.name} chip={chip} fallback={fallback} />
+      ))}
+    </TableCell>
+  )
 }
 
-function TaskRow({
-  task,
-  now,
-  timezone,
-}: {
-  task: TaskSummary
-  now: Date
-  timezone: string
-}) {
-  const card = toBoardCard(task, now, timezone)
+function TaskRow({ row }: { row: TaskRowView }) {
   return (
     <TableRow>
-      <TableCell className="text-muted-foreground">#{task.number}</TableCell>
+      <TableCell className="text-muted-foreground">#{row.number}</TableCell>
       <TableCell className="max-w-md truncate">
-        <Link href={taskHref(task.number)} className="hover:underline">
-          {task.title}
+        <Link href={taskHref(row.number)} className="hover:underline">
+          {row.title}
         </Link>
       </TableCell>
       <TableCell>
-        <Badge variant="outline">{task.status.name}</Badge>
+        <Badge variant="outline">{row.status}</Badge>
       </TableCell>
-      <TableCell>{priorityLabel[task.priority]}</TableCell>
-      <TableCell className={card.due?.overdue ? "text-destructive" : undefined}>
-        {card.due?.label}
+      <TableCell>{row.priority}</TableCell>
+      <TableCell className={cn(row.overdue && "text-destructive")}>
+        {row.due}
       </TableCell>
-      <TableCell>{card.project}</TableCell>
-      <TableCell className="space-x-1">
-        {card.labels.map((label) => (
-          <Badge key={label} variant="secondary">
-            {label}
-          </Badge>
-        ))}
-      </TableCell>
+      <ChipsCell chips={row.projects} fallback="secondary" />
+      <ChipsCell chips={row.labels} />
       <TableCell className="text-right text-muted-foreground">
-        {relativeTime(task.updatedAt, now)}
+        {row.updated}
       </TableCell>
     </TableRow>
   )
@@ -106,9 +102,7 @@ export default async function TasksPage({
             {tasks.map((task) => (
               <TaskRow
                 key={task.id}
-                task={task}
-                now={now}
-                timezone={options.timezone}
+                row={toTaskRow(task, now, options.timezone)}
               />
             ))}
             {tasks.length === 0 && (

@@ -1,11 +1,12 @@
 ---
 id: 46
 title: "Timezone correctness: timestamptz everywhere, browser timezone for display and dates"
-state: Todo
+state: Done
 parent: 6
+assignee: Christopher Vachon
 labels: [db, web]
 created: 2026-11-10T00:44:18Z
-updated: 2026-11-10T00:52:03Z
+updated: 2026-11-10T01:07:00Z
 ---
 
 ## Description
@@ -31,3 +32,9 @@ Current timezone
 
 Tests
 - Date-window helpers across DST transitions and zone changes (ET ↔ PT), floating vs fixed due dates, and overdue computation at day boundaries.
+
+## Notes
+
+### 2026-11-10T01:07:00Z — Christopher Vachon (user)
+
+Done. DB: 19 OAuth/JWKS timestamp columns -> timestamptz (migration 0002, prefixed with SET TIME ZONE 'UTC' so existing values convert as UTC); postgres-js session TimeZone=UTC, PGlite SET TIME ZONE 'UTC'; schema test fails on any 'timestamp without time zone'. user_settings(timezone, timezone_changed_at) + services.settings.getTimezone/reportTimezone (writes only on change). Pure time module @workspace/db/time (browser-safe, @date-fns/tz): calendarDateIn, dayInterval (DST 23/25h tested), todayInterval, weekInterval (Mon), Due = floating date | instant+zone, dueDeadline/isOverdue/isDueToday (ET vs PT travel tested), formatDue ('2:00 PM PT (5:00 PM ET)'), timeZoneLabel. Web: <TimezoneSync> reports browser zone on load + visibilitychange via server action; sonner toast 'Times now shown in Pacific Time' on travel. Task due columns themselves land in #13 using Due.

@@ -1,7 +1,10 @@
 import { Geist_Mono, DM_Sans, Merriweather } from "next/font/google"
 
 import "@workspace/ui/globals.css"
+import { Toaster } from "@workspace/ui/components/sonner"
+
 import { ThemeProvider } from "@/components/theme-provider"
+import { TimezoneSync } from "@/components/timezone-sync"
 import { cn } from "@workspace/ui/lib/utils"
 
 const merriweatherHeading = Merriweather({
@@ -34,7 +37,11 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <TimezoneSync />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

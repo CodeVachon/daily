@@ -18,6 +18,8 @@ export interface TestDatabase {
     account(values: typeof schema.account.$inferInsert): Promise<void>
     oauthClient(values: typeof schema.oauthClient.$inferInsert): Promise<void>
   }
+  /** Raw SQL for schema-level assertions (information_schema etc.). */
+  query<Row>(sql: string): Promise<Row[]>
   close(): Promise<void>
 }
 
@@ -27,6 +29,7 @@ export interface TestDatabase {
  */
 export async function createTestDatabase(): Promise<TestDatabase> {
   const client = new PGlite()
+  await client.exec("SET TIME ZONE 'UTC'")
   const db = drizzle({ client, schema, casing: "snake_case" })
   await migrate(db, { migrationsFolder })
   let n = 0
@@ -53,6 +56,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
         await db.insert(schema.oauthClient).values(values)
       },
     },
+    query: async <Row>(sql: string) => (await client.query<Row>(sql)).rows,
     close: () => client.close(),
   }
 }

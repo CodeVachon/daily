@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import type { Services } from "@workspace/db"
+import { createTestDatabase, type TestDatabase } from "@workspace/db/testing"
 
 import { authInfoFromClaims, bearerToken, contextFromAuthInfo } from "./context"
 
@@ -49,26 +50,47 @@ describe("bearerToken", () => {
 })
 
 describe("contextFromAuthInfo", () => {
-  it("builds the tool context", () => {
+  let t: TestDatabase
+  beforeAll(async () => {
+    t = await createTestDatabase()
+    await t.seed.user({ id: "user-1", name: "Chris" })
+    await t.seed.oauthClient({
+      id: "row",
+      clientId: "c",
+      name: "Claude Code",
+      redirectUris: ["http://127.0.0.1:1/cb"],
+    })
+    await t.services.settings.reportTimezone("user-1", "America/Vancouver")
+  })
+  afterAll(() => t.close())
+
+  it("builds the tool context with the agent actor and the user's zone", async () => {
     const authInfo = authInfoFromClaims(
       { sub: "user-1", azp: "c", scope: "openid" },
       "t",
       RESOURCE
     )
-    expect(contextFromAuthInfo(authInfo, services)).toEqual({
+    await expect(contextFromAuthInfo(authInfo, t.services)).resolves.toEqual({
       userId: "user-1",
       clientId: "c",
       scopes: ["openid"],
-      services,
+      actor: {
+        type: "agent",
+        userId: "user-1",
+        clientId: "c",
+        label: "Claude Code",
+      },
+      timezone: "America/Vancouver",
+      services: t.services,
     })
   })
 
-  it("refuses requests without a verified user", () => {
-    expect(() => contextFromAuthInfo(undefined, services)).toThrow(
+  it("refuses requests without a verified user", async () => {
+    await expect(contextFromAuthInfo(undefined, services)).rejects.toThrow(
       /without verified auth/
     )
     const noUser = authInfoFromClaims({ azp: "c" }, "t", RESOURCE)
-    expect(() => contextFromAuthInfo(noUser, services)).toThrow(
+    await expect(contextFromAuthInfo(noUser, services)).rejects.toThrow(
       /without verified auth/
     )
   })

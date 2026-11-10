@@ -30,7 +30,8 @@ export function createMcpServer(ctx: McpContext): McpServer {
  */
 export function createMcpRequestHandler(services: Services) {
   return createMcpHandler(
-    ({ authInfo }) => createMcpServer(contextFromAuthInfo(authInfo, services)),
+    async ({ authInfo }) =>
+      createMcpServer(await contextFromAuthInfo(authInfo, services)),
     { legacy: "stateless" }
   )
 }

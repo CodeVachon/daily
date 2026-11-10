@@ -29,7 +29,7 @@ export const systemTools: ToolModule = (server, ctx) => {
     {
       title: "Who am I",
       description:
-        "Returns the signed-in user this agent is acting as, plus the OAuth client and scopes of the current token.",
+        "Returns the user this agent acts for, the agent's own name (how its changes are attributed in task history), the token's scopes, and the user's current time zone.",
       inputSchema: z.object({}),
       outputSchema: z.object({
         user: z.object({
@@ -40,7 +40,12 @@ export const systemTools: ToolModule = (server, ctx) => {
           createdAt: z.string(),
         }),
         github: z.object({ id: z.string() }).nullable(),
-        client: z.object({ id: z.string(), scopes: z.array(z.string()) }),
+        client: z.object({
+          id: z.string(),
+          name: z.string(),
+          scopes: z.array(z.string()),
+        }),
+        timezone: z.string(),
       }),
       annotations: readOnly,
     },
@@ -61,7 +66,8 @@ export const systemTools: ToolModule = (server, ctx) => {
       return json({
         user: { ...user, createdAt: createdAt.toISOString() },
         github: githubAccountId ? { id: githubAccountId } : null,
-        client: { id: ctx.clientId, scopes: ctx.scopes },
+        client: { id: ctx.clientId, name: ctx.actor.label, scopes: ctx.scopes },
+        timezone: ctx.timezone,
       })
     }
   )

@@ -67,12 +67,12 @@ export const config = [
       ...databaseDriverImports,
       {
         group: ["@workspace/db/testing"],
-        message: "@workspace/db/testing is for *.test.ts files only.",
+        message: "@workspace/db/testing is for tests only (*.test.ts, test-harness.ts).",
       },
     ]),
   },
   {
-    files: ["**/*.test.ts", "**/*.test.tsx"],
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/test-harness.ts"],
     rules: dbBoundary(databaseDriverImports),
   },
   {

@@ -1,5 +1,5 @@
 import type { AuthInfo } from "@modelcontextprotocol/server"
-import type { Services } from "@workspace/db"
+import type { Actor, Services } from "@workspace/db"
 
 /**
  * Who is calling a tool, and the data services to serve them with. Built from
@@ -13,6 +13,10 @@ export interface McpContext {
   clientId: string
   /** Scopes granted to the token. */
   scopes: string[]
+  /** The agent making changes, named after its OAuth client (e.g. "Claude Code"). */
+  actor: Actor
+  /** The user's current IANA zone, for "today" and for showing times. */
+  timezone: string
   services: Services
 }
 
@@ -48,19 +52,29 @@ export function bearerToken(header: string | null): string {
   return header?.replace(/^\S+\s+/, "") ?? ""
 }
 
-export function contextFromAuthInfo(
+/**
+ * The tool context for a verified request: who is calling (as an agent
+ * actor), which user they act for, and that user's current time zone.
+ */
+export async function contextFromAuthInfo(
   authInfo: AuthInfo | undefined,
   services: Services
-): McpContext {
+): Promise<McpContext> {
   const userId = asString(authInfo?.extra?.userId)
   if (!authInfo || !userId) {
     // requireMcpAuth guarantees a verified token before we get here.
     throw new Error("MCP request reached the server without verified auth")
   }
+  const [actor, timezone] = await Promise.all([
+    services.actors.forAgent(userId, authInfo.clientId),
+    services.settings.getTimezone(userId),
+  ])
   return {
     userId,
     clientId: authInfo.clientId,
     scopes: authInfo.scopes,
+    actor,
+    timezone,
     services,
   }
 }

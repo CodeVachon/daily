@@ -34,9 +34,7 @@ Real values go in the root `.env.local` (gitignored).
 
 ### First-time setup
 
-1. Create a GitHub OAuth App (https://github.com/settings/developers). Homepage and callback URL
-   must use this machine's tailnet URL (run `scripts/tailscale.sh url` to print it):
-   `https://<machine>.<tailnet>.ts.net/api/auth/callback/github`.
+1. Create the GitHub OAuth App used to sign in (see "GitHub sign-in OAuth App" below).
 2. Fill in the root `.env.local`:
    ```bash
    BETTER_AUTH_SECRET=   # openssl rand -base64 32
@@ -47,6 +45,43 @@ Real values go in the root `.env.local` (gitignored).
 3. `bun run env:check`: validates everything against the schema.
 4. `bun run db:up && bun run db:migrate`: starts Postgres (docker compose) and applies migrations.
 5. `bun run dev:tailnet`: turns on `tailscale serve` and starts dev; open the tailnet URL.
+
+### GitHub sign-in OAuth App
+
+Sign-in uses a GitHub **OAuth App** (not a GitHub App). Create one per environment, because an
+OAuth App has exactly one callback URL.
+
+1. Go to GitHub → **Settings → Developer settings → OAuth Apps → New OAuth App**
+   (https://github.com/settings/applications/new). For an organization-owned app, use the org's
+   **Settings → Developer settings → OAuth Apps** instead.
+2. Fill in:
+
+   | Field | Value |
+   | --- | --- |
+   | Application name | `Daily (local)`, or `Daily` for production. Shown on GitHub's consent screen. |
+   | Homepage URL | The app's base URL, the same as `BETTER_AUTH_URL`. Locally: your tailnet URL from `scripts/tailscale.sh url`, e.g. `https://artimis.tail756ed3.ts.net`. Production: your DigitalOcean domain. |
+   | Application description | Optional. |
+   | Authorization callback URL | `<BETTER_AUTH_URL>/api/auth/callback/github`, e.g. `https://artimis.tail756ed3.ts.net/api/auth/callback/github`. Must match exactly: scheme, host, no trailing slash. |
+   | Enable Device Flow | Leave **off**. |
+
+3. Click **Register application**, then copy the **Client ID**, and **Generate a new client secret**
+   and copy it immediately (GitHub only shows it once).
+4. Put them in the root `.env.local` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then run
+   `bun run env:check`.
+
+Notes:
+
+- **No scopes to configure.** OAuth App scopes are requested when the user authorizes. Sign-in
+  asks only for `read:user` and `user:email` (to read your profile and verified primary email,
+  including a private one).
+- **Who can sign in** isn't set on GitHub: anyone can authorize the app, but only logins in
+  `AUTH_GITHUB_ALLOWED_USERS` get in. Everyone else is rejected before an account is created.
+- **The callback URL must match `BETTER_AUTH_URL`.** If the tailnet name changes (a new machine, or
+  the MagicDNS name was renamed), update both the Homepage and callback URLs on the app.
+- **Rotating the secret:** generate a new one, update `.env.local` (or the production secret), then
+  delete the old one on GitHub.
+- An "error: redirect_uri is not associated with this application" page from GitHub means the
+  callback URL above doesn't match the URL the app is running on.
 
 ### Serving over Tailscale
 

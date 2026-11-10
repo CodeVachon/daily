@@ -1,0 +1,109 @@
+{"at":"2026-11-10T00:33:51Z","id":5,"by":"claude-code","as":"agent","type":"created","title":"Daily v1: personal task manager for me and my agents","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":6,"by":"claude-code","as":"agent","type":"created","title":"Epic: Task core domain (schema, services, actors, activity)","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":7,"by":"claude-code","as":"agent","type":"created","title":"Epic: Task MCP tools for agents","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":8,"by":"claude-code","as":"agent","type":"created","title":"Epic: Web UI - task views and Kanban board","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":9,"by":"claude-code","as":"agent","type":"created","title":"Epic: Real-time updates, unread markers and Updates inbox","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":10,"by":"claude-code","as":"agent","type":"created","title":"Epic: External links (GitHub, Jira, Linear) with per-provider OAuth and polling sync","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":11,"by":"claude-code","as":"agent","type":"created","title":"Epic: Notifications - Web Push/PWA and Slack standup","state":"Todo"}
+{"at":"2026-11-10T00:33:59Z","id":7,"by":"claude-code","as":"agent","type":"blocked","blocker":6}
+{"at":"2026-11-10T00:33:59Z","id":8,"by":"claude-code","as":"agent","type":"blocked","blocker":6}
+{"at":"2026-11-10T00:33:59Z","id":9,"by":"claude-code","as":"agent","type":"blocked","blocker":6}
+{"at":"2026-11-10T00:33:59Z","id":9,"by":"claude-code","as":"agent","type":"blocked","blocker":8}
+{"at":"2026-11-10T00:33:59Z","id":10,"by":"claude-code","as":"agent","type":"blocked","blocker":6}
+{"at":"2026-11-10T00:33:59Z","id":11,"by":"claude-code","as":"agent","type":"blocked","blocker":6}
+{"at":"2026-11-10T00:33:59Z","id":11,"by":"claude-code","as":"agent","type":"blocked","blocker":9}
+{"at":"2026-11-10T00:34:19Z","id":12,"by":"claude-code","as":"agent","type":"created","title":"Actor model: identify user vs agent for every write","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":13,"by":"claude-code","as":"agent","type":"created","title":"Task schema: tasks, statuses, priorities, projects, labels","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":14,"by":"claude-code","as":"agent","type":"created","title":"Activity events: append-only history in the same transaction","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":15,"by":"claude-code","as":"agent","type":"created","title":"Task service: create, update, get, list/filter, search, move, delete","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":16,"by":"claude-code","as":"agent","type":"created","title":"Comments service with edit history","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":17,"by":"claude-code","as":"agent","type":"created","title":"Checklist items and subtasks","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":18,"by":"claude-code","as":"agent","type":"created","title":"Task dependencies (blocked by) with cycle detection","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":19,"by":"claude-code","as":"agent","type":"created","title":"Projects and labels services","state":"Todo"}
+{"at":"2026-11-10T00:34:19Z","id":13,"by":"claude-code","as":"agent","type":"blocked","blocker":12}
+{"at":"2026-11-10T00:34:19Z","id":14,"by":"claude-code","as":"agent","type":"blocked","blocker":12}
+{"at":"2026-11-10T00:34:19Z","id":14,"by":"claude-code","as":"agent","type":"blocked","blocker":13}
+{"at":"2026-11-10T00:34:19Z","id":15,"by":"claude-code","as":"agent","type":"blocked","blocker":13}
+{"at":"2026-11-10T00:34:19Z","id":15,"by":"claude-code","as":"agent","type":"blocked","blocker":14}
+{"at":"2026-11-10T00:34:19Z","id":16,"by":"claude-code","as":"agent","type":"blocked","blocker":14}
+{"at":"2026-11-10T00:34:19Z","id":16,"by":"claude-code","as":"agent","type":"blocked","blocker":15}
+{"at":"2026-11-10T00:34:19Z","id":17,"by":"claude-code","as":"agent","type":"blocked","blocker":14}
+{"at":"2026-11-10T00:34:19Z","id":17,"by":"claude-code","as":"agent","type":"blocked","blocker":15}
+{"at":"2026-11-10T00:34:19Z","id":18,"by":"claude-code","as":"agent","type":"blocked","blocker":14}
+{"at":"2026-11-10T00:34:19Z","id":18,"by":"claude-code","as":"agent","type":"blocked","blocker":15}
+{"at":"2026-11-10T00:34:19Z","id":19,"by":"claude-code","as":"agent","type":"blocked","blocker":13}
+{"at":"2026-11-10T00:34:19Z","id":19,"by":"claude-code","as":"agent","type":"blocked","blocker":12}
+{"at":"2026-11-10T00:34:31Z","id":20,"by":"claude-code","as":"agent","type":"created","title":"MCP: resolve calling agent as actor (client name) for every tool","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":21,"by":"claude-code","as":"agent","type":"created","title":"MCP task tools: create_task, update_task, get_task, list_tasks, search_tasks, move_task, delete_task","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":22,"by":"claude-code","as":"agent","type":"created","title":"MCP tools: comments, checklist, subtasks, dependencies","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":23,"by":"claude-code","as":"agent","type":"created","title":"MCP tools: projects and labels","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":24,"by":"claude-code","as":"agent","type":"created","title":"MCP tools: activity and updates (get_activity, get_updates_since)","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":25,"by":"claude-code","as":"agent","type":"created","title":"MCP prompts/resources for task workflows","state":"Todo"}
+{"at":"2026-11-10T00:34:31Z","id":21,"by":"claude-code","as":"agent","type":"blocked","blocker":20}
+{"at":"2026-11-10T00:34:31Z","id":22,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T00:34:31Z","id":23,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T00:34:31Z","id":24,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T00:34:31Z","id":25,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T00:34:31Z","id":25,"by":"claude-code","as":"agent","type":"blocked","blocker":24}
+{"at":"2026-11-10T00:34:43Z","id":26,"by":"claude-code","as":"agent","type":"created","title":"App shell: navigation, layout and server actions with user actor","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":27,"by":"claude-code","as":"agent","type":"created","title":"Task create/edit: dialog and detail page","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":28,"by":"claude-code","as":"agent","type":"created","title":"Comments, checklist, subtasks and dependencies UI","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":29,"by":"claude-code","as":"agent","type":"created","title":"Activity timeline component","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":30,"by":"claude-code","as":"agent","type":"created","title":"Kanban board with drag and drop","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":31,"by":"claude-code","as":"agent","type":"created","title":"Board and list filters, task list view and search","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":32,"by":"claude-code","as":"agent","type":"created","title":"Projects and labels management pages","state":"Todo"}
+{"at":"2026-11-10T00:34:43Z","id":27,"by":"claude-code","as":"agent","type":"blocked","blocker":26}
+{"at":"2026-11-10T00:34:43Z","id":28,"by":"claude-code","as":"agent","type":"blocked","blocker":27}
+{"at":"2026-11-10T00:34:43Z","id":29,"by":"claude-code","as":"agent","type":"blocked","blocker":27}
+{"at":"2026-11-10T00:34:43Z","id":30,"by":"claude-code","as":"agent","type":"blocked","blocker":26}
+{"at":"2026-11-10T00:34:43Z","id":30,"by":"claude-code","as":"agent","type":"blocked","blocker":27}
+{"at":"2026-11-10T00:34:43Z","id":31,"by":"claude-code","as":"agent","type":"blocked","blocker":30}
+{"at":"2026-11-10T00:34:43Z","id":32,"by":"claude-code","as":"agent","type":"blocked","blocker":26}
+{"at":"2026-11-10T00:34:50Z","id":33,"by":"claude-code","as":"agent","type":"created","title":"Change feed: publish task events to subscribers","state":"Todo"}
+{"at":"2026-11-10T00:34:50Z","id":34,"by":"claude-code","as":"agent","type":"created","title":"SSE endpoint and live board/task refresh","state":"Todo"}
+{"at":"2026-11-10T00:34:50Z","id":35,"by":"claude-code","as":"agent","type":"created","title":"Unread state and Updates inbox","state":"Todo"}
+{"at":"2026-11-10T00:34:50Z","id":34,"by":"claude-code","as":"agent","type":"blocked","blocker":33}
+{"at":"2026-11-10T00:34:50Z","id":35,"by":"claude-code","as":"agent","type":"blocked","blocker":33}
+{"at":"2026-11-10T00:35:07Z","id":36,"by":"claude-code","as":"agent","type":"created","title":"External link model, URL parsing and link services","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":37,"by":"claude-code","as":"agent","type":"created","title":"Encrypted provider connections (OAuth token storage)","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":38,"by":"claude-code","as":"agent","type":"created","title":"Settings > Integrations: OAuth connect flows for GitHub, Atlassian and Linear","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":39,"by":"claude-code","as":"agent","type":"created","title":"Provider clients: fetch GitHub, Jira and Linear item state","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":40,"by":"claude-code","as":"agent","type":"created","title":"Sync worker: polling refresh of linked items","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":41,"by":"claude-code","as":"agent","type":"created","title":"Links UI and MCP link tools","state":"Todo"}
+{"at":"2026-11-10T00:35:07Z","id":38,"by":"claude-code","as":"agent","type":"blocked","blocker":37}
+{"at":"2026-11-10T00:35:07Z","id":39,"by":"claude-code","as":"agent","type":"blocked","blocker":36}
+{"at":"2026-11-10T00:35:07Z","id":39,"by":"claude-code","as":"agent","type":"blocked","blocker":37}
+{"at":"2026-11-10T00:35:07Z","id":40,"by":"claude-code","as":"agent","type":"blocked","blocker":39}
+{"at":"2026-11-10T00:35:07Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":36}
+{"at":"2026-11-10T00:35:07Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":40}
+{"at":"2026-11-10T00:35:16Z","id":42,"by":"claude-code","as":"agent","type":"created","title":"PWA: manifest, icons, service worker, installable","state":"Todo"}
+{"at":"2026-11-10T00:35:16Z","id":43,"by":"claude-code","as":"agent","type":"created","title":"Web Push subscriptions and agent-change notifications","state":"Todo"}
+{"at":"2026-11-10T00:35:16Z","id":44,"by":"claude-code","as":"agent","type":"created","title":"Standup generator (service + MCP tool)","state":"Todo"}
+{"at":"2026-11-10T00:35:16Z","id":45,"by":"claude-code","as":"agent","type":"created","title":"Slack integration: OAuth connect and post standup","state":"Todo"}
+{"at":"2026-11-10T00:35:16Z","id":43,"by":"claude-code","as":"agent","type":"blocked","blocker":42}
+{"at":"2026-11-10T00:35:16Z","id":45,"by":"claude-code","as":"agent","type":"blocked","blocker":44}
+{"at":"2026-11-10T00:44:18Z","id":46,"by":"claude-code","as":"agent","type":"created","title":"Timezone correctness: timestamptz everywhere, browser timezone for display and dates","state":"Todo"}
+{"at":"2026-11-10T00:44:21Z","id":13,"by":"claude-code","as":"agent","type":"blocked","blocker":46}
+{"at":"2026-11-10T00:44:24Z","id":21,"by":"claude-code","as":"agent","type":"title","from":"MCP task tools: create_task, update_task, get_task, list_tasks, search_tasks, move_task, delete_task","to":"MCP task tools: create_task, update_task, get_task, list_tasks, search_tasks, move_task"}
+{"at":"2026-11-10T00:44:32Z","id":47,"by":"claude-code","as":"agent","type":"created","title":"Low priority: connect Codex to the MCP server (OAuth for streamable HTTP)","state":"Todo"}
+{"at":"2026-11-10T00:44:37Z","id":48,"by":"claude-code","as":"agent","type":"created","title":"Slack message templates with @mention (managed in the app)","state":"Todo"}
+{"at":"2026-11-10T00:44:54Z","id":45,"by":"claude-code","as":"agent","type":"blocked","blocker":48}
+{"at":"2026-11-10T00:45:00Z","id":49,"by":"claude-code","as":"agent","type":"created","title":"Epic: Deploy to DigitalOcean","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":50,"by":"claude-code","as":"agent","type":"created","title":"Decide DigitalOcean hosting and access model (ADR)","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":51,"by":"claude-code","as":"agent","type":"created","title":"Production builds: Docker images for web and worker, health checks","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":52,"by":"claude-code","as":"agent","type":"created","title":"Production configuration and secrets","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":53,"by":"claude-code","as":"agent","type":"created","title":"Managed Postgres: TLS, pooling, migrations on deploy, backups","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":54,"by":"claude-code","as":"agent","type":"created","title":"CI/CD: GitHub Actions check and deploy to DigitalOcean","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":55,"by":"claude-code","as":"agent","type":"created","title":"Observability: error tracking, logs, uptime","state":"Todo"}
+{"at":"2026-11-10T00:45:18Z","id":51,"by":"claude-code","as":"agent","type":"blocked","blocker":50}
+{"at":"2026-11-10T00:45:18Z","id":52,"by":"claude-code","as":"agent","type":"blocked","blocker":50}
+{"at":"2026-11-10T00:45:18Z","id":53,"by":"claude-code","as":"agent","type":"blocked","blocker":50}
+{"at":"2026-11-10T00:45:18Z","id":54,"by":"claude-code","as":"agent","type":"blocked","blocker":51}
+{"at":"2026-11-10T00:45:18Z","id":54,"by":"claude-code","as":"agent","type":"blocked","blocker":52}
+{"at":"2026-11-10T00:45:18Z","id":54,"by":"claude-code","as":"agent","type":"blocked","blocker":53}
+{"at":"2026-11-10T00:45:18Z","id":55,"by":"claude-code","as":"agent","type":"blocked","blocker":51}
+{"at":"2026-11-10T00:52:10Z","id":51,"by":"claude-code","as":"agent","type":"title","from":"Production builds: Docker images for web and worker, health checks","to":"Production Docker image (web + worker), health checks"}
+{"at":"2026-11-10T00:52:14Z","id":52,"by":"claude-code","as":"agent","type":"title","from":"Production configuration and secrets","to":"Production configuration: env file for the container"}
+{"at":"2026-11-10T00:52:17Z","id":54,"by":"claude-code","as":"agent","type":"title","from":"CI/CD: GitHub Actions check and deploy to DigitalOcean","to":"CI/CD: GitHub Actions check, build image, droplet pulls and restarts"}
+{"at":"2026-11-10T00:53:28Z","id":53,"by":"claude-code","as":"agent","type":"title","from":"Managed Postgres: TLS, pooling, migrations on deploy, backups","to":"Postgres container on the droplet: volume, migrations on deploy, backups to DO Spaces"}
+{"at":"2026-11-10T00:53:35Z","id":57,"by":"claude-code","as":"agent","type":"created","title":"Public exposure hardening: Caddy TLS, security headers, rate limits","state":"Todo"}

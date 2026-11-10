@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm"
+import { and, asc, eq, isNull } from "drizzle-orm"
 
 import { assertCanDelete, systemActor, type Actor } from "../actor"
 import type { Database } from "../database"
@@ -11,7 +11,7 @@ import {
   type LinkStateCategory,
 } from "../external-ref"
 import type { IntegrationProvider } from "../integration-inputs"
-import { taskLink } from "../schema"
+import { task, taskLink } from "../schema"
 import { recordEvents } from "./activity"
 import type { createIntegrationService } from "./integrations"
 import { createTaskService, type TaskRef } from "./tasks"
@@ -123,6 +123,30 @@ export function createLinkService(
         })
         return toLink(existing!)
       })
+    },
+
+    /**
+     * Which tasks link to this item (URL or shorthand), e.g. to find the task
+     * tracking owner/repo#12. Deleted tasks are left out.
+     */
+    async findTasks(
+      userId: string,
+      input: string
+    ): Promise<{ number: number; title: string; linkId: string }[]> {
+      const ref = await parse(userId, input)
+      return db
+        .select({ number: task.number, title: task.title, linkId: taskLink.id })
+        .from(taskLink)
+        .innerJoin(task, eq(task.id, taskLink.taskId))
+        .where(
+          and(
+            eq(taskLink.userId, userId),
+            eq(taskLink.provider, ref.provider),
+            eq(taskLink.key, ref.key),
+            isNull(task.deletedAt)
+          )
+        )
+        .orderBy(asc(task.number))
     },
 
     /** User only, like every delete. */

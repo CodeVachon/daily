@@ -141,6 +141,23 @@ describe("links", () => {
     expect((await history())[0]).toMatch(/unlinked https:\/\/github.com/)
   })
 
+  it("finds the tasks linking to an item", async () => {
+    const found = await t.services.links.findTasks(
+      me.userId,
+      "https://acme.atlassian.net/browse/PROJ-42"
+    )
+    expect(found).toEqual([
+      {
+        number: taskNumber,
+        title: expect.any(String),
+        linkId: expect.any(String),
+      },
+    ])
+    expect(
+      await t.services.links.findTasks(me.userId, "CodeVachon/daily#999")
+    ).toEqual([])
+  })
+
   it("keeps users' links apart", async () => {
     const other = await t.seed.user()
     const [link] = await t.services.links.list(me.userId, taskNumber)

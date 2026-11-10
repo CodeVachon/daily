@@ -48,11 +48,7 @@ function TaskRow({ row, href }: { row: TaskRowView; href: string }) {
       <TableCell className="text-muted-foreground">#{row.number}</TableCell>
       <TableCell className="max-w-md">
         <div className="flex items-center gap-1.5">
-          <Link
-            href={href}
-            scroll={false}
-            className="truncate hover:underline"
-          >
+          <Link href={href} scroll={false} className="truncate hover:underline">
             {row.title}
           </Link>
           <CompletionSummary completion={row.completion} />

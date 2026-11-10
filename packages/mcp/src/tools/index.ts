@@ -2,6 +2,7 @@ import { activityTools } from "./activity"
 import { catalogTools } from "./catalog"
 import { collaborationTools } from "./collaboration"
 import { integrationTools } from "./integrations"
+import { linkTools } from "./links"
 import { settingsTools } from "./settings"
 import { systemTools } from "./system"
 import { taskTools } from "./tasks"
@@ -20,5 +21,6 @@ export const toolModules: ToolModule[] = [
   activityTools,
   settingsTools,
   integrationTools,
+  linkTools,
   workflowModule,
 ]

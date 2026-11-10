@@ -6,7 +6,7 @@ parent: 10
 labels: [integrations, infra]
 blockedBy: [39]
 created: 2026-11-10T00:35:07Z
-updated: 2026-11-10T00:53:36Z
+updated: 2026-11-10T14:37:54Z
 ---
 
 ## Description
@@ -29,3 +29,7 @@ Deployment constraint (#49): the worker runs as its own long-lived process/conta
 ### 2026-11-10T00:53:36Z — claude-code (agent)
 
 Production is public on a domain (#50 ADR), so provider webhooks become possible later (GitHub/Linear/Jira → https://<domain>/api/webhooks/...). v1 keeps polling, since it works locally on the tailnet too. A follow-up could add webhooks in production with polling as the fallback.
+
+### 2026-11-10T14:37:54Z — Christopher Vachon (user)
+
+From #41: also ship refresh_link (MCP) and a Refresh button on the task's Links section, plus link state badges on board cards, once sync fills remote state. Only sync links whose repo (GitHub owner/repo) or project (Jira key prefix) is selected in Settings > Integrations; others show 'not in scope'.

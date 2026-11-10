@@ -154,6 +154,7 @@ What agents can do (everything is attributed to the agent in task history; agent
 | Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels`                                                     |
 | History           | `get_activity`, `get_updates_since`                                                                                                                                       |
 | Settings          | `get_appearance`, `update_appearance`                                                                                                                                     |
+| Links             | `link_external`, `list_task_links`, `find_tasks_by_link` (GitHub issues/PRs, Jira issues; only the user can unlink)                                                       |
 | Integrations      | `list_integrations`, `list_integration_resources`, `set_integration_scope` (never credentials: connecting and disconnecting is the user's)                                |
 
 Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as

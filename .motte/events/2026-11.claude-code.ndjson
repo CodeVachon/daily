@@ -119,3 +119,8 @@
 {"at":"2026-11-10T13:42:50Z","id":37,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
 {"at":"2026-11-10T13:44:57Z","id":37,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
 {"at":"2026-11-10T13:53:50Z","id":38,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":21}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":27}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":40}
+{"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":27}

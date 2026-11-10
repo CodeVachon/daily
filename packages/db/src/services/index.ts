@@ -1,4 +1,5 @@
 import type { Database } from "../database"
+import { createActorService } from "./actors"
 import { createOAuthClientService } from "./oauth-clients"
 import { createUserService } from "./users"
 
@@ -8,6 +9,7 @@ import { createUserService } from "./users"
  */
 export function createServices(db: Database) {
   return {
+    actors: createActorService(db),
     users: createUserService(db),
     oauthClients: createOAuthClientService(db),
   }

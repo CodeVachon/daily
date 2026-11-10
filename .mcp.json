@@ -8,8 +8,27 @@
     },
     "fallow": {
       "type": "stdio",
-      "command": "fallow-mcp",
+      "command": "node_modules/.bin/fallow-mcp",
       "args": [],
+      "env": {}
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ],
+      "env": {}
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "packages/ui/node_modules/.bin/shadcn",
+      "args": [
+        "mcp",
+        "--cwd",
+        "apps/web"
+      ],
       "env": {}
     }
   }

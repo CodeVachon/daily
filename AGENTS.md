@@ -45,3 +45,93 @@ through it are attributed to the agent rather than to the repository's git user 
 one shared record of who decided what.
 
 <!-- motte:end -->
+
+## Commit rules
+
+These are enforced by the pre-commit hook (`.githooks/pre-commit` → `scripts/check.sh`,
+installed by `bun install`). Run `bun run check` yourself before committing. **Never bypass the
+hook with `--no-verify`.** If a check fails, fix the cause; do not weaken the check.
+
+1. **Close the motte issue first.** Every change is tracked in motte (see above). Before committing,
+   move the issue to Done (`motte move <ref> Done`) once its verification passes, or
+   `motte release <ref>` if you are stopping. The hook fails while any issue is In Progress.
+2. **Tests are written and passing.** New or changed behaviour ships with Vitest tests
+   (`*.test.ts` next to the code). `bun run test` runs the whole monorepo with coverage. Keep
+   logic in `.ts` modules (services, `lib/`, pure helpers) so it can be tested; keep `.tsx`
+   components thin.
+3. **All Fallow issues are resolved.** `bun run fallow` (dead code, unused dependencies,
+   duplication, complexity and CRAP scored against real test coverage) must report no issues.
+   Fix findings: delete dead code, remove unused dependencies, test or simplify complex code.
+   Only suppress (`// fallow-ignore-next-line <rule>` or `.fallowrc.json`) generated code, with a
+   comment saying why.
+4. **Typecheck and lint are clean.** `bun run typecheck`, and `bun run lint` with zero warnings.
+
+## Use the code-intelligence MCP servers
+
+`.mcp.json` configures these; use them before falling back to grep and reading files:
+
+- **CodeGraph** (`codegraph`): explore the codebase. Find symbols, callers and callees, and the
+  impact of a change before editing. `codegraph sync` refreshes the index (`codegraph init` on a
+  fresh clone). Install: `npm i -g @colbymchenry/codegraph`.
+- **Fallow** (`fallow`): check architecture and health while you work, not just at commit time.
+  Before deleting "unused" code or dependencies, trace it with Fallow.
+- **shadcn** (`shadcn`): search and add UI components (see "UI" below).
+- **motte**: issue tracking (above).
+
+## Data access: `@workspace/db` services are the single source of truth
+
+Only services in `packages/db` may talk to the database.
+
+- The connection (`packages/db/src/client.ts`) is private. The package exports `services`
+  (`users`, `oauthClients`, ...), types, and the Better Auth storage adapter. Nothing else.
+- Need data? Add or extend a service in `packages/db/src/services/<domain>.ts`, register it in
+  `createServices`, and test it in `<domain>.test.ts` against
+  `createTestDatabase()` from `@workspace/db/testing` (in-memory PGlite with every migration).
+- ESLint blocks `drizzle-orm`, `postgres`, `drizzle-kit` and PGlite imports outside `packages/db`,
+  and blocks `@workspace/db/testing` outside test files.
+- Schema changes: edit `packages/db/src/schema/*`, then `bun run db:generate` and
+  `bun run db:migrate`.
+
+## UI: use shadcn components, don't rebuild them
+
+Build UI from shadcn components (`base-maia` style on Base UI, in `packages/ui`). Don't hand-roll
+anything shadcn already provides: buttons, cards, alerts, avatars, badges, dialogs, dropdowns,
+forms and inputs, tables, tabs, tooltips, skeletons, spinners, and so on.
+
+- **Look first.** Use the **shadcn MCP server** (`.mcp.json`) to search the registry, read
+  examples, and get the add command. `bunx shadcn docs <component>` works too.
+- **Add, don't copy.** From `apps/web`, run `bunx shadcn@latest add <component>`. Components land
+  in `packages/ui/src/components/` and are imported as `@workspace/ui/components/<name>`.
+- **Compose and extend.** Use the component's variants, `className` and composition. If you need
+  something new, build it in `packages/ui` from shadcn primitives rather than one-off markup in a
+  page. Edit a generated component only to change it for the whole app.
+- **Stories:** every shared component in `packages/ui` has a Storybook story in
+  `packages/ui/src/stories/` (use the component's real variants; light and dark are switchable).
+  `stories.test.tsx` renders every story in the test suite, so a broken story fails the commit.
+  Run `bun run storybook` (http://localhost:6006). While it runs, its MCP server at
+  http://localhost:6006/mcp lets you look up component docs and stories:
+  `claude mcp add --transport http storybook http://localhost:6006/mcp`.
+- **Icons** come from `lucide-react` (the configured icon library).
+- Plain layout (`div` with flex/grid utilities, headings, text) is fine. Interactive or styled
+  widgets are not.
+
+## Every feature ships MCP tools
+
+Claude agents work with this app's data through the MCP server at `/api/mcp`
+(`packages/mcp`). **Any feature that adds or changes user-facing functionality
+must add or update the matching MCP tools in the same change.** A feature without
+its tools is not done.
+
+- Put the feature's tools in `packages/mcp/src/tools/<feature>.ts` as a
+  `ToolModule`, and add it to `toolModules` in `packages/mcp/src/tools/index.ts`.
+- Read and write data only through `ctx.services` (see "Data access"), scoped to
+  `ctx.userId` (the verified token's user). Never accept a user id as tool input.
+- Give each tool a `description` an agent can act on, a zod `inputSchema`, an
+  `outputSchema`, and `annotations` (`readOnlyHint`, `destructiveHint`, ...).
+  Return results with `json(...)` so callers get structured content.
+- The UI and the tools share the same `@workspace/db` service; never duplicate a
+  query in a tool.
+- Test tools through `createMcpRequestHandler(services)` against
+  `createTestDatabase()` (see `packages/mcp/src/tools/system.test.ts`).
+- Verify with `bun run mcp:smoke` (dev server running). It calls every no-arg
+  tool. Extend `packages/mcp/scripts/smoke.ts` when a tool needs arguments.

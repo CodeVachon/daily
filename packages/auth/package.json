@@ -1,0 +1,30 @@
+{
+  "name": "@workspace/auth",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./next": "./src/next.ts"
+  },
+  "scripts": {
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "varlock codegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/cimd": "^1.7.18",
+    "@better-auth/mcp": "^1.7.18",
+    "@better-auth/oauth-provider": "^1.7.18",
+    "@workspace/db": "workspace:*",
+    "better-auth": "^1.7.18",
+    "varlock": "^1.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^10",
+    "typescript": "^5"
+  }
+}

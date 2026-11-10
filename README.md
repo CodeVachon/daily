@@ -19,3 +19,163 @@ To use the components in your app, import them from the `ui` package.
 ```tsx
 import { Button } from "@workspace/ui/components/button";
 ```
+
+## Storybook
+
+Shared UI components (`packages/ui`) are documented in Storybook:
+
+```bash
+bun run storybook        # http://localhost:6006 (light/dark toolbar, docs, a11y checks)
+bun run storybook:build  # static build in packages/ui/storybook-static
+```
+
+Every story is also rendered by `bun run test`. While Storybook runs, agents can query component
+docs over MCP at http://localhost:6006/mcp.
+
+## Database & auth
+
+| Package | What |
+| --- | --- |
+| `packages/db` (`@workspace/db`) | Drizzle ORM + `postgres` driver, schema in `src/schema`, migrations in `drizzle/` |
+| `packages/auth` (`@workspace/auth`) | Better Auth (GitHub only), Drizzle adapter, allowlist gate, MCP OAuth server |
+| `packages/mcp` (`@workspace/mcp`) | MCP server (tools for Claude agents) mounted at `/api/mcp` |
+
+Env is managed by [varlock](https://varlock.dev). The shared schema is the root `.env.schema`
+(committed); each app/package `@import`s what it needs and generates a typed `env.ts`.
+Real values go in the root `.env.local` (gitignored).
+
+### First-time setup
+
+1. Create the GitHub OAuth App used to sign in (see "GitHub sign-in OAuth App" below).
+2. Fill in the root `.env.local`:
+   ```bash
+   BETTER_AUTH_SECRET=   # openssl rand -base64 32
+   GITHUB_CLIENT_ID=
+   GITHUB_CLIENT_SECRET=
+   AUTH_GITHUB_ALLOWED_USERS=codevachon   # default; comma-separate to allow more
+   ```
+3. `bun run env:check`: validates everything against the schema.
+4. `bun run db:up && bun run db:migrate`: starts Postgres (docker compose) and applies migrations.
+5. `bun run dev:tailnet`: turns on `tailscale serve` and starts dev; open the tailnet URL.
+
+### GitHub sign-in OAuth App
+
+Sign-in uses a GitHub **OAuth App** (not a GitHub App). Create one per environment, because an
+OAuth App has exactly one callback URL.
+
+1. Go to GitHub → **Settings → Developer settings → OAuth Apps → New OAuth App**
+   (https://github.com/settings/applications/new). For an organization-owned app, use the org's
+   **Settings → Developer settings → OAuth Apps** instead.
+2. Fill in:
+
+   | Field | Value |
+   | --- | --- |
+   | Application name | `Daily (local)`, or `Daily` for production. Shown on GitHub's consent screen. |
+   | Homepage URL | The app's base URL, the same as `BETTER_AUTH_URL`. Locally: your tailnet URL from `scripts/tailscale.sh url`, e.g. `https://artimis.tail756ed3.ts.net`. Production: your DigitalOcean domain. |
+   | Application description | Optional. |
+   | Authorization callback URL | `<BETTER_AUTH_URL>/api/auth/callback/github`, e.g. `https://artimis.tail756ed3.ts.net/api/auth/callback/github`. Must match exactly: scheme, host, no trailing slash. |
+   | Enable Device Flow | Leave **off**. |
+
+3. Click **Register application**, then copy the **Client ID**, and **Generate a new client secret**
+   and copy it immediately (GitHub only shows it once).
+4. Put them in the root `.env.local` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then run
+   `bun run env:check`.
+
+Notes:
+
+- **No scopes to configure.** OAuth App scopes are requested when the user authorizes. Sign-in
+  asks only for `read:user` and `user:email` (to read your profile and verified primary email,
+  including a private one).
+- **Who can sign in** isn't set on GitHub: anyone can authorize the app, but only logins in
+  `AUTH_GITHUB_ALLOWED_USERS` get in. Everyone else is rejected before an account is created.
+- **The callback URL must match `BETTER_AUTH_URL`.** If the tailnet name changes (a new machine, or
+  the MagicDNS name was renamed), update both the Homepage and callback URLs on the app.
+- **Rotating the secret:** generate a new one, update `.env.local` (or the production secret), then
+  delete the old one on GitHub.
+- An "error: redirect_uri is not associated with this application" page from GitHub means the
+  callback URL above doesn't match the URL the app is running on.
+
+### Serving over Tailscale
+
+The app is served at this machine's tailnet HTTPS address via `tailscale serve` (tailnet only,
+not Funnel), which proxies `https://<machine>.<tailnet>.ts.net` to `http://127.0.0.1:3000`.
+
+- `TAILSCALE_URL` is auto-detected at load time from the running Tailscale (see `.env.schema`).
+- `BETTER_AUTH_URL` defaults to `TAILSCALE_URL`, or `http://localhost:3000` when Tailscale isn't
+  connected. Override either in `.env.local`.
+- `bun run tailnet:up` / `tailnet:down` / `tailnet:status` manage the proxy. It persists across
+  reboots until you run `tailnet:down`.
+- The tailnet host is added to Next's `allowedDevOrigins` automatically.
+
+### Gated GitHub sign-in
+
+Only GitHub logins listed in `AUTH_GITHUB_ALLOWED_USERS` can sign in. The check runs on every
+OAuth callback (sign-up and sign-in), before any user, account or session row is written. Rejected
+users land on `/sign-in?error=unable_to_get_user_info`. Removing someone from the list blocks their
+next sign-in; existing sessions last until they expire (delete their `session` rows to cut access
+immediately).
+
+### Schema changes
+
+Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migrate`
+(`db:push` / `db:studio` are also available).
+
+## MCP server (for Claude agents)
+
+Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
+`https://<machine>.<tailnet>.ts.net/api/mcp` (Streamable HTTP, `POST` only).
+
+What agents can do (everything is attributed to the agent in task history; agents can never delete):
+
+| Area | Tools |
+| --- | --- |
+| System | `ping`, `whoami` |
+| Tasks | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks` |
+| Collaboration | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
+| Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels` |
+| History | `get_activity`, `get_updates_since` |
+
+Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as
+Markdown). Tasks are referred to as `#12`; due dates are plain strings in the user's current time
+zone (`2026-11-14`, `2026-11-14T17:00`).
+
+**Auth.** The app is its own OAuth 2.1 authorization server (`@better-auth/mcp`). When an MCP
+client connects, it opens a browser to `/sign-in` (GitHub, same allowlist) and then `/consent`.
+Tokens are JWTs bound to the `/api/mcp` resource and verified against `/api/auth/jwks`. Clients
+register via Client ID Metadata Documents (MCP 2026-07-28) or Dynamic Client Registration.
+
+**Connect Claude Code:**
+
+```bash
+claude mcp add --transport http daily "$(scripts/tailscale.sh url)/api/mcp"
+```
+
+Then run `/mcp` in Claude Code and authenticate.
+
+**Connect Codex** (Codex identifies itself with a Client ID Metadata Document, so no registration
+step is needed; its changes show up as "Codex"):
+
+```bash
+codex mcp add daily --url "$(scripts/tailscale.sh url)/api/mcp"
+codex mcp login daily
+```
+
+The login opens the same GitHub sign-in and Allow screen. With `--no-browser`, open the printed
+URL yourself and paste the final `127.0.0.1` callback URL back into the terminal.
+
+**Test:** `bun run mcp:smoke` with the dev server running. It runs the full OAuth flow with a
+throwaway user and calls every tool.
+
+## Development workflow
+
+Rules for every commit are in `AGENTS.md` ("Commit rules") and enforced by a pre-commit hook that
+`bun install` sets up (`core.hooksPath=.githooks`). Run the same checks with `bun run check`:
+
+1. no motte issue left In Progress
+2. `bun run typecheck`
+3. `bun run lint` (zero warnings; blocks database imports outside `packages/db`)
+4. `bun run test` (Vitest across the monorepo, with coverage; DB tests use in-memory PGlite)
+5. `bun run fallow` (dead code, dependencies, duplication, complexity scored against coverage)
+
+Tooling: `motte` and `codegraph` (`npm i -g @colbymchenry/codegraph`) are global CLIs; Fallow is a
+dev dependency. All three are MCP servers in `.mcp.json`.

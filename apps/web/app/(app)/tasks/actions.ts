@@ -60,3 +60,19 @@ export async function ensureLabelAction(name: string) {
     return { id: label!.id, name: label!.name, color: label!.color }
   })
 }
+
+/** Drag-and-drop: put a task in a column, between two neighbours. */
+export async function moveTaskAction(
+  ref: string,
+  target: {
+    status: string
+    afterTaskId: string | null
+    beforeTaskId: string | null
+  }
+) {
+  return runAsUser(async (actor) => {
+    const task = await services.tasks.move(actor, ref, target)
+    refresh()
+    return { number: task.number, status: task.status.key }
+  })
+}

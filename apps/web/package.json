@@ -13,6 +13,8 @@
     "ui:shot": "varlock run -- bun scripts/ui-shot.ts"
   },
   "dependencies": {
+    "@dnd-kit/helpers": "^0.5.3",
+    "@dnd-kit/react": "^0.5.3",
     "@varlock/nextjs-integration": "^2.0.0",
     "@workspace/auth": "workspace:*",
     "@workspace/db": "workspace:*",

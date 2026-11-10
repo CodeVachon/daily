@@ -15,7 +15,8 @@ export default async function AppLayout({
       <AppSidebar
         user={{ name: user.name, email: user.email, image: user.image }}
       />
-      <SidebarInset>{children}</SidebarInset>
+      {/* min-w-0: let the page shrink to the window so only wide content (the board) scrolls. */}
+      <SidebarInset className="min-w-0">{children}</SidebarInset>
     </SidebarProvider>
   )
 }

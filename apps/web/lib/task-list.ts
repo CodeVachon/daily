@@ -16,6 +16,7 @@ export function toTaskRow(task: TaskSummary, now: Date, timezone: string) {
     id: task.id,
     number: task.number,
     title: task.title,
+    completion: card.completion,
     status: task.status.name,
     priority: PRIORITY_LABEL[task.priority] ?? "",
     due: card.due?.label ?? "",

@@ -138,5 +138,9 @@
 {"at":"2026-11-10T02:40:56Z","id":62,"by":"Christopher Vachon","as":"user","type":"assigned","from":null,"to":"Christopher Vachon"}
 {"at":"2026-11-10T03:12:18Z","id":51,"by":"Christopher Vachon","as":"user","type":"state","from":"Todo","to":"In Progress"}
 {"at":"2026-11-10T03:12:18Z","id":51,"by":"Christopher Vachon","as":"user","type":"assigned","from":null,"to":"Christopher Vachon"}
+{"at":"2026-11-10T03:29:00Z","id":64,"by":"Christopher Vachon","as":"user","type":"created","title":"Board and list: show a (done/total) completion summary for checklist items and subtasks","state":"Todo"}
+{"at":"2026-11-10T03:29:03Z","id":64,"by":"Christopher Vachon","as":"user","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-10T03:29:03Z","id":64,"by":"Christopher Vachon","as":"user","type":"assigned","from":null,"to":"Christopher Vachon"}
 {"at":"2026-11-10T03:31:45Z","id":63,"by":"Christopher Vachon","as":"user","type":"state","from":"Todo","to":"In Progress"}
 {"at":"2026-11-10T03:31:45Z","id":63,"by":"Christopher Vachon","as":"user","type":"assigned","from":null,"to":"Christopher Vachon"}
+{"at":"2026-11-10T03:33:32Z","id":64,"by":"Christopher Vachon","as":"user","type":"state","from":"In Progress","to":"Done"}

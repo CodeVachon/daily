@@ -98,6 +98,11 @@ async function seed(userId: string, name: string) {
       "Reconcile **October** invoices against the bank export.\n\n- [ ] Pull statements\n- [ ] Match payments",
     priority: "urgent",
   })
+  // Checklist items and a subtask, so cards and rows show "(done/total)".
+  const pull = await services.checklist.add(me, 3, "Pull statements")
+  await services.checklist.toggle(me, pull.id, true)
+  await services.checklist.add(me, 3, "Match payments")
+  await make("Email the accountant", { parentTaskId: "#3", status: "done" })
 }
 
 async function sessionCookie(userId: string) {

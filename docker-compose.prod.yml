@@ -1,0 +1,58 @@
+# Production stack on the droplet (docs/adr/0001-production-deployment.md).
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Every setting comes from one env file (default /etc/daily/daily.env, root-only,
+# mode 600): the app's variables from .env.schema plus POSTGRES_PASSWORD. Set
+# DAILY_ENV_FILE / DAILY_IMAGE / DAILY_WEB_PORT to override (e.g. local testing).
+# TLS (Caddy, #57) and backups (#53) are added on top of this.
+
+x-app: &app
+  image: ${DAILY_IMAGE:-ghcr.io/codevachon/daily:latest}
+  env_file: ${DAILY_ENV_FILE:-/etc/daily/daily.env}
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    env_file: ${DAILY_ENV_FILE:-/etc/daily/daily.env}
+    environment:
+      POSTGRES_USER: daily
+      POSTGRES_DB: daily
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Internal network only: never published to the host.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U daily -d daily"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  # One-shot: apply migrations, then exit. web waits for it on every deploy.
+  migrate:
+    <<: *app
+    command: migrate
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  web:
+    <<: *app
+    command: web
+    restart: unless-stopped
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    ports:
+      # Loopback only; Caddy (#57) is the public entry point.
+      - "127.0.0.1:${DAILY_WEB_PORT:-3000}:3000"
+
+volumes:
+  postgres-data:

@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
     "@workspace/auth",
     "@workspace/db",
     "@workspace/mcp",
+    "@workspace/integrations",
   ],
   serverExternalPackages: ["postgres"],
   allowedDevOrigins: tailnetHost ? [tailnetHost] : [],

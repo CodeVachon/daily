@@ -1,0 +1,57 @@
+import { ValidationError } from "@workspace/db/core"
+
+import type { Fetch } from "./types"
+
+/**
+ * A provider refused or couldn't be reached. A ValidationError, so the UI and
+ * MCP tools show the message instead of treating it as a bug.
+ */
+export class ProviderError extends ValidationError {
+  constructor(message: string) {
+    super(message)
+    this.name = "ProviderError"
+  }
+}
+
+async function errorDetail(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as {
+      message?: string
+      errorMessages?: string[]
+    }
+    return body.message ?? body.errorMessages?.join("; ") ?? ""
+  } catch {
+    return ""
+  }
+}
+
+/** GET JSON from a provider; every failure becomes a readable ProviderError. */
+export async function getJson<T>(
+  fetch: Fetch,
+  provider: string,
+  url: string,
+  headers: Record<string, string>
+): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(url, {
+      headers: { accept: "application/json", ...headers },
+      signal: AbortSignal.timeout(15_000),
+    })
+  } catch {
+    throw new ProviderError(`Couldn't reach ${provider}. Try again shortly.`)
+  }
+  if (response.ok) return (await response.json()) as T
+  if (response.status === 401 || response.status === 403)
+    throw new ProviderError(
+      `${provider} rejected the credentials (${response.status}). Check them, or create new ones.`
+    )
+  if (response.status === 404)
+    throw new ProviderError(
+      `${provider} returned 404 (not found). Check the address and that the account can see it.`
+    )
+  const detail = await errorDetail(response)
+  throw new ProviderError(
+    `${provider} returned ${response.status}${detail ? `: ${detail}` : ""}`
+  )
+}

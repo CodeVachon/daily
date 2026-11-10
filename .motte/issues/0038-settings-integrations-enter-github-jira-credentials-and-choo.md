@@ -1,12 +1,13 @@
 ---
 id: 38
 title: "Settings > Integrations: enter GitHub/Jira credentials and choose repositories/projects"
-state: Todo
+state: Done
 parent: 10
+assignee: Christopher Vachon
 labels: [web, integrations]
 blockedBy: [26, 37]
 created: 2026-11-10T00:35:07Z
-updated: 2026-11-10T13:42:50Z
+updated: 2026-11-10T13:53:50Z
 ---
 
 ## Description
@@ -29,3 +30,7 @@ Per #5 (answer 3): GitHub OAuth App scopes are requested at authorize time, not 
 ### 2026-11-10T00:52:04Z — claude-code (agent)
 
 Chris (2026-11-09): GitHub/Atlassian/Linear app settings and scope decisions are deferred until this story is picked up ("cross that bridge when we come to it"). Decide then, and document each provider's app settings in the README like the sign-in app.
+
+### 2026-11-10T13:53:50Z — claude-code (agent)
+
+Done. New packages/integrations (provider registry: GitHub REST /user + /user/repos paged to 1,000; Jira Cloud v3 /myself + /project/search paged, *.atlassian.net only to avoid SSRF), createIntegrations({ services, fetch }) shared by web actions and MCP (McpContext.integrations; createMcpRequestHandler(services, { version, fetch })). Settings > Integrations tab: card per provider, credentials form verified before storing, Replace (prefills non-secret site/email) / Disconnect (AlertDialog, user-only), resource picker in Suspense with filter + checkboxes + Save; provider errors render as an Alert. MCP: list_integrations, list_integration_resources, set_integration_scope (replace; unknown keys are an error and nothing changes). Verified in a real browser with a throwaway user + the gh CLI token: connected as CodeVachon, 214 repos listed, selection saved via the UI; a fake Jira site shows the 404 alert. Linear dropped from this round (Chris asked for GitHub + Jira; adding a provider is one file in packages/integrations plus the enum in db/integration-inputs.ts).

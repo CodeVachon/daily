@@ -82,6 +82,7 @@ describe("contextFromAuthInfo", () => {
       },
       timezone: "America/Vancouver",
       services: t.services,
+      integrations: expect.objectContaining({ connect: expect.any(Function) }),
     })
   })
 

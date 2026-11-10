@@ -3,6 +3,7 @@
  * as the "Claude Code" agent acting for one user. Used by tool tests.
  */
 import { createTestDatabase, type TestDatabase } from "@workspace/db/testing"
+import type { Fetch } from "@workspace/integrations"
 
 import { authInfoFromClaims } from "./context"
 import { createMcpRequestHandler } from "./index"
@@ -23,6 +24,10 @@ export async function createMcpHarness({
   userName = "Chris",
   timezone = "America/Toronto",
   version = undefined as string | undefined,
+  /** Answers integration calls (GitHub, Jira); the network is never used. */
+  fetch = (async () => {
+    throw new Error("no network in tests")
+  }) as Fetch,
 } = {}): Promise<McpHarness> {
   const t = await createTestDatabase()
   const user = await t.seed.user({ name: userName })
@@ -33,7 +38,7 @@ export async function createMcpHarness({
     redirectUris: ["http://127.0.0.1:1/cb"],
   })
   await t.services.settings.reportTimezone(user.id, timezone)
-  const handler = createMcpRequestHandler(t.services, version)
+  const handler = createMcpRequestHandler(t.services, { version, fetch })
 
   async function rpc(method: string, params: object = {}, sub = user.id) {
     const response = await handler.fetch(

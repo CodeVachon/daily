@@ -120,6 +120,25 @@ immediately).
 Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migrate`
 (`db:push` / `db:studio` are also available).
 
+## Integrations (GitHub, Jira)
+
+Settings → Integrations connects external systems with your own credentials and lets you
+choose which repositories / projects Daily may look at. Nothing outside that selection is ever
+queried. Credentials are checked with the provider before saving, stored encrypted
+(AES-256-GCM, key `INTEGRATIONS_ENCRYPTION_KEY`; generate one with `openssl rand -base64 32`), and
+never shown again or exposed to agents. Disconnecting deletes them but keeps the selection.
+
+- **GitHub:** a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
+  with read-only **Issues**, **Pull requests** and **Metadata** on the repositories you want
+  (for organisation repos, choose the organisation as the resource owner; it may need approval).
+  A classic token with `repo` also works but sees every repository.
+- **Jira Cloud:** your site (`acme.atlassian.net`), the email you sign in with, and an
+  [Atlassian API token](https://id.atlassian.com/manage-profile/security/api-tokens). Only
+  `*.atlassian.net` sites are accepted.
+
+Changing `INTEGRATIONS_ENCRYPTION_KEY` makes stored credentials unreadable; reconnect each
+integration afterwards.
+
 ## MCP server (for Claude agents)
 
 Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
@@ -134,6 +153,8 @@ What agents can do (everything is attributed to the agent in task history; agent
 | Collaboration     | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
 | Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels`                                                     |
 | History           | `get_activity`, `get_updates_since`                                                                                                                                       |
+| Settings          | `get_appearance`, `update_appearance`                                                                                                                                     |
+| Integrations      | `list_integrations`, `list_integration_resources`, `set_integration_scope` (never credentials: connecting and disconnecting is the user's)                                |
 
 Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as
 Markdown). Tasks are referred to as `#12`; due dates are plain strings in the user's current time

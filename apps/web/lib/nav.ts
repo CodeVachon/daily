@@ -24,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const SETTINGS_SECTIONS = [
   { title: "Appearance", href: "/settings" },
   { title: "Labels", href: "/settings/labels" },
+  { title: "Integrations", href: "/settings/integrations" },
   { title: "About", href: "/settings/about" },
 ]
 

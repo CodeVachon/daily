@@ -140,6 +140,17 @@ claude mcp add --transport http daily "$(scripts/tailscale.sh url)/api/mcp"
 
 Then run `/mcp` in Claude Code and authenticate.
 
+**Connect Codex** (Codex identifies itself with a Client ID Metadata Document, so no registration
+step is needed; its changes show up as "Codex"):
+
+```bash
+codex mcp add daily --url "$(scripts/tailscale.sh url)/api/mcp"
+codex mcp login daily
+```
+
+The login opens the same GitHub sign-in and Allow screen. With `--no-browser`, open the printed
+URL yourself and paste the final `127.0.0.1` callback URL back into the terminal.
+
 **Test:** `bun run mcp:smoke` with the dev server running. It runs the full OAuth flow with a
 throwaway user and calls every tool.
 

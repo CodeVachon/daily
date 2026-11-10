@@ -77,6 +77,11 @@ export function createTaskService(db: Database) {
     return row
   }
 
+  /** The id of a live task the user owns (by id, number or "#n"). */
+  async function resolveId(userId: string, ref: TaskRef): Promise<string> {
+    return (await load(userId, ref)).id
+  }
+
   async function statuses(): Promise<TaskStatusInfo[]> {
     return db.select().from(taskStatus).orderBy(asc(taskStatus.position))
   }
@@ -328,6 +333,7 @@ export function createTaskService(db: Database) {
   return {
     statuses,
     resolveStatus,
+    resolveId,
     get,
     create,
     update,

@@ -43,6 +43,13 @@
       "when": 1794273055144,
       "tag": "0005_lonely_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794273424850,
+      "tag": "0006_exotic_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

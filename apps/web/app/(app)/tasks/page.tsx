@@ -12,6 +12,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import Link from "next/link"
 
 import { ColorBadge } from "@/components/color-badge"
+import { CompletionSummary } from "@/components/completion-summary"
 import { FilterBar } from "@/components/filter-bar"
 import { PageHeader } from "@/components/page-header"
 import { NewTaskDialog } from "@/components/task/new-task-dialog"
@@ -45,10 +46,17 @@ function TaskRow({ row, href }: { row: TaskRowView; href: string }) {
   return (
     <TableRow>
       <TableCell className="text-muted-foreground">#{row.number}</TableCell>
-      <TableCell className="max-w-md truncate">
-        <Link href={href} scroll={false} className="hover:underline">
-          {row.title}
-        </Link>
+      <TableCell className="max-w-md">
+        <div className="flex items-center gap-1.5">
+          <Link
+            href={href}
+            scroll={false}
+            className="truncate hover:underline"
+          >
+            {row.title}
+          </Link>
+          <CompletionSummary completion={row.completion} />
+        </div>
       </TableCell>
       <TableCell>
         <Badge variant="outline">{row.status}</Badge>

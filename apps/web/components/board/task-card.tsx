@@ -16,13 +16,12 @@ import {
   ArrowUpIcon,
   BanIcon,
   CalendarIcon,
-  ListChecksIcon,
-  ListTreeIcon,
   MinusIcon,
 } from "lucide-react"
 import Link from "next/link"
 
 import { ColorBadge } from "@/components/color-badge"
+import { CompletionSummary } from "@/components/completion-summary"
 import type { BoardCard } from "@/lib/board"
 import { taskHref } from "@/lib/task-form"
 
@@ -55,22 +54,6 @@ function DueBadge({ due }: { due: NonNullable<BoardCard["due"]> }) {
   )
 }
 
-function Progress({
-  icon,
-  value,
-}: {
-  icon: React.ReactNode
-  value: BoardCard["checklist"]
-}) {
-  if (!value) return null
-  return (
-    <Badge variant="ghost">
-      {icon}
-      {value.done}/{value.total}
-    </Badge>
-  )
-}
-
 function CardBadges({ card }: { card: BoardCard }) {
   return (
     <CardContent className="flex flex-wrap gap-1 empty:hidden">
@@ -85,8 +68,6 @@ function CardBadges({ card }: { card: BoardCard }) {
       {card.labels.map((label) => (
         <ColorBadge key={label.name} chip={label} />
       ))}
-      <Progress icon={<ListChecksIcon />} value={card.checklist} />
-      <Progress icon={<ListTreeIcon />} value={card.subtasks} />
     </CardContent>
   )
 }
@@ -129,6 +110,7 @@ export function TaskCard({
             <span className="text-muted-foreground">#{card.number}</span>{" "}
             {card.title}
           </Link>
+          <CompletionSummary completion={card.completion} />
         </CardTitle>
       </CardHeader>
       <CardBadges card={card} />

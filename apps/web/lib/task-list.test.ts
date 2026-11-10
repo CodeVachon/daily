@@ -27,6 +27,7 @@ describe("toTaskRow", () => {
       id: "t1",
       number: 7,
       title: "Ship",
+      completion: null,
       status: "Todo",
       priority: "High",
       due: "Thu, Nov 12",
@@ -35,6 +36,21 @@ describe("toTaskRow", () => {
       labels: [{ name: "work", color: "green" }],
       updated: "1 hour ago",
     })
+  })
+
+  it("summarises checklist items and subtasks done", () => {
+    const row = toTaskRow(
+      {
+        ...base,
+        progress: {
+          checklist: { done: 2, total: 2 },
+          subtasks: { done: 0, total: 1 },
+        },
+      } as unknown as TaskSummary,
+      now,
+      "UTC"
+    )
+    expect(row.completion?.label).toBe("(2/3)")
   })
 
   it("leaves empty cells blank", () => {

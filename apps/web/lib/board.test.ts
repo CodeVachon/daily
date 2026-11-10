@@ -1,7 +1,13 @@
 import type { TaskSummary } from "@workspace/db/core"
 import { describe, expect, it } from "vitest"
 
-import { boardItems, dropTarget, groupByStatus, toBoardCard } from "./board"
+import {
+  boardItems,
+  completionSummary,
+  dropTarget,
+  groupByStatus,
+  toBoardCard,
+} from "./board"
 
 const statuses = [
   { key: "todo", name: "Todo", category: "open" },
@@ -76,8 +82,7 @@ describe("toBoardCard", () => {
       project: { name: "Appello", color: "blue" },
       labels: [{ name: "work", color: "green" }],
       openBlockers: 1,
-      checklist: { done: 1, total: 3 },
-      subtasks: null,
+      completion: { done: 1, total: 3, label: "(1/3)" },
     })
     const today = toBoardCard(
       {
@@ -105,6 +110,36 @@ describe("toBoardCard", () => {
       toBoardCard({ ...base, due: null } as unknown as TaskSummary, now, "UTC")
         .due
     ).toBeNull()
+  })
+})
+
+describe("completionSummary", () => {
+  const progress = (checklist: number[], subtasks: number[]) => ({
+    checklist: { done: checklist[0]!, total: checklist[1]! },
+    subtasks: { done: subtasks[0]!, total: subtasks[1]! },
+  })
+
+  it("is null when there are no checklist items or subtasks", () => {
+    expect(completionSummary(progress([0, 0], [0, 0]))).toBeNull()
+  })
+
+  it("combines checklist items and subtasks", () => {
+    expect(completionSummary(progress([1, 2], [1, 1]))).toEqual({
+      done: 2,
+      total: 3,
+      label: "(2/3)",
+      detail: "1 of 2 checklist items, 1 of 1 subtask done",
+    })
+  })
+
+  it("describes only what the task has", () => {
+    expect(completionSummary(progress([1, 1], [0, 0]))?.detail).toBe(
+      "1 of 1 checklist item done"
+    )
+    expect(completionSummary(progress([0, 0], [0, 2]))).toMatchObject({
+      label: "(0/2)",
+      detail: "0 of 2 subtasks done",
+    })
   })
 })
 

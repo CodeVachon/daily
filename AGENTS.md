@@ -105,6 +105,12 @@ forms and inputs, tables, tabs, tooltips, skeletons, spinners, and so on.
 - **Compose and extend.** Use the component's variants, `className` and composition. If you need
   something new, build it in `packages/ui` from shadcn primitives rather than one-off markup in a
   page. Edit a generated component only to change it for the whole app.
+- **Stories:** every shared component in `packages/ui` has a Storybook story in
+  `packages/ui/src/stories/` (use the component's real variants; light and dark are switchable).
+  `stories.test.tsx` renders every story in the test suite, so a broken story fails the commit.
+  Run `bun run storybook` (http://localhost:6006). While it runs, its MCP server at
+  http://localhost:6006/mcp lets you look up component docs and stories:
+  `claude mcp add --transport http storybook http://localhost:6006/mcp`.
 - **Icons** come from `lucide-react` (the configured icon library).
 - Plain layout (`div` with flex/grid utilities, headings, text) is fine. Interactive or styled
   widgets are not.

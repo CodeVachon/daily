@@ -20,6 +20,18 @@ To use the components in your app, import them from the `ui` package.
 import { Button } from "@workspace/ui/components/button";
 ```
 
+## Storybook
+
+Shared UI components (`packages/ui`) are documented in Storybook:
+
+```bash
+bun run storybook        # http://localhost:6006 (light/dark toolbar, docs, a11y checks)
+bun run storybook:build  # static build in packages/ui/storybook-static
+```
+
+Every story is also rendered by `bun run test`. While Storybook runs, agents can query component
+docs over MCP at http://localhost:6006/mcp.
+
 ## Database & auth
 
 | Package | What |

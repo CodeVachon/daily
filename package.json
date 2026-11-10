@@ -25,7 +25,9 @@
     "check": "scripts/check.sh",
     "fallow": "fallow --coverage coverage/coverage-final.json",
     "prepare": "git config core.hooksPath .githooks || true",
-    "ui:shot": "bun run --cwd apps/web ui:shot"
+    "ui:shot": "bun run --cwd apps/web ui:shot",
+    "storybook": "bun run --cwd packages/ui storybook",
+    "storybook:build": "bun run --cwd packages/ui storybook:build"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.1.0",

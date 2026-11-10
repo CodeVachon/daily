@@ -13,7 +13,7 @@ import { homedir } from "node:os"
 import { join } from "node:path"
 
 import { auth } from "@workspace/auth"
-import { services, userActor } from "@workspace/db"
+import { agentActor, services, userActor } from "@workspace/db"
 import { chromium, type Page } from "playwright"
 
 const [path = "/board", out = "/tmp/daily.png", ...flags] =
@@ -77,6 +77,13 @@ async function seed(userId: string, name: string) {
   })
   await make("Wait on vendor reply", { status: "blocked" })
   await make("Ship release 1.4", { status: "done" })
+  // An agent's change, so history shows agent attribution.
+  const claude = agentActor(userId, "ui-shot-agent", "Claude Code")
+  await services.tasks.update(claude, 3, {
+    description:
+      "Reconcile **October** invoices against the bank export.\n\n- [ ] Pull statements\n- [ ] Match payments",
+    priority: "urgent",
+  })
 }
 
 async function sessionCookie(userId: string) {
@@ -133,16 +140,14 @@ try {
   page.on("console", (msg) => {
     if (msg.type() === "error") console.error(`[console] ${msg.text()}`)
   })
-  await page
-    .context()
-    .addCookies([
-      {
-        ...(await sessionCookie(user.id)),
-        url: base,
-        httpOnly: true,
-        secure: base.startsWith("https"),
-      },
-    ])
+  await page.context().addCookies([
+    {
+      ...(await sessionCookie(user.id)),
+      url: base,
+      httpOnly: true,
+      secure: base.startsWith("https"),
+    },
+  ])
   const response = await page.goto(new URL(path, base).href, {
     waitUntil: "networkidle",
   })

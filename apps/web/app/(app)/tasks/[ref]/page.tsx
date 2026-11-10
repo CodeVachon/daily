@@ -3,7 +3,9 @@ import { NotFoundError } from "@workspace/db/core"
 import { notFound } from "next/navigation"
 
 import { PageHeader } from "@/components/page-header"
+import { ActivityTimeline } from "@/components/task/activity-timeline"
 import { TaskEditor } from "@/components/task/task-editor"
+import { toTimeline } from "@/lib/activity"
 import { requireSession } from "@/lib/session"
 import { loadTaskOptions } from "@/lib/task-options"
 
@@ -35,6 +37,16 @@ export default async function TaskPage({
     loadTask(user.id, ref),
     loadTaskOptions(user.id),
   ])
+  const timeline = toTimeline(
+    await services.activity.forTask(user.id, task.id, 50),
+    {
+      now: new Date(),
+      timezone: options.timezone,
+      statusNames: Object.fromEntries(
+        options.statuses.map((s) => [s.key, s.name])
+      ),
+    }
+  )
 
   return (
     <>
@@ -49,6 +61,9 @@ export default async function TaskPage({
           task={task}
           options={options}
         />
+        <div className="mt-10 max-w-2xl">
+          <ActivityTimeline entries={timeline} />
+        </div>
       </div>
     </>
   )

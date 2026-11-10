@@ -4,10 +4,13 @@ import {
   type IntegrationConnection,
   type IntegrationProvider,
   type Services,
+  type SyncResult,
+  type TaskLink,
 } from "@workspace/db/core"
 import { z } from "zod"
 
 import { github } from "./github"
+import { ProviderError } from "./http"
 import { jira } from "./jira"
 import type { AvailableResource, Fetch, Provider, ProviderInfo } from "./types"
 
@@ -52,7 +55,7 @@ export function pickResources(
 }
 
 export interface IntegrationsOptions {
-  services: Pick<Services, "integrations">
+  services: Pick<Services, "integrations" | "links">
   fetch?: Fetch
 }
 
@@ -77,7 +80,57 @@ export function createIntegrations({
     return p.listResources(creds, fetch)
   }
 
+  /**
+   * Ask the provider about one link. Never throws for the provider's sake:
+   * no connection, out of scope and provider errors become `{ ok: false }`.
+   */
+  async function fetchState(
+    userId: string,
+    link: TaskLink
+  ): Promise<SyncResult> {
+    const p = PROVIDERS[link.provider]
+    const connection = await store.get(userId, link.provider)
+    if (!connection)
+      return {
+        ok: false,
+        error: `Connect ${p.name} in Settings > Integrations to sync this`,
+      }
+    const scope = p.scopeOf(link)
+    const inScope = connection.resources.some(
+      (r) => r.key.toLowerCase() === scope.toLowerCase()
+    )
+    if (!inScope)
+      return {
+        ok: false,
+        error: `${scope} isn't selected in Settings > Integrations`,
+      }
+    try {
+      const creds = p.credentials.parse(
+        await store.credentials(userId, link.provider)
+      )
+      return { ok: true, state: await p.fetchItem(creds, link, fetch) }
+    } catch (error) {
+      if (error instanceof ProviderError)
+        return { ok: false, error: error.message }
+      throw error
+    }
+  }
+
   return {
+    /**
+     * Fetch a link's current state now and record it (title, state; later
+     * changes go in the task's history). Returns the updated link.
+     */
+    async refreshLink(userId: string, linkId: string): Promise<TaskLink> {
+      const link = await services.links.get(userId, linkId)
+      await services.links.recordSync(
+        userId,
+        linkId,
+        await fetchState(userId, link)
+      )
+      return services.links.get(userId, linkId)
+    },
+
     /** Every provider the user can connect, in display order. */
     providers: (): ProviderInfo[] =>
       INTEGRATION_PROVIDERS.map((id) => info(PROVIDERS[id])),

@@ -1,8 +1,9 @@
 // Jira Cloud REST v3: site + email + API token, scoped to the projects chosen.
+import type { RemoteState } from "@workspace/db/core"
 import { z } from "zod"
 
-import { getJson } from "./http"
-import type { Fetch, Provider } from "./types"
+import { getJson, ProviderError } from "./http"
+import type { Fetch, LinkRef, Provider } from "./types"
 
 const PAGE_SIZE = 50
 const MAX_PAGES = 20
@@ -52,6 +53,28 @@ const get = <T>(fetch: Fetch, creds: JiraCredentials, path: string) =>
   getJson<T>(fetch, "Jira", `${creds.site}/rest/api/3${path}`, {
     authorization: `Basic ${Buffer.from(`${creds.email}:${creds.apiToken}`).toString("base64")}`,
   })
+
+interface JiraIssue {
+  fields: {
+    summary: string
+    status: { name: string; statusCategory: { key: string } }
+    assignee?: { displayName: string } | null
+    updated?: string
+  }
+}
+
+/** Jira's status categories: "new" and "indeterminate" are still open. */
+export function jiraState({ fields }: JiraIssue): RemoteState {
+  return {
+    kind: "issue",
+    title: fields.summary,
+    state: fields.status.name,
+    stateCategory:
+      fields.status.statusCategory.key === "done" ? "done" : "open",
+    assignee: fields.assignee?.displayName ?? null,
+    remoteUpdatedAt: fields.updated ? new Date(fields.updated) : null,
+  }
+}
 
 export const jira: Provider<JiraCredentials> = {
   id: "jira",
@@ -115,5 +138,21 @@ export const jira: Provider<JiraCredentials> = {
       description: p.description ?? null,
       private: false,
     }))
+  },
+
+  scopeOf: (link: LinkRef) => link.key.slice(0, link.key.lastIndexOf("-")),
+
+  async fetchItem(creds, link, fetch) {
+    if (new URL(link.url).origin !== creds.site)
+      throw new ProviderError(
+        `${link.key} is on ${new URL(link.url).host}, not the connected site ${new URL(creds.site).host}`
+      )
+    return jiraState(
+      await get<JiraIssue>(
+        fetch,
+        creds,
+        `/issue/${encodeURIComponent(link.key)}?fields=summary,status,assignee,updated`
+      )
+    )
   },
 }

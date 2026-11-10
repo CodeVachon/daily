@@ -81,6 +81,11 @@ export function createLinkService(
   }
 
   return {
+    /** One link. */
+    async get(userId: string, linkId: string): Promise<TaskLink> {
+      return toLink(await load(userId, linkId))
+    },
+
     /** A task's links, oldest first. */
     async list(userId: string, taskRef: TaskRef): Promise<TaskLink[]> {
       const taskId = await tasks.resolveId(userId, taskRef)

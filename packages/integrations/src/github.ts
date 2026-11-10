@@ -1,8 +1,9 @@
 // GitHub REST: a personal access token, scoped to the repositories chosen.
+import type { RemoteState } from "@workspace/db/core"
 import { z } from "zod"
 
 import { getJson } from "./http"
-import type { AvailableResource, Fetch, Provider } from "./types"
+import type { AvailableResource, Fetch, LinkRef, Provider } from "./types"
 
 const API = "https://api.github.com"
 const PAGE_SIZE = 100
@@ -37,6 +38,41 @@ const toResource = (repo: GitHubRepo): AvailableResource => ({
   description: repo.description,
   private: repo.private,
 })
+
+interface GitHubIssue {
+  title: string
+  state: "open" | "closed"
+  state_reason?: string | null
+  assignee?: { login: string } | null
+  updated_at: string
+  pull_request?: { merged_at: string | null } | null
+  draft?: boolean
+}
+
+/** "owner/repo#12" → ["owner/repo", "12"]. */
+function parts(key: string): [string, string] {
+  const at = key.lastIndexOf("#")
+  return [key.slice(0, at), key.slice(at + 1)]
+}
+
+/** Normalize an issue or PR (the issues API returns both). */
+export function githubState(item: GitHubIssue): RemoteState {
+  const isPr = Boolean(item.pull_request)
+  let state: string = item.state
+  let category: RemoteState["stateCategory"] = "open"
+  if (isPr && item.pull_request?.merged_at) state = category = "merged"
+  else if (item.state === "closed")
+    category = !isPr && item.state_reason === "completed" ? "done" : "closed"
+  else if (item.draft) state = category = "draft"
+  return {
+    kind: isPr ? "pr" : "issue",
+    title: item.title,
+    state,
+    stateCategory: category,
+    assignee: item.assignee?.login ?? null,
+    remoteUpdatedAt: new Date(item.updated_at),
+  }
+}
 
 export const github: Provider<GitHubCredentials> = {
   id: "github",
@@ -75,5 +111,14 @@ export const github: Provider<GitHubCredentials> = {
       if (batch.length < PAGE_SIZE) break
     }
     return repos.map(toResource)
+  },
+
+  scopeOf: (link: LinkRef) => parts(link.key)[0],
+
+  async fetchItem(creds, link, fetch) {
+    const [repo, number] = parts(link.key)
+    return githubState(
+      await get<GitHubIssue>(fetch, creds, `/repos/${repo}/issues/${number}`)
+    )
   },
 }

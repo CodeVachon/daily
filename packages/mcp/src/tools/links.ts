@@ -45,26 +45,55 @@ const ref = z
 /** Links from tasks to GitHub issues/PRs and Jira issues. */
 export const linkTools: ToolModule = (server, ctx) => {
   const { links } = ctx.services
+  const { integrations } = ctx
 
   server.registerTool(
     "link_external",
     {
       title: "Link external item",
       description:
-        "Link a GitHub issue/PR or Jira issue to a task, e.g. the PR that implements it. Linking the same item again returns the existing link. Title and state fill in when the item is synced. Only the user can remove links.",
+        "Link a GitHub issue/PR or Jira issue to a task, e.g. the PR that implements it, and fetch its title and state. Linking the same item again returns the existing link. sync_error says why the state couldn't be fetched (e.g. the repository isn't selected in Settings > Integrations). Only the user can remove links.",
       inputSchema: z.object({ task: taskRef, ref }),
       outputSchema: z.object({ link: linkOutput }),
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: true,
-        openWorldHint: false,
+        openWorldHint: true,
       },
     },
     async ({ task, ref }) =>
-      safely(async () =>
-        json({ link: toOutput(await links.add(ctx.actor, task, ref)) })
-      )
+      safely(async () => {
+        const link = await links.add(ctx.actor, task, ref)
+        return json({
+          link: toOutput(await integrations.refreshLink(ctx.userId, link.id)),
+        })
+      })
+  )
+
+  server.registerTool(
+    "refresh_links",
+    {
+      title: "Refresh links",
+      description:
+        "Fetch the current title and state of every link on a task from GitHub/Jira now. Changes since the last sync are recorded in the task's history as the sync system. Only repositories/projects selected in Settings > Integrations are asked.",
+      inputSchema: z.object({ task: taskRef }),
+      outputSchema: z.object({ links: z.array(linkOutput) }),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async ({ task }) =>
+      safely(async () => {
+        const current = await links.list(ctx.userId, task)
+        const refreshed = await Promise.all(
+          current.map((l) => integrations.refreshLink(ctx.userId, l.id))
+        )
+        return json({ links: refreshed.map(toOutput) })
+      })
   )
 
   server.registerTool(

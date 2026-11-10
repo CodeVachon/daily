@@ -1,6 +1,8 @@
 import type {
   IntegrationProvider,
   IntegrationResource,
+  LinkKind,
+  RemoteState,
 } from "@workspace/db/core"
 import type { z } from "zod"
 
@@ -45,4 +47,15 @@ export interface Provider<C = unknown> extends ProviderInfo {
   verify(credentials: C, fetch: Fetch): Promise<Verified>
   /** Everything the credentials can see, for the user to choose from. */
   listResources(credentials: C, fetch: Fetch): Promise<AvailableResource[]>
+  /** The scope key a link falls under ("owner/repo", "PROJ"). */
+  scopeOf(link: LinkRef): string
+  /** The item's current state. */
+  fetchItem(credentials: C, link: LinkRef, fetch: Fetch): Promise<RemoteState>
+}
+
+/** What a provider needs to know about a link to fetch it. */
+export interface LinkRef {
+  kind: LinkKind
+  key: string
+  url: string
 }

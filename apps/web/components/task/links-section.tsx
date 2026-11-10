@@ -11,11 +11,16 @@ import {
   CircleAlertIcon,
   CircleDotIcon,
   GitPullRequestIcon,
+  RefreshCwIcon,
   TicketIcon,
   XIcon,
 } from "lucide-react"
 
-import { addLinkAction, removeLinkAction } from "@/app/(app)/tasks/link-actions"
+import {
+  addLinkAction,
+  refreshLinksAction,
+  removeLinkAction,
+} from "@/app/(app)/tasks/link-actions"
 import type { LinkView } from "@/lib/links"
 
 import { AddInput } from "./add-input"
@@ -97,7 +102,23 @@ export function LinksSection({
 }) {
   const { pending, run } = useAction()
   return (
-    <Section title="Links" aside={links.length || undefined}>
+    <Section
+      title="Links"
+      aside={
+        links.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Refresh links"
+            title="Refresh titles and states"
+            disabled={pending}
+            onClick={() => run(() => refreshLinksAction(taskId))}
+          >
+            <RefreshCwIcon className={pending ? "animate-spin" : undefined} />
+          </Button>
+        )
+      }
+    >
       <ul className="flex flex-col gap-1.5">
         {links.map((link) => (
           <LinkRow

@@ -1,12 +1,12 @@
 /**
  * Screenshot an app page as a throwaway signed-in user (dev only).
  *
- *   bun run ui:shot /board /tmp/board.png [--dark] [--width=1280]
+ *   bun run ui:shot /board /tmp/board.png [--dark] [--width=1280] [--click=Label]
  *
  * Needs the dev server running. Creates a temporary user with a few sample
  * tasks, mints a session cookie for it (DB access + BETTER_AUTH_SECRET, like
  * mcp:smoke), screenshots the page in headless Chromium, then deletes the
- * user and everything it owns.
+ * user and everything it owns. Browser errors are printed.
  */
 import { readdirSync } from "node:fs"
 import { homedir } from "node:os"
@@ -14,14 +14,16 @@ import { join } from "node:path"
 
 import { auth } from "@workspace/auth"
 import { services, userActor } from "@workspace/db"
-import { chromium } from "playwright"
+import { chromium, type Page } from "playwright"
 
 const [path = "/board", out = "/tmp/daily.png", ...flags] =
   process.argv.slice(2)
+const flag = (name: string) =>
+  flags.find((f) => f.startsWith(`--${name}=`))?.slice(name.length + 3)
 const dark = flags.includes("--dark")
-const width = Number(
-  flags.find((f) => f.startsWith("--width="))?.split("=")[1] ?? 1280
-)
+const width = Number(flag("width") ?? 1280)
+/** Accessible name of a button to click first (e.g. to open a dialog). */
+const click = flag("click")
 
 /** Newest cached Playwright headless shell, unless PLAYWRIGHT_CHROMIUM_PATH is set. */
 function chromiumPath(): string | undefined {
@@ -77,19 +79,9 @@ async function seed(userId: string, name: string) {
   await make("Ship release 1.4", { status: "done" })
 }
 
-const ctx = await auth.$context
-const base = new URL(ctx.baseURL).origin
-const user = await ctx.internalAdapter.createUser(
-  {
-    name: "Screenshot User",
-    email: `ui-shot-${Date.now()}@example.invalid`,
-    emailVerified: true,
-  },
-  { method: "admin" }
-)
-try {
-  await seed(user.id, user.name)
-  const session = await ctx.internalAdapter.createSession(user.id)
+async function sessionCookie(userId: string) {
+  const ctx = await auth.$context
+  const session = await ctx.internalAdapter.createSession(userId)
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(ctx.secret),
@@ -104,24 +96,57 @@ try {
       new TextEncoder().encode(session.token)
     )
   ).toString("base64")
+  return {
+    name: ctx.authCookies.sessionToken.name,
+    value: encodeURIComponent(`${session.token}.${sig}`),
+  }
+}
 
+async function clickButton(page: Page, name: string) {
+  // Dev builds can report network idle before React has hydrated.
+  await page.waitForTimeout(1500)
+  await page.getByRole("button", { name }).first().click()
+  await page
+    .getByRole("dialog")
+    .waitFor({ timeout: 3000 })
+    .catch(() => page.waitForTimeout(500))
+}
+
+const ctx = await auth.$context
+const base = new URL(ctx.baseURL).origin
+const user = await ctx.internalAdapter.createUser(
+  {
+    name: "Screenshot User",
+    email: `ui-shot-${Date.now()}@example.invalid`,
+    emailVerified: true,
+  },
+  { method: "admin" }
+)
+try {
+  await seed(user.id, user.name)
   const browser = await chromium.launch({ executablePath: chromiumPath() })
   const page = await browser.newPage({
     viewport: { width, height: 800 },
     colorScheme: dark ? "dark" : "light",
   })
-  await page.context().addCookies([
-    {
-      name: ctx.authCookies.sessionToken.name,
-      value: encodeURIComponent(`${session.token}.${sig}`),
-      url: base,
-      httpOnly: true,
-      secure: base.startsWith("https"),
-    },
-  ])
+  page.on("pageerror", (error) => console.error(`[pageerror] ${error.message}`))
+  page.on("console", (msg) => {
+    if (msg.type() === "error") console.error(`[console] ${msg.text()}`)
+  })
+  await page
+    .context()
+    .addCookies([
+      {
+        ...(await sessionCookie(user.id)),
+        url: base,
+        httpOnly: true,
+        secure: base.startsWith("https"),
+      },
+    ])
   const response = await page.goto(new URL(path, base).href, {
     waitUntil: "networkidle",
   })
+  if (click) await clickButton(page, click)
   await page.screenshot({ path: out, fullPage: true })
   console.log(`${response?.status()} ${page.url()} -> ${out}`)
   await browser.close()

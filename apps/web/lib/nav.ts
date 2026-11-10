@@ -1,4 +1,10 @@
-import { KanbanSquareIcon, ListIcon, type LucideIcon } from "lucide-react"
+import {
+  FolderIcon,
+  KanbanSquareIcon,
+  ListIcon,
+  TagIcon,
+  type LucideIcon,
+} from "lucide-react"
 
 export interface NavItem {
   title: string
@@ -10,6 +16,8 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { title: "Board", href: "/board", icon: KanbanSquareIcon },
   { title: "Tasks", href: "/tasks", icon: ListIcon },
+  { title: "Projects", href: "/projects", icon: FolderIcon },
+  { title: "Labels", href: "/labels", icon: TagIcon },
 ]
 
 /** Whether a nav item is the current page (or a page under it). */

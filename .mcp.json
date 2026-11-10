@@ -2,7 +2,9 @@
   "mcpServers": {
     "motte": {
       "command": "motte",
-      "args": ["mcp"]
+      "args": [
+        "mcp"
+      ]
     },
     "fallow": {
       "type": "stdio",
@@ -13,7 +15,20 @@
     "codegraph": {
       "type": "stdio",
       "command": "codegraph",
-      "args": ["serve", "--mcp"],
+      "args": [
+        "serve",
+        "--mcp"
+      ],
+      "env": {}
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "packages/ui/node_modules/.bin/shadcn",
+      "args": [
+        "mcp",
+        "--cwd",
+        "apps/web"
+      ],
       "env": {}
     }
   }

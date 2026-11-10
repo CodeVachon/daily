@@ -75,6 +75,7 @@ hook with `--no-verify`.** If a check fails, fix the cause; do not weaken the ch
   fresh clone). Install: `npm i -g @colbymchenry/codegraph`.
 - **Fallow** (`fallow`): check architecture and health while you work, not just at commit time.
   Before deleting "unused" code or dependencies, trace it with Fallow.
+- **shadcn** (`shadcn`): search and add UI components (see "UI" below).
 - **motte**: issue tracking (above).
 
 ## Data access: `@workspace/db` services are the single source of truth
@@ -90,6 +91,23 @@ Only services in `packages/db` may talk to the database.
   and blocks `@workspace/db/testing` outside test files.
 - Schema changes: edit `packages/db/src/schema/*`, then `bun run db:generate` and
   `bun run db:migrate`.
+
+## UI: use shadcn components, don't rebuild them
+
+Build UI from shadcn components (`base-maia` style on Base UI, in `packages/ui`). Don't hand-roll
+anything shadcn already provides: buttons, cards, alerts, avatars, badges, dialogs, dropdowns,
+forms and inputs, tables, tabs, tooltips, skeletons, spinners, and so on.
+
+- **Look first.** Use the **shadcn MCP server** (`.mcp.json`) to search the registry, read
+  examples, and get the add command. `bunx shadcn docs <component>` works too.
+- **Add, don't copy.** From `apps/web`, run `bunx shadcn@latest add <component>`. Components land
+  in `packages/ui/src/components/` and are imported as `@workspace/ui/components/<name>`.
+- **Compose and extend.** Use the component's variants, `className` and composition. If you need
+  something new, build it in `packages/ui` from shadcn primitives rather than one-off markup in a
+  page. Edit a generated component only to change it for the whole app.
+- **Icons** come from `lucide-react` (the configured icon library).
+- Plain layout (`div` with flex/grid utilities, headings, text) is fine. Interactive or styled
+  widgets are not.
 
 ## Every feature ships MCP tools
 

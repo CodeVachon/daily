@@ -1,3 +1,11 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 import { services } from "@workspace/db"
 
 import { clientDisplayName, describeScopes } from "@/lib/consent"
@@ -21,23 +29,29 @@ export default async function ConsentPage({
   const scopes = describeScopes(scope)
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <div className="flex w-full max-w-sm flex-col gap-4 text-sm">
-        <h1 className="font-heading text-xl">Authorize agent</h1>
-        <p>
-          <strong>{clientDisplayName(client, clientId)}</strong> wants to access
-          the daily MCP server as <strong>{user.name}</strong>.
-        </p>
-        {client?.uri && (
-          <p className="break-all text-muted-foreground">{client.uri}</p>
-        )}
-        <ul className="list-disc pl-5">
-          {scopes.map((label) => (
-            <li key={label}>{label}</li>
-          ))}
-        </ul>
-        <ConsentButtons />
-      </div>
-    </div>
+    <main className="flex min-h-svh items-center justify-center p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Authorize agent</CardTitle>
+          <CardDescription>
+            <strong>{clientDisplayName(client, clientId)}</strong> wants to
+            access the daily MCP server as <strong>{user.name}</strong>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 text-sm">
+          {client?.uri && (
+            <p className="break-all text-muted-foreground">{client.uri}</p>
+          )}
+          <ul className="list-disc pl-5">
+            {scopes.map((label) => (
+              <li key={label}>{label}</li>
+            ))}
+          </ul>
+        </CardContent>
+        <CardFooter>
+          <ConsentButtons />
+        </CardFooter>
+      </Card>
+    </main>
   )
 }

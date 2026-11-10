@@ -1,7 +1,10 @@
 "use client"
 
 import { authClient } from "@workspace/auth/client"
+import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { CircleAlertIcon } from "lucide-react"
 import { useState } from "react"
 
 import { consentOutcome } from "@/lib/consent"
@@ -24,9 +27,16 @@ export function ConsentButtons() {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full flex-col gap-3">
+      {error && (
+        <Alert variant="destructive">
+          <CircleAlertIcon />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex gap-2">
         <Button disabled={pending} onClick={() => decide(true)}>
+          {pending && <Spinner />}
           Allow
         </Button>
         <Button
@@ -37,11 +47,6 @@ export function ConsentButtons() {
           Deny
         </Button>
       </div>
-      {error && (
-        <p role="alert" className="text-destructive">
-          {error}
-        </p>
-      )}
     </div>
   )
 }

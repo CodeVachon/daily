@@ -2,6 +2,7 @@ import { Geist_Mono, DM_Sans, Merriweather } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { Toaster } from "@workspace/ui/components/sonner"
+import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { TimezoneSync } from "@/components/timezone-sync"
@@ -38,7 +39,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
           <TimezoneSync />
           <Toaster />
         </ThemeProvider>

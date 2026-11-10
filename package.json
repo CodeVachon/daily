@@ -24,7 +24,8 @@
     "test:watch": "vitest",
     "check": "scripts/check.sh",
     "fallow": "fallow --coverage coverage/coverage-final.json",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "ui:shot": "bun run --cwd apps/web ui:shot"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.1.0",

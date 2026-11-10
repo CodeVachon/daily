@@ -4,6 +4,7 @@ import { collaborationTools } from "./collaboration"
 import { systemTools } from "./system"
 import { taskTools } from "./tasks"
 import type { ToolModule } from "./types"
+import { workflowModule } from "./workflows"
 
 /**
  * Every MCP tool module. When you add an app feature, add its tools module
@@ -15,4 +16,5 @@ export const toolModules: ToolModule[] = [
   collaborationTools,
   catalogTools,
   activityTools,
+  workflowModule,
 ]

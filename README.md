@@ -113,7 +113,19 @@ Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migr
 Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
 `https://<machine>.<tailnet>.ts.net/api/mcp` (Streamable HTTP, `POST` only).
 
-Tools today: `ping` (health check) and `whoami` (the user + OAuth client the agent is acting as).
+What agents can do (everything is attributed to the agent in task history; agents can never delete):
+
+| Area | Tools |
+| --- | --- |
+| System | `ping`, `whoami` |
+| Tasks | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks` |
+| Collaboration | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
+| Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels` |
+| History | `get_activity`, `get_updates_since` |
+
+Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as
+Markdown). Tasks are referred to as `#12`; due dates are plain strings in the user's current time
+zone (`2026-11-14`, `2026-11-14T17:00`).
 
 **Auth.** The app is its own OAuth 2.1 authorization server (`@better-auth/mcp`). When an MCP
 client connects, it opens a browser to `/sign-in` (GitHub, same allowlist) and then `/consent`.

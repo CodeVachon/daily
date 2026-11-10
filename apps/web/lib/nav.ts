@@ -2,7 +2,7 @@ import {
   FolderIcon,
   KanbanSquareIcon,
   ListIcon,
-  TagIcon,
+  SettingsIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -17,7 +17,13 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Board", href: "/board", icon: KanbanSquareIcon },
   { title: "Tasks", href: "/tasks", icon: ListIcon },
   { title: "Projects", href: "/projects", icon: FolderIcon },
-  { title: "Labels", href: "/labels", icon: TagIcon },
+  { title: "Settings", href: "/settings", icon: SettingsIcon },
+]
+
+/** Tabs on the settings pages. */
+export const SETTINGS_SECTIONS = [
+  { title: "Appearance", href: "/settings" },
+  { title: "Labels", href: "/settings/labels" },
 ]
 
 /** Whether a nav item is the current page (or a page under it). */

@@ -1,5 +1,12 @@
 import { eq } from "drizzle-orm"
 
+import {
+  applyAppearance,
+  DEFAULT_APPEARANCE,
+  toAppearance,
+  type Appearance,
+  type AppearancePatch,
+} from "../appearance"
 import type { Database } from "../database"
 import { userSettings } from "../schema"
 import { isValidTimeZone } from "../time"
@@ -20,7 +27,28 @@ export function createSettingsService(db: Database) {
     })
   }
 
+  async function getAppearance(userId: string): Promise<Appearance> {
+    const row = await current(userId)
+    return row ? toAppearance(row) : DEFAULT_APPEARANCE
+  }
+
   return {
+    /** The base colour, theme and chart palette the app is drawn in. */
+    getAppearance,
+
+    /** Change any of base colour, theme and chart palette; returns the result. */
+    async updateAppearance(
+      userId: string,
+      patch: AppearancePatch
+    ): Promise<Appearance> {
+      const next = applyAppearance(await getAppearance(userId), patch)
+      await db
+        .insert(userSettings)
+        .values({ userId, ...next })
+        .onConflictDoUpdate({ target: userSettings.userId, set: next })
+      return next
+    },
+
     /** The user's current IANA zone ("UTC" until their browser reports one). */
     async getTimezone(userId: string): Promise<string> {
       return (await current(userId))?.timezone ?? DEFAULT_TIMEZONE

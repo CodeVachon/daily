@@ -14,6 +14,18 @@ export type {
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
 export { COLORS } from "./catalog-inputs"
+export {
+  ACCENT_COLORS,
+  applyAppearance,
+  appearancePatch,
+  BASE_COLORS,
+  DEFAULT_APPEARANCE,
+  type AccentColor,
+  type Appearance,
+  type AppearancePatch,
+  type BaseColor,
+  type Palette,
+} from "./appearance"
 export { describeEvent, type TaskEvent, type TaskEventPayload } from "./events"
 export {
   PRIORITIES,

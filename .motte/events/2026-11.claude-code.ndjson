@@ -108,3 +108,5 @@
 {"at":"2026-11-10T00:53:28Z","id":53,"by":"claude-code","as":"agent","type":"title","from":"Managed Postgres: TLS, pooling, migrations on deploy, backups","to":"Postgres container on the droplet: volume, migrations on deploy, backups to DO Spaces"}
 {"at":"2026-11-10T00:53:35Z","id":57,"by":"claude-code","as":"agent","type":"created","title":"Public exposure hardening: Caddy TLS, security headers, rate limits","state":"Todo"}
 {"at":"2026-11-10T02:32:13Z","id":61,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T02:40:49Z","id":62,"by":"claude-code","as":"agent","type":"created","title":"Settings page: appearance (base colour, theme, chart colours) and labels moved there","state":"Todo"}
+{"at":"2026-11-10T02:49:39Z","id":62,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

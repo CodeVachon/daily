@@ -3,8 +3,10 @@ import { services } from "@workspace/db"
 import { KanbanBoard } from "@/components/board/kanban-board"
 import { PageHeader } from "@/components/page-header"
 import { NewTaskDialog } from "@/components/task/new-task-dialog"
+import { TaskDrawerSlot } from "@/components/task/task-drawer-slot"
 import { FilterBar } from "@/components/filter-bar"
 import { boardItems, groupByStatus, toBoardCard } from "@/lib/board"
+import { drawerHref, drawerTask, searchWithoutDrawer } from "@/lib/drawer"
 import { parseFilters, toListInput } from "@/lib/filters"
 import { requireSession } from "@/lib/session"
 import { loadTaskOptions } from "@/lib/task-options"
@@ -17,7 +19,9 @@ export default async function BoardPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { user } = await requireSession()
-  const filters = parseFilters(await searchParams)
+  const params = await searchParams
+  const filters = parseFilters(params)
+  const search = searchWithoutDrawer(params)
   const [options, { tasks }] = await Promise.all([
     loadTaskOptions(user.id),
     services.tasks.list(user.id, { ...toListInput(filters), orderBy: "board" }),
@@ -27,7 +31,13 @@ export default async function BoardPage({
   })
   const now = new Date()
   const cards = Object.fromEntries(
-    tasks.map((task) => [task.id, toBoardCard(task, now, options.timezone)])
+    tasks.map((task) => [
+      task.id,
+      {
+        ...toBoardCard(task, now, options.timezone),
+        href: drawerHref("/board", search, task.number),
+      },
+    ])
   )
   const version = tasks
     .map((t) => `${t.id}:${t.status.key}:${t.boardPosition}:${+t.updatedAt}`)
@@ -47,6 +57,12 @@ export default async function BoardPage({
         }))}
         cards={cards}
         initialItems={boardItems(columns)}
+      />
+      <TaskDrawerSlot
+        userId={user.id}
+        taskRef={drawerTask(params)}
+        pathname="/board"
+        search={search}
       />
     </>
   )

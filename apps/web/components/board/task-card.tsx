@@ -121,7 +121,8 @@ export function TaskCard({
         <CardTitle className="flex items-start gap-1.5 text-sm font-normal [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0">
           {PRIORITY_ICON[card.priority]}
           <Link
-            href={taskHref(card.number)}
+            href={card.href ?? taskHref(card.number)}
+            scroll={false}
             className="hover:underline"
             draggable={false}
           >

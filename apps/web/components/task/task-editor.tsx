@@ -42,7 +42,7 @@ export function TaskEditor({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_18rem]">
+    <div className="grid gap-8 @3xl:grid-cols-[1fr_18rem]">
       <div className="flex min-w-0 flex-col gap-4">
         <Input
           aria-label="Title"

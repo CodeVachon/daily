@@ -107,3 +107,4 @@
 {"at":"2026-11-10T00:52:17Z","id":54,"by":"claude-code","as":"agent","type":"title","from":"CI/CD: GitHub Actions check and deploy to DigitalOcean","to":"CI/CD: GitHub Actions check, build image, droplet pulls and restarts"}
 {"at":"2026-11-10T00:53:28Z","id":53,"by":"claude-code","as":"agent","type":"title","from":"Managed Postgres: TLS, pooling, migrations on deploy, backups","to":"Postgres container on the droplet: volume, migrations on deploy, backups to DO Spaces"}
 {"at":"2026-11-10T00:53:35Z","id":57,"by":"claude-code","as":"agent","type":"created","title":"Public exposure hardening: Caddy TLS, security headers, rate limits","state":"Todo"}
+{"at":"2026-11-10T02:32:13Z","id":61,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

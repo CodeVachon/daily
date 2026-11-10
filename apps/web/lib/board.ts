@@ -38,6 +38,8 @@ export interface Chip {
 /** What a board card shows; computed on the server in the user's zone. */
 export interface BoardCard {
   id: string
+  /** Where clicking the card goes (the drawer on the board); defaults to the task page. */
+  href?: string
   number: number
   title: string
   priority: Priority

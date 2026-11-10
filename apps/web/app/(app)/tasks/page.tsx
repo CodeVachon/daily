@@ -15,10 +15,11 @@ import { ColorBadge } from "@/components/color-badge"
 import { FilterBar } from "@/components/filter-bar"
 import { PageHeader } from "@/components/page-header"
 import { NewTaskDialog } from "@/components/task/new-task-dialog"
+import { TaskDrawerSlot } from "@/components/task/task-drawer-slot"
 import type { Chip } from "@/lib/board"
+import { drawerHref, drawerTask, searchWithoutDrawer } from "@/lib/drawer"
 import { parseFilters, toListInput } from "@/lib/filters"
 import { requireSession } from "@/lib/session"
-import { taskHref } from "@/lib/task-form"
 import { toTaskRow, type TaskRowView } from "@/lib/task-list"
 import { loadTaskOptions } from "@/lib/task-options"
 
@@ -40,12 +41,12 @@ function ChipsCell({
   )
 }
 
-function TaskRow({ row }: { row: TaskRowView }) {
+function TaskRow({ row, href }: { row: TaskRowView; href: string }) {
   return (
     <TableRow>
       <TableCell className="text-muted-foreground">#{row.number}</TableCell>
       <TableCell className="max-w-md truncate">
-        <Link href={taskHref(row.number)} className="hover:underline">
+        <Link href={href} scroll={false} className="hover:underline">
           {row.title}
         </Link>
       </TableCell>
@@ -71,7 +72,9 @@ export default async function TasksPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { user } = await requireSession()
-  const filters = parseFilters(await searchParams)
+  const params = await searchParams
+  const filters = parseFilters(params)
+  const search = searchWithoutDrawer(params)
   const [options, { tasks, hasMore }] = await Promise.all([
     loadTaskOptions(user.id),
     services.tasks.list(user.id, toListInput(filters)),
@@ -103,6 +106,7 @@ export default async function TasksPage({
               <TaskRow
                 key={task.id}
                 row={toTaskRow(task, now, options.timezone)}
+                href={drawerHref("/tasks", search, task.number)}
               />
             ))}
             {tasks.length === 0 && (
@@ -123,6 +127,12 @@ export default async function TasksPage({
           </p>
         )}
       </div>
+      <TaskDrawerSlot
+        userId={user.id}
+        taskRef={drawerTask(params)}
+        pathname="/tasks"
+        search={search}
+      />
     </>
   )
 }

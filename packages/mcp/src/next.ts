@@ -1,16 +1,11 @@
 import { requireMcpAuth } from "@better-auth/mcp"
-import { createMcpHandler } from "@modelcontextprotocol/server"
 import { auth, MCP_RESOURCE } from "@workspace/auth"
+import { services } from "@workspace/db"
 
-import { contextFromAuthInfo, type McpAuthExtra } from "./context"
-import { createMcpServer } from "./index"
+import { authInfoFromClaims, bearerToken } from "./context"
+import { createMcpRequestHandler } from "./index"
 
-// One fresh server per request, built for the caller. `legacy: "stateless"`
-// also answers 2025-era clients (no sessions), alongside MCP 2026-07-28.
-const handler = createMcpHandler(
-  ({ authInfo }) => createMcpServer(contextFromAuthInfo(authInfo)),
-  { legacy: "stateless" }
-)
+const handler = createMcpRequestHandler(services)
 
 /**
  * `POST /api/mcp`. Verifies the bearer token (JWKS, issuer, audience = this
@@ -19,21 +14,13 @@ const handler = createMcpHandler(
  */
 export const POST = requireMcpAuth(
   auth,
-  (request, claims) => {
-    const scope = typeof claims.scope === "string" ? claims.scope : ""
-    const clientId = String(claims.azp ?? claims.client_id ?? "")
-    const extra: McpAuthExtra = { userId: String(claims.sub ?? "") }
-    return handler.fetch(request, {
-      authInfo: {
-        token:
-          request.headers.get("authorization")?.replace(/^\S+\s+/, "") ?? "",
-        clientId,
-        scopes: scope.split(" ").filter(Boolean),
-        expiresAt: typeof claims.exp === "number" ? claims.exp : undefined,
-        resource: new URL(MCP_RESOURCE),
-        extra,
-      },
-    })
-  },
+  (request, claims) =>
+    handler.fetch(request, {
+      authInfo: authInfoFromClaims(
+        claims,
+        bearerToken(request.headers.get("authorization")),
+        MCP_RESOURCE
+      ),
+    }),
   { resource: MCP_RESOURCE }
 )

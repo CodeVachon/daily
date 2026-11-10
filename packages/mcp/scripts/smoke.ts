@@ -9,12 +9,12 @@
  * initialize, tools/list and every no-arg tool. Cleans up after itself.
  */
 import { auth, MCP_RESOURCE } from "@workspace/auth"
-import { db, schema } from "@workspace/db"
-import { eq } from "drizzle-orm"
+import { services } from "@workspace/db"
 
 const B = new URL(MCP_RESOURCE).origin
 const ctx = await auth.$context
 const email = `mcp-smoke-${Date.now()}@example.invalid`
+let clientId: string | undefined
 const user = await ctx.internalAdapter.createUser(
   {
     name: "MCP Smoke Test",
@@ -56,6 +56,7 @@ try {
       }),
     })
   ).json()
+  clientId = reg.client_id
   console.log("1. registered client:", reg.client_id ?? reg)
 
   const verifier = Buffer.from(
@@ -162,10 +163,8 @@ try {
     JSON.stringify(who.body.result?.structuredContent ?? who.body)
   )
 } finally {
-  await db
-    .delete(schema.oauthClient)
-    .where(eq(schema.oauthClient.name, "MCP smoke test"))
-  await db.delete(schema.user).where(eq(schema.user.id, user.id))
+  if (clientId) await services.oauthClients.delete(clientId)
+  await services.users.delete(user.id)
   console.log("cleanup: removed test user + client")
   process.exit(0)
 }

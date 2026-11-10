@@ -1,15 +1,13 @@
 import { cimd } from "@better-auth/cimd"
 import { fetchClientMetadataResource } from "@better-auth/cimd/node"
 import { mcp } from "@better-auth/mcp"
-import { db } from "@workspace/db"
-import * as schema from "@workspace/db/schema"
+import { authDatabaseAdapter } from "@workspace/db"
 import { betterAuth } from "better-auth"
-import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
 import { jwt } from "better-auth/plugins"
 import { github } from "better-auth/social-providers"
 
-import { isAllowedGithubLogin, parseAllowlist } from "./allowlist"
+import { gateGithubUserInfo, parseAllowlist } from "./allowlist"
 import { ENV } from "./env"
 
 /** Canonical URL of the MCP endpoint; access tokens are audience-bound to it. */
@@ -29,26 +27,23 @@ export const auth = betterAuth({
   appName: "daily",
   baseURL: ENV.BETTER_AUTH_URL,
   secret: ENV.BETTER_AUTH_SECRET,
-  database: drizzleAdapter(db, { provider: "pg", schema }),
+  database: authDatabaseAdapter,
   // GitHub is the only way in — no email/password.
   emailAndPassword: { enabled: false },
   socialProviders: {
     github: {
       ...githubCredentials,
-      // Runs on every OAuth callback (sign-up *and* sign-in). Returning null
-      // makes Better Auth abort before any user/account/session is written and
-      // redirect to the error page with `?error=unable_to_get_user_info`.
-      async getUserInfo(token) {
-        const info = await stockGithub.getUserInfo(token)
-        const login = (info?.data as { login?: string } | undefined)?.login
-        if (!info || !isAllowedGithubLogin(allowedGithubUsers, login)) {
+      // Runs on every OAuth callback (sign-up *and* sign-in). Rejected logins
+      // abort before any user/account/session is written and land on
+      // /sign-in?error=unable_to_get_user_info.
+      getUserInfo: gateGithubUserInfo(
+        stockGithub.getUserInfo,
+        allowedGithubUsers,
+        (login) =>
           console.warn(
             `[auth] rejected GitHub sign-in for "${login ?? "unknown"}" (not in AUTH_GITHUB_ALLOWED_USERS)`
           )
-          return null
-        }
-        return info
-      },
+      ),
     },
   },
   account: {

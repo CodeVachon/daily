@@ -95,3 +95,17 @@ Then run `/mcp` in Claude Code and authenticate.
 
 **Test:** `bun run mcp:smoke` with the dev server running. It runs the full OAuth flow with a
 throwaway user and calls every tool.
+
+## Development workflow
+
+Rules for every commit are in `AGENTS.md` ("Commit rules") and enforced by a pre-commit hook that
+`bun install` sets up (`core.hooksPath=.githooks`). Run the same checks with `bun run check`:
+
+1. no motte issue left In Progress
+2. `bun run typecheck`
+3. `bun run lint` (zero warnings; blocks database imports outside `packages/db`)
+4. `bun run test` (Vitest across the monorepo, with coverage; DB tests use in-memory PGlite)
+5. `bun run fallow` (dead code, dependencies, duplication, complexity scored against coverage)
+
+Tooling: `motte` and `codegraph` (`npm i -g @colbymchenry/codegraph`) are global CLIs; Fallow is a
+dev dependency. All three are MCP servers in `.mcp.json`.

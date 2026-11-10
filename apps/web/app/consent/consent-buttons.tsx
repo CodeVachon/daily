@@ -4,6 +4,8 @@ import { authClient } from "@workspace/auth/client"
 import { Button } from "@workspace/ui/components/button"
 import { useState } from "react"
 
+import { consentOutcome } from "@/lib/consent"
+
 export function ConsentButtons() {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -12,14 +14,12 @@ export function ConsentButtons() {
     setPending(true)
     setError(null)
     // oauthProviderClient attaches the signed oauth_query from the URL.
-    const { data, error } = await authClient.oauth2.consent({ accept })
-    if (data?.url) {
-      window.location.href = data.url
+    const outcome = consentOutcome(await authClient.oauth2.consent({ accept }))
+    if ("redirectTo" in outcome) {
+      window.location.href = outcome.redirectTo
       return
     }
-    setError(
-      error?.message ?? "Something went wrong. Try again from the agent."
-    )
+    setError(outcome.error)
     setPending(false)
   }
 

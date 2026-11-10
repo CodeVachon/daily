@@ -1,7 +1,12 @@
-import { db } from "@workspace/db"
 import { z } from "zod"
 
 import { json, type ToolModule } from "./types"
+
+const readOnly = {
+  readOnlyHint: true,
+  idempotentHint: true,
+  openWorldHint: false,
+}
 
 /** Connectivity + identity tools. */
 export const systemTools: ToolModule = (server, ctx) => {
@@ -13,11 +18,7 @@ export const systemTools: ToolModule = (server, ctx) => {
         "Health check. Returns `pong` and the server time; use it to confirm the MCP connection and auth work.",
       inputSchema: z.object({}),
       outputSchema: z.object({ message: z.literal("pong"), time: z.string() }),
-      annotations: {
-        readOnlyHint: true,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: readOnly,
     },
     async () =>
       json({ message: "pong" as const, time: new Date().toISOString() })
@@ -41,18 +42,11 @@ export const systemTools: ToolModule = (server, ctx) => {
         github: z.object({ id: z.string() }).nullable(),
         client: z.object({ id: z.string(), scopes: z.array(z.string()) }),
       }),
-      annotations: {
-        readOnlyHint: true,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: readOnly,
     },
     async () => {
-      const user = await db.query.user.findFirst({
-        where: (u, { eq }) => eq(u.id, ctx.userId),
-        with: { accounts: { columns: { providerId: true, accountId: true } } },
-      })
-      if (!user) {
+      const profile = await ctx.services.users.getProfile(ctx.userId)
+      if (!profile) {
         return {
           isError: true,
           content: [
@@ -63,16 +57,10 @@ export const systemTools: ToolModule = (server, ctx) => {
           ],
         }
       }
-      const github = user.accounts.find((a) => a.providerId === "github")
+      const { githubAccountId, createdAt, ...user } = profile
       return json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          createdAt: user.createdAt.toISOString(),
-        },
-        github: github ? { id: github.accountId } : null,
+        user: { ...user, createdAt: createdAt.toISOString() },
+        github: githubAccountId ? { id: githubAccountId } : null,
         client: { id: ctx.clientId, scopes: ctx.scopes },
       })
     }

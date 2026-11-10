@@ -46,6 +46,51 @@ one shared record of who decided what.
 
 <!-- motte:end -->
 
+## Commit rules
+
+These are enforced by the pre-commit hook (`.githooks/pre-commit` → `scripts/check.sh`,
+installed by `bun install`). Run `bun run check` yourself before committing. **Never bypass the
+hook with `--no-verify`.** If a check fails, fix the cause; do not weaken the check.
+
+1. **Close the motte issue first.** Every change is tracked in motte (see above). Before committing,
+   move the issue to Done (`motte move <ref> Done`) once its verification passes, or
+   `motte release <ref>` if you are stopping. The hook fails while any issue is In Progress.
+2. **Tests are written and passing.** New or changed behaviour ships with Vitest tests
+   (`*.test.ts` next to the code). `bun run test` runs the whole monorepo with coverage. Keep
+   logic in `.ts` modules (services, `lib/`, pure helpers) so it can be tested; keep `.tsx`
+   components thin.
+3. **All Fallow issues are resolved.** `bun run fallow` (dead code, unused dependencies,
+   duplication, complexity and CRAP scored against real test coverage) must report no issues.
+   Fix findings: delete dead code, remove unused dependencies, test or simplify complex code.
+   Only suppress (`// fallow-ignore-next-line <rule>` or `.fallowrc.json`) generated code, with a
+   comment saying why.
+4. **Typecheck and lint are clean.** `bun run typecheck`, and `bun run lint` with zero warnings.
+
+## Use the code-intelligence MCP servers
+
+`.mcp.json` configures these; use them before falling back to grep and reading files:
+
+- **CodeGraph** (`codegraph`): explore the codebase. Find symbols, callers and callees, and the
+  impact of a change before editing. `codegraph sync` refreshes the index (`codegraph init` on a
+  fresh clone). Install: `npm i -g @colbymchenry/codegraph`.
+- **Fallow** (`fallow`): check architecture and health while you work, not just at commit time.
+  Before deleting "unused" code or dependencies, trace it with Fallow.
+- **motte**: issue tracking (above).
+
+## Data access: `@workspace/db` services are the single source of truth
+
+Only services in `packages/db` may talk to the database.
+
+- The connection (`packages/db/src/client.ts`) is private. The package exports `services`
+  (`users`, `oauthClients`, ...), types, and the Better Auth storage adapter. Nothing else.
+- Need data? Add or extend a service in `packages/db/src/services/<domain>.ts`, register it in
+  `createServices`, and test it in `<domain>.test.ts` against
+  `createTestDatabase()` from `@workspace/db/testing` (in-memory PGlite with every migration).
+- ESLint blocks `drizzle-orm`, `postgres`, `drizzle-kit` and PGlite imports outside `packages/db`,
+  and blocks `@workspace/db/testing` outside test files.
+- Schema changes: edit `packages/db/src/schema/*`, then `bun run db:generate` and
+  `bun run db:migrate`.
+
 ## Every feature ships MCP tools
 
 Claude agents work with this app's data through the MCP server at `/api/mcp`
@@ -55,12 +100,14 @@ its tools is not done.
 
 - Put the feature's tools in `packages/mcp/src/tools/<feature>.ts` as a
   `ToolModule`, and add it to `toolModules` in `packages/mcp/src/tools/index.ts`.
-- Scope every query to `ctx.userId` (the verified token's user). Never accept a
-  user id as tool input.
+- Read and write data only through `ctx.services` (see "Data access"), scoped to
+  `ctx.userId` (the verified token's user). Never accept a user id as tool input.
 - Give each tool a `description` an agent can act on, a zod `inputSchema`, an
   `outputSchema`, and `annotations` (`readOnlyHint`, `destructiveHint`, ...).
   Return results with `json(...)` so callers get structured content.
-- Share data access with the UI (a function in the feature's package) rather
-  than duplicating queries in the tool.
+- The UI and the tools share the same `@workspace/db` service; never duplicate a
+  query in a tool.
+- Test tools through `createMcpRequestHandler(services)` against
+  `createTestDatabase()` (see `packages/mcp/src/tools/system.test.ts`).
 - Verify with `bun run mcp:smoke` (dev server running). It calls every no-arg
   tool. Extend `packages/mcp/scripts/smoke.ts` when a tool needs arguments.

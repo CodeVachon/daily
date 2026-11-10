@@ -1,12 +1,18 @@
-import { McpServer } from "@modelcontextprotocol/server"
+import { createMcpHandler, McpServer } from "@modelcontextprotocol/server"
+import type { Services } from "@workspace/db"
 
-import { type McpContext } from "./context"
+import { contextFromAuthInfo, type McpContext } from "./context"
 import { toolModules } from "./tools"
 
-export { contextFromAuthInfo, type McpContext } from "./context"
+export {
+  authInfoFromClaims,
+  bearerToken,
+  contextFromAuthInfo,
+  type McpContext,
+} from "./context"
 export { json, type ToolModule } from "./tools/types"
 
-export const MCP_SERVER_INFO = { name: "daily", version: "0.0.1" } as const
+const MCP_SERVER_INFO = { name: "daily", version: "0.0.1" } as const
 
 /** Builds an MCP server with every tool bound to the calling user. */
 export function createMcpServer(ctx: McpContext): McpServer {
@@ -16,4 +22,15 @@ export function createMcpServer(ctx: McpContext): McpServer {
   })
   for (const register of toolModules) register(server, ctx)
   return server
+}
+
+/**
+ * Streamable-HTTP handler: one fresh server per request, built for the caller.
+ * `legacy: "stateless"` also answers 2025-era clients (no sessions).
+ */
+export function createMcpRequestHandler(services: Services) {
+  return createMcpHandler(
+    ({ authInfo }) => createMcpServer(contextFromAuthInfo(authInfo, services)),
+    { legacy: "stateless" }
+  )
 }

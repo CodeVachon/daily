@@ -23,5 +23,9 @@
     //   "**/generated/**"     // OpenAPI, Protobuf codegen
     // ]
   },
+  // `varlock codegen` output: helper types we don't consume.
+  "ignoreExports": [
+    { "file": "**/env.ts", "exports": ["EnvSchemaAsStrings", "PublicCoercedEnvSchema"] }
+  ],
   "rules": {}
 }

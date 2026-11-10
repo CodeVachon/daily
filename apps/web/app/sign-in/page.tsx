@@ -1,13 +1,9 @@
 import { redirect } from "next/navigation"
 
+import { signInErrorMessage } from "@/lib/sign-in"
 import { getSession } from "@/lib/session"
 
 import { SignInButton } from "./sign-in-button"
-
-const ERROR_MESSAGES: Record<string, string> = {
-  unable_to_get_user_info:
-    "That GitHub account isn't authorized to use this app.",
-}
 
 export default async function SignInPage({
   searchParams,
@@ -17,9 +13,7 @@ export default async function SignInPage({
   if (await getSession()) redirect("/")
 
   const { error } = await searchParams
-  const message = error
-    ? (ERROR_MESSAGES[error] ?? "Sign-in failed. Please try again.")
-    : null
+  const message = signInErrorMessage(error)
 
   return (
     <div className="flex min-h-svh items-center justify-center p-6">

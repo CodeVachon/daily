@@ -5,22 +5,24 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "db:generate": "varlock run -- drizzle-kit generate",
     "db:migrate": "varlock run -- drizzle-kit migrate",
     "db:push": "varlock run -- drizzle-kit push",
     "db:studio": "varlock run -- drizzle-kit studio",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings 0",
     "typecheck": "varlock codegen && tsc --noEmit"
   },
   "dependencies": {
+    "better-auth": "^1.7.18",
     "drizzle-orm": "^0.45.4",
     "postgres": "^4.1.0",
     "varlock": "^1.24.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@types/node": "^20",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",

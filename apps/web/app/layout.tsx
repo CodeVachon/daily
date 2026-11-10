@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, DM_Sans, Merriweather } from "next/font/google"
+import { Geist_Mono, DM_Sans, Merriweather } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"

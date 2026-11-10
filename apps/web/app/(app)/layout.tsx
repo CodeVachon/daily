@@ -13,7 +13,10 @@ export default async function AppLayout({
   children: React.ReactNode
 }) {
   const { user } = await requireSession()
-  const appearance = await services.settings.getAppearance(user.id)
+  const [appearance, unread] = await Promise.all([
+    services.settings.getAppearance(user.id),
+    services.inbox.count(user.id),
+  ])
   return (
     <SidebarProvider>
       {/* The user's colours; comes after globals.css so it overrides the defaults. */}
@@ -23,6 +26,7 @@ export default async function AppLayout({
       />
       <AppSidebar
         user={{ name: user.name, email: user.email, image: user.image }}
+        counts={{ "/updates": unread }}
       />
       {/* min-w-0: let the page shrink to the window so only wide content (the board) scrolls. */}
       <SidebarInset className="min-w-0">{children}</SidebarInset>

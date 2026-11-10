@@ -52,6 +52,8 @@ export interface BoardCard {
   completion: Completion | null
   /** Linked GitHub/Jira items (added by the board page). */
   links?: LinkBadge[]
+  /** Changed by an agent or sync since the user last opened it. */
+  unread?: boolean
 }
 
 /** Checklist items and subtasks done, combined, e.g. "(2/3)". */

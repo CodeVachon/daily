@@ -1,3 +1,4 @@
+import { MarkReadOnOpen } from "@/components/updates/inbox-actions"
 import type { TaskDetailData } from "@/lib/task-detail"
 
 import { ActivityTimeline } from "./activity-timeline"
@@ -13,6 +14,7 @@ export function TaskDetailView({ data }: { data: TaskDetailData }) {
   const { task } = data
   return (
     <div className="@container">
+      <MarkReadOnOpen taskId={task.id} unread={data.unread} />
       <TaskEditor
         key={task.updatedAt.toISOString()}
         task={task}

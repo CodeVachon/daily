@@ -124,4 +124,40 @@ export const activityTools: ToolModule = (server, ctx) => {
         })
       })
   )
+
+  server.registerTool(
+    "list_unread_updates",
+    {
+      title: "List unread updates",
+      description:
+        "What the user hasn't seen yet: tasks that agents or the sync worker changed since the user last opened them (their Updates inbox), newest first, with the latest unread changes. Use it to brief the user. Read-only: only the user marks things read, by opening the task.",
+      inputSchema: z.object({
+        limit: z.number().int().min(1).max(50).optional(),
+      }),
+      outputSchema: z.object({
+        tasks: z.array(
+          z.object({
+            ref: z.string(),
+            title: z.string(),
+            unread: z.number(),
+            changes: z.array(eventOutput),
+          })
+        ),
+      }),
+      annotations: readOnly,
+    },
+    async ({ limit = 20 }) => {
+      const items = await ctx.services.inbox.list(ctx.userId, { limit })
+      return json({
+        tasks: await Promise.all(
+          items.map(async (item) => ({
+            ref: `#${item.task.number}`,
+            title: item.task.title,
+            unread: item.unread,
+            changes: await serializeEvents(ctx, item.events),
+          }))
+        ),
+      })
+    }
+  )
 }

@@ -1,6 +1,7 @@
 export * from "./auth"
 export * from "./comments"
 export * from "./events"
+export * from "./inbox"
 export * from "./integrations"
 export * from "./links"
 export * from "./mcp-oauth"

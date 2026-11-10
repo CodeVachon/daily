@@ -8,6 +8,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -20,7 +21,14 @@ import { isActive, NAV_ITEMS } from "@/lib/nav"
 
 import { UserMenu, type MenuUser } from "./user-menu"
 
-export function AppSidebar({ user }: { user: MenuUser }) {
+export function AppSidebar({
+  user,
+  counts = {},
+}: {
+  user: MenuUser
+  /** Badge numbers by nav href (e.g. unread updates). */
+  counts?: Record<string, number>
+}) {
   const pathname = usePathname()
 
   return (
@@ -49,6 +57,13 @@ export function AppSidebar({ user }: { user: MenuUser }) {
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
+                  {Boolean(counts[item.href]) && (
+                    <SidebarMenuBadge
+                      aria-label={`${counts[item.href]} unread`}
+                    >
+                      {counts[item.href]}
+                    </SidebarMenuBadge>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

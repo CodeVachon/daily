@@ -7,6 +7,7 @@ import { createChecklistService } from "./checklist"
 import { createCommentService } from "./comments"
 import { createDependencyService } from "./dependencies"
 import { createHealthService } from "./health"
+import { createInboxService } from "./inbox"
 import { createIntegrationService } from "./integrations"
 import { createLabelService } from "./labels"
 import { createLinkService } from "./links"
@@ -39,6 +40,7 @@ export function createServices(db: Database, options: ServiceOptions) {
     comments: createCommentService(db),
     dependencies: createDependencyService(db),
     health: createHealthService(db),
+    inbox: createInboxService(db),
     integrations,
     users: createUserService(db),
     labels: createLabelService(db),
@@ -62,6 +64,7 @@ export type {
   TaskLink,
 } from "./links"
 export type { WorkerStatus } from "./worker"
+export type { InboxItem } from "./inbox"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
 export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

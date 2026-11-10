@@ -24,6 +24,7 @@ import { ColorBadge } from "@/components/color-badge"
 import { CompletionSummary } from "@/components/completion-summary"
 import { LinkIcon } from "@/components/link-icon"
 import { useLiveFlash } from "@/components/live-updates"
+import { UnreadDot } from "@/components/unread-dot"
 import type { BoardCard } from "@/lib/board"
 import { MAX_CARD_LINKS, type LinkBadge } from "@/lib/links"
 import { taskHref } from "@/lib/task-form"
@@ -117,7 +118,7 @@ export function TaskCard({
       size="sm"
       data-flash={flash || undefined}
       className={cn(
-        "cursor-grab touch-none ring-primary transition-shadow duration-700 select-none data-flash:ring-2",
+        "cursor-grab touch-none transition-shadow duration-700 select-none data-flash:ring-2 data-flash:ring-primary",
         isDragging && "opacity-50"
       )}
     >
@@ -134,6 +135,7 @@ export function TaskCard({
             {card.title}
           </Link>
           <CompletionSummary completion={card.completion} />
+          <UnreadDot unread={card.unread} className="mt-1.5 ml-auto" />
         </CardTitle>
       </CardHeader>
       <CardBadges card={card} />

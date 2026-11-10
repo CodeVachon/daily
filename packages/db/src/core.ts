@@ -7,6 +7,7 @@ export type {
   Services,
   UserProfile,
   IntegrationConnection,
+  InboxItem,
   DueLink,
   LinkChip,
   RemoteState,

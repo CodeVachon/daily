@@ -18,7 +18,7 @@ export async function loadTaskDetail(userId: string, ref: string) {
     throw error
   })
   if (!task) return null
-  const [options, events, checklist, comments, dependencies, links] =
+  const [options, events, checklist, comments, dependencies, links, unread] =
     await Promise.all([
       loadTaskOptions(userId),
       services.activity.forTask(userId, task.id, 50),
@@ -26,6 +26,7 @@ export async function loadTaskDetail(userId: string, ref: string) {
       services.comments.list(userId, task.id),
       services.dependencies.list(userId, task.id),
       services.links.list(userId, task.id),
+      services.inbox.unreadTaskIds(userId, [task.id]),
     ])
   const now = new Date()
   return {
@@ -53,6 +54,8 @@ export async function loadTaskDetail(userId: string, ref: string) {
     })),
     comments: comments.map((c) => toCommentView(c, userId, now)),
     links: links.map(toLinkView),
+    /** Changed by an agent or sync since last opened (marked read on view). */
+    unread: unread.has(task.id),
   }
 }
 

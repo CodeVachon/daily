@@ -167,7 +167,7 @@ What agents can do (everything is attributed to the agent in task history; agent
 | Tasks             | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks`                                                                      |
 | Collaboration     | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
 | Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels`                                                     |
-| History           | `get_activity`, `get_updates_since`                                                                                                                                       |
+| History           | `get_activity`, `get_updates_since`, `list_unread_updates`                                                                                                                |
 | Settings          | `get_appearance`, `update_appearance`                                                                                                                                     |
 | Links             | `link_external`, `refresh_links`, `list_task_links`, `find_tasks_by_link` (GitHub issues/PRs, Jira issues; only the user can unlink)                                      |
 | Integrations      | `list_integrations`, `list_integration_resources`, `set_integration_scope` (never credentials: connecting and disconnecting is the user's)                                |

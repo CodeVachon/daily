@@ -81,6 +81,10 @@ const FIELD_NAMES: Record<string, string> = {
   due: "due date",
   projectId: "project",
   parentTaskId: "parent task",
+  kind: "type",
+  state: "state",
+  stateCategory: "state category",
+  assignee: "assignee",
 }
 
 function describeChange({ field, from, to }: FieldChange): string {
@@ -90,13 +94,14 @@ function describeChange({ field, from, to }: FieldChange): string {
 }
 
 /** The payload shape for one event type (members may share a union of types). */
-type Payload<T extends TaskEventPayload["type"]> = TaskEventPayload extends infer P
-  ? P extends { type: infer U }
-    ? T extends U
-      ? P
+type Payload<T extends TaskEventPayload["type"]> =
+  TaskEventPayload extends infer P
+    ? P extends { type: infer U }
+      ? T extends U
+        ? P
+        : never
       : never
     : never
-  : never
 
 /** One formatter per event type; the mapped type makes the table exhaustive. */
 const DESCRIBE: {

@@ -48,9 +48,9 @@ describe("integrations", () => {
     )
     expect(row!.credentials_enc).toMatch(/^v1:/)
     expect(row!.credentials_enc).not.toContain("ghp_secret")
-    expect(
-      await t.services.integrations.credentials(userId, "github")
-    ).toEqual({ token: "ghp_secret" })
+    expect(await t.services.integrations.credentials(userId, "github")).toEqual(
+      { token: "ghp_secret" }
+    )
   })
 
   it("keeps each user's connections apart", async () => {
@@ -99,9 +99,9 @@ describe("integrations", () => {
       "select credentials_enc from integration_connection"
     )
     expect(row!.credentials_enc).toBeNull()
-    await expect(t.services.integrations.disconnect(me, "github")).rejects.toThrow(
-      NotFoundError
-    )
+    await expect(
+      t.services.integrations.disconnect(me, "github")
+    ).rejects.toThrow(NotFoundError)
 
     const back = await t.services.integrations.connect(userId, {
       provider: "github",

@@ -7,6 +7,9 @@ export type {
   Services,
   UserProfile,
   IntegrationConnection,
+  RemoteState,
+  SyncResult,
+  TaskLink,
   OAuthClientDisplay,
   TaskDetail,
   TaskRef,
@@ -15,6 +18,14 @@ export type {
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
 export { COLORS } from "./catalog-inputs"
+export {
+  LINK_KINDS,
+  LINK_STATE_CATEGORIES,
+  parseExternalRef,
+  type ExternalRef,
+  type LinkKind,
+  type LinkStateCategory,
+} from "./external-ref"
 export {
   INTEGRATION_PROVIDERS,
   integrationResource,

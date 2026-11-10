@@ -8,6 +8,7 @@ import { createDependencyService } from "./dependencies"
 import { createHealthService } from "./health"
 import { createIntegrationService } from "./integrations"
 import { createLabelService } from "./labels"
+import { createLinkService } from "./links"
 import { createOAuthClientService } from "./oauth-clients"
 import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
@@ -24,6 +25,7 @@ export interface ServiceOptions {
 }
 
 export function createServices(db: Database, options: ServiceOptions) {
+  const integrations = createIntegrationService(db, options.encryptionKey)
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
@@ -31,9 +33,10 @@ export function createServices(db: Database, options: ServiceOptions) {
     comments: createCommentService(db),
     dependencies: createDependencyService(db),
     health: createHealthService(db),
-    integrations: createIntegrationService(db, options.encryptionKey),
+    integrations,
     users: createUserService(db),
     labels: createLabelService(db),
+    links: createLinkService(db, integrations),
     oauthClients: createOAuthClientService(db),
     projects: createProjectService(db),
     settings: createSettingsService(db),
@@ -44,6 +47,7 @@ export function createServices(db: Database, options: ServiceOptions) {
 export type Services = ReturnType<typeof createServices>
 export type { UserProfile } from "./users"
 export type { IntegrationConnection } from "./integrations"
+export type { RemoteState, SyncResult, TaskLink } from "./links"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
 export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

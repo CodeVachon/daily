@@ -108,7 +108,10 @@ export function createIntegrationService(db: Database, key: KeySource) {
         .insert(integrationConnection)
         .values({ userId, provider: input.provider, ...values })
         .onConflictDoUpdate({
-          target: [integrationConnection.userId, integrationConnection.provider],
+          target: [
+            integrationConnection.userId,
+            integrationConnection.provider,
+          ],
           set: values,
         })
       return (await get(userId, input.provider))!

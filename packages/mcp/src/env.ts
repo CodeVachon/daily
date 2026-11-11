@@ -21,11 +21,49 @@ export type CoercedEnvSchema = {
   DATABASE_URL: string;
   
   /**
+   * **DATABASE_DIRECT_URL** 🔐 _sensitive_  
+   * A direct (unpooled) connection for live updates (LISTEN). Only needed when  
+   * DATABASE_URL goes through a transaction-mode pooler; else DATABASE_URL is used.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M24%2021V9h-2v14h8v-2zm-4-6v-4c0-1.103-.897-2-2-2h-6v14h2v-6h1.48l2.335%206h2.145l-2.333-6H18c1.103%200%202-.897%202-2m-6-4h4v4h-4zM8%2023H4c-1.103%200-2-.897-2-2V9h2v12h4V9h2v12c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  DATABASE_DIRECT_URL?: string;
+  
+  /**
    * **BETTER_AUTH_SECRET** 🔐 _sensitive_  
    * Secret used to sign sessions/cookies. Generate with `openssl rand -base64 32`.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
   BETTER_AUTH_SECRET: string;
+  
+  /**
+   * **INTEGRATIONS_ENCRYPTION_KEY** 🔐 _sensitive_  
+   * Encrypts the GitHub/Jira credentials entered under Settings > Integrations.  
+   * 32 random bytes, base64: `openssl rand -base64 32`. Changing it makes stored  
+   * credentials unreadable (reconnect each integration).  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  INTEGRATIONS_ENCRYPTION_KEY: string;
+  
+  /**
+   * **SYNC_POLL_SECONDS**  
+   * Seconds between the sync worker's passes (apps/worker). Each pass refreshes  
+   * only the links that are due (packages/db/src/sync-policy.ts), so this is how  
+   * quickly newly due links are picked up.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  SYNC_POLL_SECONDS: number;
+  
+  /**
+   * **GOOGLE_CLIENT_ID**  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  GOOGLE_CLIENT_ID?: string;
+  
+  /**
+   * **GOOGLE_CLIENT_SECRET** 🔐 _sensitive_  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  GOOGLE_CLIENT_SECRET?: string;
   
   /**
    * **TAILSCALE_URL**  
@@ -83,7 +121,7 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_c22577c6 = CoercedEnvSchema;
+type _CoercedEnvSchema_05e9f23a = CoercedEnvSchema;
 
 export type EnvSchemaAsStrings = {
   [Property in keyof CoercedEnvSchema]:
@@ -91,9 +129,9 @@ export type EnvSchemaAsStrings = {
       : (NonNullable<CoercedEnvSchema[Property]> extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_c22577c6 = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_05e9f23a = EnvSchemaAsStrings;
 
-export type PublicCoercedEnvSchema = Readonly<Pick<CoercedEnvSchema, 'APP_ENV' | 'TAILSCALE_URL' | 'BETTER_AUTH_URL' | 'GITHUB_CLIENT_ID' | 'AUTH_GITHUB_ALLOWED_USERS' | 'APP_VERSION' | 'APP_COMMIT'>>;
+export type PublicCoercedEnvSchema = Readonly<Pick<CoercedEnvSchema, 'APP_ENV' | 'SYNC_POLL_SECONDS' | 'GOOGLE_CLIENT_ID' | 'TAILSCALE_URL' | 'BETTER_AUTH_URL' | 'GITHUB_CLIENT_ID' | 'AUTH_GITHUB_ALLOWED_USERS' | 'APP_VERSION' | 'APP_COMMIT'>>;
 
 // re-export of the runtime ENV proxy, typed to this package's schema
 export const ENV = _ENV as unknown as Readonly<CoercedEnvSchema>;

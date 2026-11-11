@@ -1,8 +1,10 @@
 import {
+  assertCanDelete,
   INTEGRATION_PROVIDERS,
   ValidationError,
+  type Actor,
   type IntegrationConnection,
-  type IntegrationProvider,
+  type LinkProvider,
   type Services,
   type SyncResult,
   type TaskLink,
@@ -10,11 +12,23 @@ import {
 import { z } from "zod"
 
 import { github } from "./github"
+import {
+  exchangeGoogleCode,
+  googleAuthorizeUrl,
+  googleCredentials,
+  googlePrimaryCalendar,
+  isFresh,
+  listGoogleCalendars,
+  refreshGoogleToken,
+  revokeGoogleToken,
+  toCalendarResource,
+  type GoogleConfig,
+} from "./google"
 import { ProviderError } from "./http"
 import { jira } from "./jira"
 import type { AvailableResource, Fetch, Provider, ProviderInfo } from "./types"
 
-const PROVIDERS: Record<IntegrationProvider, Provider> = {
+const PROVIDERS: Record<LinkProvider, Provider> = {
   github: github as Provider,
   jira: jira as Provider,
 }
@@ -31,8 +45,37 @@ function info({
   fields,
   help,
 }: Provider): ProviderInfo {
-  return { id, name, resourceNoun, fields, help }
+  return {
+    id,
+    name,
+    resourceNoun,
+    fields,
+    help,
+    auth: "credentials",
+    configured: true,
+  }
 }
+
+const googleInfo = (configured: boolean): ProviderInfo => ({
+  id: "google",
+  name: "Google Calendar",
+  resourceNoun: { one: "calendar", many: "calendars" },
+  fields: [],
+  help: {
+    text: "Set up the Google OAuth client",
+    url: "https://console.cloud.google.com/auth/clients",
+  },
+  auth: "oauth",
+  configured,
+})
+
+/** Strip what the picker adds; keep what's stored. */
+const stored = ({ externalId, key, name, url }: AvailableResource) => ({
+  externalId,
+  key,
+  name,
+  url,
+})
 
 /**
  * Pick resources by external id or key (case-insensitive). Unknown ones are
@@ -63,6 +106,8 @@ export interface SyncSummary {
 export interface IntegrationsOptions {
   services: Pick<Services, "integrations" | "links">
   fetch?: Fetch
+  /** The Google OAuth client; without it Google can't be connected. */
+  google?: GoogleConfig | null
 }
 
 /**
@@ -73,14 +118,48 @@ export interface IntegrationsOptions {
 export function createIntegrations({
   services,
   fetch = globalThis.fetch,
+  google = null,
 }: IntegrationsOptions) {
   const store = services.integrations
 
+  /** A provider connected with pasted credentials (not Google). */
   function provider(id: string): Provider {
-    return PROVIDERS[providerId.parse(id)]
+    const parsed = providerId.parse(id)
+    if (parsed === "google")
+      throw new ValidationError(
+        "Connect Google with the Connect button in Settings > Integrations"
+      )
+    return PROVIDERS[parsed]
   }
 
-  async function available(userId: string, id: string) {
+  function googleClient(): GoogleConfig {
+    if (!google)
+      throw new ValidationError(
+        "Google isn't set up on this server (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)"
+      )
+    return google
+  }
+
+  /**
+   * A working Google access token for the user, refreshed (and the new one
+   * stored) when it's about to expire.
+   */
+  async function googleAccessToken(userId: string): Promise<string> {
+    const creds = googleCredentials.parse(
+      await store.credentials(userId, "google")
+    )
+    if (isFresh(creds)) return creds.accessToken
+    const refreshed = await refreshGoogleToken(googleClient(), fetch, creds)
+    await store.updateCredentials(userId, "google", refreshed)
+    return refreshed.accessToken
+  }
+
+  async function available(
+    userId: string,
+    id: string
+  ): Promise<AvailableResource[]> {
+    if (providerId.parse(id) === "google")
+      return listGoogleCalendars(fetch, await googleAccessToken(userId))
     const p = provider(id)
     const creds = p.credentials.parse(await store.credentials(userId, p.id))
     return p.listResources(creds, fetch)
@@ -167,7 +246,56 @@ export function createIntegrations({
 
     /** Every provider the user can connect, in display order. */
     providers: (): ProviderInfo[] =>
-      INTEGRATION_PROVIDERS.map((id) => info(PROVIDERS[id])),
+      INTEGRATION_PROVIDERS.map((id) =>
+        id === "google" ? googleInfo(Boolean(google)) : info(PROVIDERS[id])
+      ),
+
+    googleAccessToken,
+
+    /** Google's consent page, for the Connect button (PKCE challenge). */
+    googleAuthorizeUrl: (params: { state: string; codeChallenge: string }) =>
+      googleAuthorizeUrl(googleClient(), params),
+
+    /**
+     * Finish connecting Google with the code from its redirect. The primary
+     * calendar is selected when nothing was selected before.
+     */
+    async connectGoogle(
+      userId: string,
+      code: string,
+      codeVerifier: string
+    ): Promise<IntegrationConnection> {
+      const creds = await exchangeGoogleCode(googleClient(), fetch, {
+        code,
+        codeVerifier,
+      })
+      const primary = await googlePrimaryCalendar(fetch, creds.accessToken)
+      const connection = await store.connect(userId, {
+        provider: "google",
+        account: primary.id,
+        credentials: creds,
+      })
+      if (connection.resources.length > 0) return connection
+      return store.setResources(userId, "google", [
+        stored(toCalendarResource({ ...primary, primary: true })),
+      ])
+    },
+
+    /**
+     * Forget a connection's credentials (the user's call alone). Google is
+     * also asked to drop Daily's access.
+     */
+    async disconnect(actor: Actor, id: string): Promise<void> {
+      const parsed = providerId.parse(id)
+      assertCanDelete(actor, `the ${parsed} connection`)
+      if (parsed === "google") {
+        const creds = googleCredentials.safeParse(
+          await store.credentials(actor.userId, "google")
+        )
+        if (creds.success) await revokeGoogleToken(fetch, creds.data)
+      }
+      await store.disconnect(actor, parsed)
+    },
 
     /** Check credentials with the provider, then store them encrypted. */
     async connect(
@@ -197,13 +325,8 @@ export function createIntegrations({
       const picked = pickResources(await available(userId, id), refs)
       return store.setResources(
         userId,
-        provider(id).id,
-        picked.map(({ externalId, key, name, url }) => ({
-          externalId,
-          key,
-          name,
-          url,
-        }))
+        providerId.parse(id),
+        picked.map(stored)
       )
     },
   }

@@ -11,18 +11,34 @@ const repo = (id: number, name: string, isPrivate = false) => ({
   private: isPrivate,
 })
 
-// Stands in for api.github.com.
-const github: typeof fetch = async (input) => {
+const calendars = {
+  items: [
+    { id: "chris@example.com", summary: "chris@example.com", primary: true },
+    { id: "team@group.calendar.google.com", summary: "Team" },
+  ],
+}
+
+// Stands in for api.github.com and Google's calendar list.
+const remote: typeof fetch = async (input) => {
   const url = String(input)
-  const body = url.startsWith("https://api.github.com/user/repos")
-    ? [repo(1, "codevachon/daily"), repo(2, "useAnzen/app", true)]
-    : { login: "codevachon" }
+  const body = url.startsWith("https://www.googleapis.com/calendar/v3/")
+    ? calendars
+    : url.startsWith("https://api.github.com/user/repos")
+      ? [repo(1, "codevachon/daily"), repo(2, "useAnzen/app", true)]
+      : { login: "codevachon" }
   return new Response(JSON.stringify(body), { status: 200 })
 }
 
 let h: McpHarness
 beforeAll(async () => {
-  h = await createMcpHarness({ fetch: github })
+  h = await createMcpHarness({
+    fetch: remote,
+    google: {
+      clientId: "id",
+      clientSecret: "secret",
+      redirectUri: "https://daily.test/api/integrations/google/callback",
+    },
+  })
 })
 afterAll(() => h.t.close())
 
@@ -45,6 +61,12 @@ describe("integration tools", () => {
       expect.objectContaining({
         provider: "jira",
         resource_noun: "projects",
+        connected: false,
+      }),
+      expect.objectContaining({
+        provider: "google",
+        name: "Google Calendar",
+        resource_noun: "calendars",
         connected: false,
       }),
     ])
@@ -119,5 +141,32 @@ describe("integration tools", () => {
     )
     const { integrations } = await call("list_integrations")
     expect(integrations[0].connected).toBe(false)
+  })
+
+  it("scopes Google calendars by name", async () => {
+    await h.t.services.integrations.connect(h.userId, {
+      provider: "google",
+      account: "chris@example.com",
+      credentials: {
+        refreshToken: "r",
+        accessToken: "a",
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      },
+    })
+    const { resources } = await call("list_integration_resources", {
+      provider: "google",
+    })
+    expect(resources.map((r: { key: string }) => r.key)).toEqual([
+      "chris@example.com",
+      "Team",
+    ])
+    const { in_scope } = await call("set_integration_scope", {
+      provider: "google",
+      keys: ["chris@example.com", "team"],
+    })
+    expect(in_scope.map((r: { name: string }) => r.name).sort()).toEqual([
+      "Team",
+      "chris@example.com",
+    ])
   })
 })

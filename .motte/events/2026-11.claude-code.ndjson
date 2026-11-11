@@ -124,3 +124,20 @@
 {"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":40}
 {"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
 {"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":27}
+{"at":"2026-11-10T18:45:00Z","id":65,"by":"claude-code","as":"agent","type":"created","title":"Epic: Google Calendar meetings, RSVP, meeting tasks and a calendar view","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":66,"by":"claude-code","as":"agent","type":"created","title":"Google connection: Internal OAuth app, Connect with Google, choose calendars","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":67,"by":"claude-code","as":"agent","type":"created","title":"Calendar sync: cache every event with full details","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":68,"by":"claude-code","as":"agent","type":"created","title":"RSVP: accept, maybe or decline meetings from Daily","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":69,"by":"claude-code","as":"agent","type":"created","title":"Accepted meetings become tasks, kept in sync","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"created","title":"Calendar page: month and week views with meetings and due tasks; drag to reschedule","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"created","title":"MCP tools for meetings (read-only)","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":67,"by":"claude-code","as":"agent","type":"blocked","blocker":66}
+{"at":"2026-11-10T18:45:24Z","id":68,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":69,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"blocked","blocker":69}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"blocked","blocker":68}
+{"at":"2026-11-11T20:22:11Z","id":66,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T20:22:11Z","id":66,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T20:36:10Z","id":66,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

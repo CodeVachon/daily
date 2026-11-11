@@ -133,4 +133,23 @@ describe("integrations", () => {
       (await t.services.integrations.list(userId)).map((c) => c.provider)
     ).toEqual(["github", "jira"])
   })
+
+  it("updates credentials in place, keeping the connection as it was", async () => {
+    const before = await t.services.integrations.connect(userId, {
+      provider: "google",
+      account: "chris@example.com",
+      credentials: { refreshToken: "r", accessToken: "old" },
+    })
+    await t.services.integrations.updateCredentials(userId, "google", {
+      refreshToken: "r",
+      accessToken: "new",
+    })
+    expect(await t.services.integrations.credentials(userId, "google")).toEqual(
+      { refreshToken: "r", accessToken: "new" }
+    )
+    expect(await t.services.integrations.get(userId, "google")).toEqual(before)
+    await expect(
+      t.services.integrations.updateCredentials(otherId, "google", {})
+    ).rejects.toThrow(NotFoundError)
+  })
 })

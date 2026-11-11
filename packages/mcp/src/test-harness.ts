@@ -3,7 +3,7 @@
  * as the "Claude Code" agent acting for one user. Used by tool tests.
  */
 import { createTestDatabase, type TestDatabase } from "@workspace/db/testing"
-import type { Fetch } from "@workspace/integrations"
+import type { Fetch, GoogleConfig } from "@workspace/integrations"
 
 import { authInfoFromClaims } from "./context"
 import { createMcpRequestHandler } from "./index"
@@ -28,6 +28,8 @@ export async function createMcpHarness({
   fetch = (async () => {
     throw new Error("no network in tests")
   }) as Fetch,
+  /** The Google OAuth client, when a test needs Google. */
+  google = null as GoogleConfig | null,
 } = {}): Promise<McpHarness> {
   const t = await createTestDatabase()
   const user = await t.seed.user({ name: userName })
@@ -38,7 +40,11 @@ export async function createMcpHarness({
     redirectUris: ["http://127.0.0.1:1/cb"],
   })
   await t.services.settings.reportTimezone(user.id, timezone)
-  const handler = createMcpRequestHandler(t.services, { version, fetch })
+  const handler = createMcpRequestHandler(t.services, {
+    version,
+    fetch,
+    google,
+  })
 
   async function rpc(method: string, params: object = {}, sub = user.id) {
     const response = await handler.fetch(

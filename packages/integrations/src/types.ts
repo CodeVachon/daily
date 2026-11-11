@@ -22,11 +22,18 @@ export interface CredentialField {
 export interface ProviderInfo {
   id: IntegrationProvider
   name: string
-  /** What gets put in scope: "repository" / "project". */
+  /** What gets put in scope: "repository" / "project" / "calendar". */
   resourceNoun: { one: string; many: string }
   fields: CredentialField[]
   /** Where and how to create the credentials. */
   help: { text: string; url: string }
+  /**
+   * "credentials": the user pastes them into `fields`. "oauth": a Connect
+   * button sends them to the provider to approve Daily.
+   */
+  auth: "credentials" | "oauth"
+  /** False when the server lacks what connecting needs (an OAuth client). */
+  configured: boolean
 }
 
 /** A repository/project the credentials can see, before it's selected. */
@@ -41,7 +48,11 @@ export interface Verified {
   config: Record<string, string>
 }
 
-export interface Provider<C = unknown> extends ProviderInfo {
+/** A provider connected with pasted credentials, whose items tasks link to. */
+export interface Provider<C = unknown> extends Omit<
+  ProviderInfo,
+  "auth" | "configured"
+> {
   credentials: z.ZodType<C, unknown>
   /** Check the credentials work; who they belong to. */
   verify(credentials: C, fetch: Fetch): Promise<Verified>

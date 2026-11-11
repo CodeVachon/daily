@@ -1,6 +1,10 @@
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server"
 import type { Services } from "@workspace/db/core"
-import { createIntegrations, type Fetch } from "@workspace/integrations"
+import {
+  createIntegrations,
+  type Fetch,
+  type GoogleConfig,
+} from "@workspace/integrations"
 
 import { contextFromAuthInfo, type McpContext } from "./context"
 import { toolModules } from "./tools"
@@ -37,8 +41,10 @@ export function createMcpServer(ctx: McpContext, version = "dev"): McpServer {
 export interface McpHandlerOptions {
   /** The app's release version, reported in `initialize`. */
   version?: string
-  /** How integrations reach GitHub/Jira (tests pass a fake). */
+  /** How integrations reach GitHub/Jira/Google (tests pass a fake). */
   fetch?: Fetch
+  /** The Google OAuth client, to refresh Google access tokens. */
+  google?: GoogleConfig | null
 }
 
 /**
@@ -47,9 +53,9 @@ export interface McpHandlerOptions {
  */
 export function createMcpRequestHandler(
   services: Services,
-  { version, fetch }: McpHandlerOptions = {}
+  { version, fetch, google }: McpHandlerOptions = {}
 ) {
-  const integrations = createIntegrations({ services, fetch })
+  const integrations = createIntegrations({ services, fetch, google })
   return createMcpHandler(
     async ({ authInfo }) =>
       createMcpServer(

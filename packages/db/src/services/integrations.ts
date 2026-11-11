@@ -128,6 +128,28 @@ export function createIntegrationService(db: Database, key: KeySource) {
       )
     },
 
+    /**
+     * Replace a live connection's credentials (e.g. a refreshed OAuth access
+     * token) without touching who it's connected as or when.
+     */
+    async updateCredentials(
+      userId: string,
+      provider: IntegrationProvider,
+      credentials: unknown
+    ) {
+      const row = await mustGet(userId, provider)
+      await db
+        .update(integrationConnection)
+        .set({
+          credentialsEnc: seal(
+            key,
+            JSON.stringify(credentials),
+            context(userId, provider)
+          ),
+        })
+        .where(eq(integrationConnection.id, row.id))
+    },
+
     /** Wipe the credentials. The user's call alone, like any delete. */
     async disconnect(actor: Actor, provider: IntegrationProvider) {
       assertCanDelete(actor, `the ${provider} connection`)

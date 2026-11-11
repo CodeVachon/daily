@@ -22,11 +22,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { ExternalLinkIcon } from "lucide-react"
 import { useState } from "react"
 
 import { disconnectIntegrationAction } from "@/app/(app)/settings/integrations/actions"
 import { useAction } from "@/components/task/use-action"
 import {
+  connectPrompt,
+  disconnectNote,
+  oauthStartPath,
   replaceDefaults,
   siteHost,
   type ConnectionView,
@@ -50,8 +54,8 @@ function Disconnect({ provider }: { provider: ProviderInfo }) {
           <AlertDialogTitle>Disconnect {provider.name}?</AlertDialogTitle>
           <AlertDialogDescription>
             The credentials are deleted from Daily. Your choice of{" "}
-            {provider.resourceNoun.many} is kept in case you reconnect. Revoke
-            the token with {provider.name} too if you no longer need it.
+            {provider.resourceNoun.many} is kept in case you reconnect.{" "}
+            {disconnectNote(provider)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -76,13 +80,7 @@ function Summary({
   connection: ConnectionView | null
 }) {
   const many = provider.resourceNoun.many
-  if (!connection)
-    return (
-      <>
-        Connect with your own credentials, then choose which {many} Daily may
-        look at.
-      </>
-    )
+  if (!connection) return <>{connectPrompt(provider)}</>
   const host = siteHost(connection)
   return (
     <>
@@ -122,9 +120,77 @@ function Shell({
   )
 }
 
+/** OAuth: a link to the provider's consent page (when the server can). */
+function OAuthConnect({ provider }: { provider: ProviderInfo }) {
+  if (!provider.configured)
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        Not set up on this server yet: add the OAuth client to the env file (see
+        the README), then restart Daily.
+        <Button
+          variant="link"
+          nativeButton={false}
+          render={
+            <a href={provider.help.url} target="_blank" rel="noreferrer" />
+          }
+        >
+          {provider.help.text}
+          <ExternalLinkIcon />
+        </Button>
+      </div>
+    )
+  return (
+    <Button nativeButton={false} render={<a href={oauthStartPath(provider)} />}>
+      Connect {provider.name}
+    </Button>
+  )
+}
+
+/** How to connect: a credentials form, or the provider's consent page. */
+function ConnectBody({
+  provider,
+  initial,
+  onDone,
+}: {
+  provider: ProviderInfo
+  initial?: Record<string, string>
+  onDone?: () => void
+}) {
+  if (provider.auth === "oauth") return <OAuthConnect provider={provider} />
+  return (
+    <CredentialsForm provider={provider} initial={initial} onDone={onDone} />
+  )
+}
+
+/** Re-enter credentials, or go through the provider's consent again. */
+function ReplaceButton({
+  provider,
+  onReplace,
+}: {
+  provider: ProviderInfo
+  onReplace: () => void
+}) {
+  if (provider.auth === "oauth")
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        nativeButton={false}
+        render={<a href={oauthStartPath(provider)} />}
+      >
+        Reconnect
+      </Button>
+    )
+  return (
+    <Button variant="outline" size="sm" onClick={onReplace}>
+      Replace credentials
+    </Button>
+  )
+}
+
 /**
- * One provider: its credentials form until connected, then who it's
- * connected as and (as children) the resource picker.
+ * One provider: how to connect until connected, then who it's connected as
+ * and (as children) the resource picker.
  */
 export function IntegrationCard({
   provider,
@@ -140,13 +206,13 @@ export function IntegrationCard({
   if (!connection)
     return (
       <Shell provider={provider} connection={null}>
-        <CredentialsForm provider={provider} />
+        <ConnectBody provider={provider} />
       </Shell>
     )
   if (replacing)
     return (
       <Shell provider={provider} connection={connection}>
-        <CredentialsForm
+        <ConnectBody
           provider={provider}
           initial={replaceDefaults(connection)}
           onDone={() => setReplacing(false)}
@@ -159,13 +225,10 @@ export function IntegrationCard({
       connection={connection}
       actions={
         <>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setReplacing(true)}
-          >
-            Replace credentials
-          </Button>
+          <ReplaceButton
+            provider={provider}
+            onReplace={() => setReplacing(true)}
+          />
           <Disconnect provider={provider} />
         </>
       }

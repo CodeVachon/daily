@@ -1,6 +1,5 @@
 "use server"
 
-import { services } from "@workspace/db"
 import { INTEGRATION_PROVIDERS } from "@workspace/db/core"
 import { refresh } from "next/cache"
 import { z } from "zod"
@@ -41,7 +40,7 @@ export async function selectIntegrationResourcesAction(
 /** Forget the credentials; the selection is kept for a later reconnect. */
 export async function disconnectIntegrationAction(id: string) {
   return runAsUser(async (actor) => {
-    await services.integrations.disconnect(actor, provider.parse(id))
+    await integrations.disconnect(actor, provider.parse(id))
     refresh()
     return null
   })

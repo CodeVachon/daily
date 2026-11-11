@@ -14,9 +14,9 @@ const resource = z.object({
 })
 
 /**
- * External systems (GitHub, Jira). Agents can see and change what's in scope,
- * but never credentials: connecting and disconnecting is the user's, in
- * Settings > Integrations.
+ * External systems (GitHub, Jira, Google Calendar). Agents can see and change
+ * what's in scope, but never credentials: connecting and disconnecting is the
+ * user's, in Settings > Integrations.
  */
 export const integrationTools: ToolModule = (server, ctx) => {
   const { integrations } = ctx
@@ -26,7 +26,7 @@ export const integrationTools: ToolModule = (server, ctx) => {
     {
       title: "List integrations",
       description:
-        "The external systems Daily can connect to (GitHub, Jira), whether each is connected and as whom, and which repositories/projects are in scope. Only in-scope ones are ever looked at. Credentials are entered by the user in Settings > Integrations; you cannot see or set them.",
+        "The external systems Daily can connect to (GitHub, Jira, Google Calendar), whether each is connected and as whom, and which repositories/projects/calendars are in scope. Only in-scope ones are ever looked at. Connecting is done by the user in Settings > Integrations (credentials, or Google's consent page); you cannot see or set credentials.",
       inputSchema: z.object({}),
       outputSchema: z.object({
         integrations: z.array(
@@ -75,7 +75,7 @@ export const integrationTools: ToolModule = (server, ctx) => {
     {
       title: "List integration resources",
       description:
-        "Every repository (GitHub) or project (Jira) the connected credentials can see, asked of the provider now, with in_scope marking the ones the user selected. Use the keys with set_integration_scope. Fails if the integration isn't connected.",
+        "Every repository (GitHub), project (Jira) or calendar (Google, by name) the connection can see, asked of the provider now, with in_scope marking the ones the user selected. Use the keys with set_integration_scope. Fails if the integration isn't connected.",
       inputSchema: z.object({ provider }),
       outputSchema: z.object({
         resources: z.array(
@@ -119,7 +119,7 @@ export const integrationTools: ToolModule = (server, ctx) => {
     {
       title: "Set integration scope",
       description:
-        'Replace which repositories (GitHub "owner/repo") or projects (Jira "PROJ") are in scope with exactly `keys`; anything left out stops being looked at. To add one, pass the current in_scope keys plus it. Keys must be visible to the credentials (list_integration_resources); unknown keys are an error and nothing changes.',
+        'Replace which repositories (GitHub "owner/repo"), projects (Jira "PROJ") or calendars (Google, by name) are in scope with exactly `keys`; anything left out stops being looked at. To add one, pass the current in_scope keys plus it. Keys must be visible to the credentials (list_integration_resources); unknown keys are an error and nothing changes.',
       inputSchema: z.object({
         provider,
         keys: z.array(z.string().min(1)).describe("The full new scope"),

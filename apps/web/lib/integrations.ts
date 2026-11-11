@@ -1,7 +1,12 @@
 import "server-only"
 
 import { services } from "@workspace/db"
-import { createIntegrations } from "@workspace/integrations"
+import { createIntegrations, googleConfig } from "@workspace/integrations"
 
-/** GitHub/Jira connections for server components and actions. */
-export const integrations = createIntegrations({ services })
+import { ENV } from "@/env"
+
+/** GitHub/Jira/Google connections for server components and actions. */
+export const integrations = createIntegrations({
+  services,
+  google: googleConfig(ENV),
+})

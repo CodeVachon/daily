@@ -11,7 +11,7 @@ import {
 
 import type { Actor } from "../actor"
 import type { LinkKind, LinkStateCategory } from "../external-ref"
-import type { IntegrationProvider } from "../integration-inputs"
+import type { LinkProvider } from "../integration-inputs"
 import { taskOwned } from "./columns"
 import { task } from "./tasks"
 
@@ -26,7 +26,7 @@ export const taskLink = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     ...taskOwned(),
-    provider: text().$type<IntegrationProvider>().notNull(),
+    provider: text().$type<LinkProvider>().notNull(),
     kind: text().$type<LinkKind>().notNull(),
     /** "owner/repo#12", "PROJ-42". */
     key: text().notNull(),

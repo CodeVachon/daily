@@ -33,7 +33,11 @@ describe("createIntegrations", () => {
 
   it("lists providers without their functions", () => {
     const providers = integrations().providers()
-    expect(providers.map((p) => p.id)).toEqual(["github", "jira"])
+    expect(providers.map((p) => p.id)).toEqual(["github", "jira", "google"])
+    expect(providers.find((p) => p.id === "google")).toMatchObject({
+      auth: "oauth",
+      configured: false,
+    })
     expect(JSON.parse(JSON.stringify(providers))).toEqual(providers)
   })
 

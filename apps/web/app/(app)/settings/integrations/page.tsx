@@ -7,11 +7,12 @@ import {
   AlertTitle,
 } from "@workspace/ui/components/alert"
 import { Skeleton } from "@workspace/ui/components/skeleton"
-import { CircleAlertIcon } from "lucide-react"
+import { CircleAlertIcon, CircleCheckIcon } from "lucide-react"
 import { Suspense } from "react"
 
 import { IntegrationCard } from "@/components/settings/integration-card"
 import { ResourcePicker } from "@/components/settings/resource-picker"
+import { connectNotice, type ConnectNotice } from "@/lib/google-oauth"
 import { integrations } from "@/lib/integrations"
 import { requireSession } from "@/lib/session"
 
@@ -51,11 +52,36 @@ async function Resources({
   )
 }
 
-export default async function IntegrationsPage() {
+/** How connecting Google went, after its redirect back here. */
+function Notice({ notice }: { notice: ConnectNotice }) {
+  if (!notice) return null
+  if (notice.ok)
+    return (
+      <Alert>
+        <CircleCheckIcon />
+        <AlertTitle>Google Calendar connected</AlertTitle>
+        <AlertDescription>
+          Your primary calendar is selected. Choose any others below.
+        </AlertDescription>
+      </Alert>
+    )
+  return (
+    <Alert variant="destructive">
+      <CircleAlertIcon />
+      <AlertTitle>Couldn’t connect Google Calendar</AlertTitle>
+      <AlertDescription>{notice.reason}</AlertDescription>
+    </Alert>
+  )
+}
+
+export default async function IntegrationsPage({
+  searchParams,
+}: PageProps<"/settings/integrations">) {
   const { user } = await requireSession()
   const connections = await services.integrations.list(user.id)
   return (
     <div className="max-w-3xl space-y-4 p-4">
+      <Notice notice={connectNotice(await searchParams)} />
       {integrations.providers().map((provider) => {
         const connection = connections.find((c) => c.provider === provider.id)
         return (

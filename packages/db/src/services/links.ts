@@ -10,7 +10,7 @@ import {
   type LinkKind,
   type LinkStateCategory,
 } from "../external-ref"
-import type { IntegrationProvider } from "../integration-inputs"
+import type { LinkProvider } from "../integration-inputs"
 import { task, taskLink } from "../schema"
 import { SYNC_INTERVALS } from "../sync-policy"
 import { recordEvents } from "./activity"
@@ -19,7 +19,7 @@ import { createTaskService, type TaskRef } from "./tasks"
 
 export interface TaskLink {
   id: string
-  provider: IntegrationProvider
+  provider: LinkProvider
   kind: LinkKind
   key: string
   url: string
@@ -52,12 +52,12 @@ export type SyncResult =
 export interface DueLink {
   userId: string
   linkId: string
-  provider: IntegrationProvider
+  provider: LinkProvider
 }
 
 /** What a board card shows about a link. */
 export interface LinkChip {
-  provider: IntegrationProvider
+  provider: LinkProvider
   kind: LinkKind
   key: string
   state: string | null

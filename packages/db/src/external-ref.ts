@@ -1,5 +1,5 @@
 // Links from tasks to GitHub / Jira items (motte #36). Database-free.
-import type { IntegrationProvider } from "./integration-inputs"
+import type { LinkProvider } from "./integration-inputs"
 
 export const LINK_KINDS = ["issue", "pr"] as const
 export type LinkKind = (typeof LINK_KINDS)[number]
@@ -15,7 +15,7 @@ export const LINK_STATE_CATEGORIES = [
 export type LinkStateCategory = (typeof LINK_STATE_CATEGORIES)[number]
 
 export interface ExternalRef {
-  provider: IntegrationProvider
+  provider: LinkProvider
   /**
    * GitHub shorthand can't tell an issue from a PR; it starts as "issue"
    * and sync corrects it.

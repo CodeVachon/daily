@@ -34,8 +34,10 @@ export {
 export {
   INTEGRATION_PROVIDERS,
   integrationResource,
+  LINK_PROVIDERS,
   type IntegrationProvider,
   type IntegrationResource,
+  type LinkProvider,
 } from "./integration-inputs"
 export {
   ACCENT_COLORS,

@@ -120,7 +120,7 @@ immediately).
 Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migrate`
 (`db:push` / `db:studio` are also available).
 
-## Integrations (GitHub, Jira)
+## Integrations (GitHub, Jira, Google Calendar)
 
 Settings → Integrations connects external systems with your own credentials and lets you
 choose which repositories / projects Daily may look at. Nothing outside that selection is ever
@@ -138,6 +138,35 @@ never shown again or exposed to agents. Disconnecting deletes them but keeps the
 
 Changing `INTEGRATIONS_ENCRYPTION_KEY` makes stored credentials unreadable; reconnect each
 integration afterwards.
+
+### Google Calendar
+
+Google is connected with **Connect Google Calendar** (Google's consent page) instead of pasted
+credentials. Daily keeps the refresh token (encrypted like the others), refreshes access tokens
+itself, and selects your primary calendar; choose others in the picker. Disconnecting also asks
+Google to remove Daily's access. It needs an OAuth client, once per deployment:
+
+1. [Create a project](https://console.cloud.google.com/projectcreate) in your Workspace
+   organisation (Internal apps are only offered for projects in an organisation).
+2. [Enable the Google Calendar API](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com).
+3. [Branding](https://console.cloud.google.com/auth/branding): app name "Daily", your email as
+   support and developer contact; **Audience: Internal** (no Google review, tokens don't expire
+   after 7 days).
+4. [Data access](https://console.cloud.google.com/auth/scopes): add
+   `https://www.googleapis.com/auth/calendar.events` (read events, answer invitations) and
+   `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (list your calendars).
+5. [Create an OAuth client](https://console.cloud.google.com/auth/clients/create): **Web
+   application**, authorized redirect URI `${BETTER_AUTH_URL}/api/integrations/google/callback`
+   (e.g. `https://<machine>.<tailnet>.ts.net/api/integrations/google/callback`; add the
+   production domain's too).
+6. Put the client in `.env.local` (or the production env file) and restart:
+
+   ```sh
+   GOOGLE_CLIENT_ID=….apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=…
+   ```
+
+Without them the Google card says it isn't set up; everything else works.
 
 ### Sync worker
 

@@ -227,7 +227,7 @@ async function listEvents(
 }
 
 /**
- * Kept: live events up to a year ahead. Cancelled ones, and ones now beyond
+ * Kept: live events up to a month ahead. Cancelled ones, and ones now beyond
  * the horizon (moved, or far instances of a series), are removed.
  */
 function toBatch(
@@ -249,7 +249,7 @@ function toBatch(
 
 /**
  * A calendar's changes since `syncToken`, or everything from 30 days ago
- * (to a year ahead) when there's no token or Google says it expired (410).
+ * (to a month ahead) when there's no token or Google says it expired (410).
  */
 export async function fetchCalendarChanges(
   fetch: Fetch,

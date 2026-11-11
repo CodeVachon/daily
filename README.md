@@ -178,9 +178,9 @@ selected in Settings → Integrations are asked. Changes after the first sync ap
 activity as "sync".
 
 It also mirrors the selected Google calendars (`calendar-sync`, every pass): the first sync
-fetches events from 30 days ago to a year ahead with every detail (attendees and their answers,
+fetches events from 30 days ago to a month ahead with every detail (attendees and their answers,
 Meet link and dial-in, attachments), later passes fetch only what changed (Google sync tokens), and
-a full sync every 7 days rolls the one-year window forward. Deselecting a calendar or
+a full sync every 7 days rolls that window forward. Deselecting a calendar or
 disconnecting Google drops its events. Open pages refresh when events change. A calendar that
 fails (e.g. you lost access) records why and is retried next pass.
 

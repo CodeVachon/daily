@@ -1,12 +1,13 @@
 ---
 id: 69
 title: Accepted meetings become tasks, kept in sync
-state: Todo
+state: Done
 parent: 65
+assignee: claude-code
 labels: [calendar, db, integrations]
 blockedBy: [67]
 created: 2026-11-10T18:45:24Z
-updated: 2026-11-11T20:38:05Z
+updated: 2026-11-11T21:52:13Z
 ---
 
 ## Description
@@ -26,3 +27,7 @@ Every meeting you've accepted (or organize) shows in your todo list as a real ta
 ### 2026-11-11T20:38:05Z — claude-code (agent)
 
 Decision (Chris, 2026-11-11): a meeting whose end time has passed moves its task to Done automatically. Open question resolved; plan updated.
+
+### 2026-11-11T21:52:09Z — claude-code (agent)
+
+Built: pure rules in packages/db/src/meeting-tasks.ts (isGoing: default type, not all-day, other people or a Meet link, accepted or organizer; meetingTaskAction: create within 14 days / cancel when declined or gone / reopen to Todo when accepted again / Done once after it ends / follow title+time; never touch done or deleted tasks). meeting_task table (migration 0016) links (calendar, event id) → task and survives full re-syncs (calendar_event rows are replaced). services.meetingTasks.reconcile runs in the worker's calendar-sync pass (holds the job's advisory lock, so no duplicate tasks); not on RSVP, so an accepted invitation becomes a task within a minute. Gone meetings only count as gone while the calendar is still synced and within the synced past window (25 days), so deselecting a calendar or old meetings never cancel tasks. get_meeting returns task_number; the meeting sheet links "Task #n". Live: dev worker created tasks #2 and #3 for Chris's accepted Executive L10 meetings.

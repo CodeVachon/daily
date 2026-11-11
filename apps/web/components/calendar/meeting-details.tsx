@@ -7,6 +7,7 @@ import {
   CircleHelpIcon,
   ClockIcon,
   ExternalLinkIcon,
+  ListTodoIcon,
   MapPinIcon,
   PaperclipIcon,
   PhoneIcon,
@@ -15,6 +16,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import Link from "next/link"
+
 import { Markdown } from "@/components/markdown"
 import {
   meetingDetailsView,
@@ -22,6 +25,7 @@ import {
   type MeetingDetailsView,
   type PersonView,
 } from "@/lib/meeting"
+import { taskHref } from "@/lib/task-form"
 
 import { RsvpButtons } from "./rsvp-buttons"
 
@@ -154,6 +158,20 @@ function Attachments({ files }: { files: MeetingDetailsView["attachments"] }) {
   )
 }
 
+/** The task Daily keeps for this meeting. */
+function TaskLink({ number }: { number: number | null }) {
+  if (number === null) return null
+  return (
+    <Link
+      href={taskHref(number)}
+      className="flex items-center gap-2 text-sm hover:underline"
+    >
+      <ListTodoIcon className="size-3.5 text-muted-foreground" />
+      Task #{number}
+    </Link>
+  )
+}
+
 function OpenInGoogle({ url }: { url: string | null }) {
   if (!url) return null
   return (
@@ -171,12 +189,19 @@ function OpenInGoogle({ url }: { url: string | null }) {
 }
 
 /** Everything about one meeting: how to join, who's coming, the agenda. */
-export function MeetingDetails({ event }: { event: CalendarEvent }) {
+export function MeetingDetails({
+  event,
+  taskNumber,
+}: {
+  event: CalendarEvent
+  taskNumber: number | null
+}) {
   const view = meetingDetailsView(event, descriptionMarkdown(event.description))
   return (
     <>
       <Answer view={view} />
       <Join view={view} />
+      <TaskLink number={taskNumber} />
       <Place text={view.location} />
       <Guests view={view} />
       <Description text={view.description} />

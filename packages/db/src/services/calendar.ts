@@ -253,6 +253,13 @@ export function createCalendarService(db: Database) {
 
     get,
 
+    /** One of the user's events, or null (e.g. a stale link). */
+    find: (userId: string, id: string): Promise<CalendarEvent | null> =>
+      get(userId, id).catch((error: unknown) => {
+        if (error instanceof NotFoundError) return null
+        throw error
+      }),
+
     /**
      * The meeting on now or next within 24 hours: timed, not declined, not
      * focus time / out of office. Null when there's none.

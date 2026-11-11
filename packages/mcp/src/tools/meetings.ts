@@ -85,9 +85,17 @@ const meetingDetails = meetingOutput.extend({
   ),
   attachments: z.array(z.object({ title: z.string(), url: z.string() })),
   google_calendar_url: z.string().nullable(),
+  task_number: z
+    .number()
+    .nullable()
+    .describe("The task Daily keeps for this meeting (accepted meetings)"),
 })
 
-function toDetails(e: CalendarEvent, timezone: string) {
+function toDetails(
+  e: CalendarEvent,
+  timezone: string,
+  taskNumber: number | null
+) {
   return {
     ...toMeeting(e, timezone),
     description: descriptionMarkdown(e.description),
@@ -104,6 +112,7 @@ function toDetails(e: CalendarEvent, timezone: string) {
       .map((c) => ({ number: c.label ?? c.uri, pin: c.pin })),
     attachments: e.attachments.map(({ title, url }) => ({ title, url })),
     google_calendar_url: e.htmlLink,
+    task_number: taskNumber,
   }
 }
 
@@ -168,7 +177,7 @@ export const meetingTools: ToolModule = (server, ctx) => {
     {
       title: "Get meeting",
       description:
-        "Everything about one meeting (id from list_meetings or next_meeting): attendees and their answers, the agenda (Markdown), Meet link, phone dial-in with PIN, attachments such as Meet notes.",
+        'Everything about one meeting (id from list_meetings or next_meeting): attendees and their answers, the agenda (Markdown), Meet link, phone dial-in with PIN, attachments such as Meet notes, and task_number: the task Daily keeps for meetings you accepted (label "meeting", Done automatically once it\'s over).',
       inputSchema: z.object({ id: z.string().min(1) }),
       outputSchema: z.object({ meeting: meetingDetails }),
       annotations: {
@@ -178,11 +187,13 @@ export const meetingTools: ToolModule = (server, ctx) => {
       },
     },
     async ({ id }) =>
-      safely(async () =>
-        json({
-          meeting: toDetails(await calendar.get(ctx.userId, id), ctx.timezone),
+      safely(async () => {
+        const event = await calendar.get(ctx.userId, id)
+        const task = await ctx.services.meetingTasks.taskFor(ctx.userId, event)
+        return json({
+          meeting: toDetails(event, ctx.timezone, task),
         })
-      )
+      })
   )
 
   server.registerTool(

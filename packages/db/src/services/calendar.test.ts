@@ -294,6 +294,10 @@ describe("calendar reads", () => {
     await expect(t.services.calendar.get(otherId, standup!.id)).rejects.toThrow(
       NotFoundError
     )
+    expect(await t.services.calendar.find(otherId, standup!.id)).toBeNull()
+    expect((await t.services.calendar.find(me, standup!.id))?.title).toBe(
+      "Standup"
+    )
   })
 
   it("finds the meeting on now or next, skipping declined and focus time", async () => {

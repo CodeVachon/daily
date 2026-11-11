@@ -12,6 +12,7 @@ import { createInboxService } from "./inbox"
 import { createIntegrationService } from "./integrations"
 import { createLabelService } from "./labels"
 import { createLinkService } from "./links"
+import { createMeetingTaskService } from "./meeting-tasks"
 import { createOAuthClientService } from "./oauth-clients"
 import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
@@ -32,10 +33,21 @@ export interface ServiceOptions {
 
 export function createServices(db: Database, options: ServiceOptions) {
   const integrations = createIntegrationService(db, options.encryptionKey)
+  const calendar = createCalendarService(db)
+  const tasks = createTaskService(db)
+  const labels = createLabelService(db)
+  const settings = createSettingsService(db)
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
-    calendar: createCalendarService(db),
+    calendar,
+    /** Tasks for the meetings I'm going to (calendar sync keeps them). */
+    meetingTasks: createMeetingTaskService(db, {
+      calendar,
+      tasks,
+      labels,
+      settings,
+    }),
     /** Live calendar changes (calendar sync, any process). */
     calendarChanges: createCalendarFeed(options.listen),
     /** Live task changes from every process (web, MCP, sync worker). */
@@ -47,12 +59,12 @@ export function createServices(db: Database, options: ServiceOptions) {
     inbox: createInboxService(db),
     integrations,
     users: createUserService(db),
-    labels: createLabelService(db),
+    labels,
     links: createLinkService(db, integrations),
     oauthClients: createOAuthClientService(db),
     projects: createProjectService(db),
-    settings: createSettingsService(db),
-    tasks: createTaskService(db),
+    settings,
+    tasks,
     worker: createWorkerService(db),
   }
 }

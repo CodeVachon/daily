@@ -19,6 +19,7 @@ import type {
   ResponseStatus,
 } from "../calendar-inputs"
 import { user } from "./auth"
+import { task } from "./tasks"
 
 /** One event instance on one of the user's selected calendars. */
 export const calendarEvent = pgTable(
@@ -83,4 +84,36 @@ export const calendarSyncState = pgTable(
     lastError: text(),
   },
   (t) => [uniqueIndex("calendar_sync_state_ref_idx").on(t.userId, t.calendarId)]
+)
+
+/**
+ * A meeting's task (motte #69). Kept apart from calendar_event, whose rows
+ * a full sync replaces; the task follows the meeting by (calendar, id).
+ */
+export const meetingTask = pgTable(
+  "meeting_task",
+  {
+    userId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    calendarId: text().notNull(),
+    externalId: text().notNull(),
+    taskId: text()
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    /** The meeting as last applied to the task. */
+    title: text().notNull(),
+    startAt: timestamp({ withTimezone: true }).notNull(),
+    /** Daily moved it to Done after the meeting; it won't again. */
+    autoCompletedAt: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("meeting_task_ref_idx").on(
+      t.userId,
+      t.calendarId,
+      t.externalId
+    ),
+    index("meeting_task_task_idx").on(t.taskId),
+  ]
 )

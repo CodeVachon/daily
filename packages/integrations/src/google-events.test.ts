@@ -312,7 +312,7 @@ describe("syncCalendars", () => {
       await sync({
         [EVENTS]: { body: { items: [meeting], nextSyncToken: "s1" } },
       })
-    ).toEqual({ calendars: 2, changed: 1, failed: 1 })
+    ).toEqual({ calendars: 2, changed: 1, failed: 1, tasks: 0 })
     const status = await t.services.calendar.syncStatus(userId)
     expect(status.find((s) => s.calendarId !== ME)?.lastError).toMatch(
       /Google returned 404/
@@ -341,7 +341,12 @@ describe("syncCalendars", () => {
       accessToken: "a",
       expiresAt: "2000-01-01T00:00:00.000Z",
     })
-    expect(await sync({})).toEqual({ calendars: 2, changed: 0, failed: 2 })
+    expect(await sync({})).toEqual({
+      calendars: 2,
+      changed: 0,
+      failed: 2,
+      tasks: 0,
+    })
   })
 })
 

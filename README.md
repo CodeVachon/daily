@@ -181,7 +181,14 @@ It also mirrors the selected Google calendars (`calendar-sync`, every pass): the
 fetches events from 30 days ago to a month ahead with every detail (attendees and their answers,
 Meet link and dial-in, attachments), later passes fetch only what changed (Google sync tokens), and
 a full sync every 7 days rolls that window forward. Deselecting a calendar or
-disconnecting Google drops its events. Open pages refresh when events change. A calendar that
+disconnecting Google drops its events. Open pages refresh when events change.
+
+Meetings you accept (or organize) become tasks: up to two weeks ahead, each meeting with other
+people or a Meet link gets a task labelled "meeting", due at its start, created by the sync system.
+A new title or time updates the task; declining or a cancelled meeting cancels it (accepting again
+reopens it); once the meeting is over the task moves to Done, once (reopen it and it stays open).
+Tasks you finished or deleted are never touched. Answer invitations from the meeting details or the
+Invitations list on Updates (Google tells the organizer). A calendar that
 fails (e.g. you lost access) records why and is retried next pass.
 
 - **Dev:** `bun run dev` starts it with the web app (or `bun run --cwd apps/worker dev` alone).

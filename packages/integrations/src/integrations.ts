@@ -113,10 +113,15 @@ export interface CalendarSyncSummary {
   /** Events added, changed or removed. */
   changed: number
   failed: number
+  /** Meeting tasks created or updated. */
+  tasks: number
 }
 
 export interface IntegrationsOptions {
-  services: Pick<Services, "integrations" | "links" | "calendar">
+  services: Pick<
+    Services,
+    "integrations" | "links" | "calendar" | "meetingTasks"
+  >
   fetch?: Fetch
   /** The Google OAuth client; without it Google can't be connected. */
   google?: GoogleConfig | null
@@ -296,8 +301,9 @@ export function createIntegrations({
 
     /**
      * One calendar sync pass (all users): drop calendars no longer selected,
-     * then fetch each selected calendar's changes since its sync token. A
-     * failing calendar records why and is retried next pass.
+     * fetch each selected calendar's changes since its sync token, then
+     * update meeting tasks. A failing calendar records why and is retried
+     * next pass.
      */
     async syncCalendars(now = new Date()): Promise<CalendarSyncSummary> {
       const calendar = services.calendar
@@ -321,7 +327,13 @@ export function createIntegrations({
           await calendar.recordSyncError(userId, calendarId, error.message)
         }
       }
-      return { calendars: targets.length, changed, failed }
+      // Then tasks for the meetings each user is going to (motte #69).
+      let tasks = 0
+      for (const userId of new Set(targets.map((t) => t.userId))) {
+        const done = await services.meetingTasks.reconcile(userId, now)
+        tasks += done.created + done.updated
+      }
+      return { calendars: targets.length, changed, failed, tasks }
     },
 
     /** Google's consent page, for the Connect button (PKCE challenge). */

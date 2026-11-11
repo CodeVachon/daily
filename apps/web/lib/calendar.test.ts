@@ -7,6 +7,7 @@ import {
   monthOf,
   openEventId,
   parseView,
+  stepLabels,
   viewLinks,
   hourLabels,
   layoutWeek,
@@ -200,14 +201,20 @@ describe("calendar links", () => {
         label: "Week",
         href: "/calendar?date=2026-11-12",
         active: false,
+        variant: "ghost",
       },
       {
         view: "month",
         label: "Month",
         href: "/calendar?date=2026-11-12&view=month",
         active: true,
+        variant: "secondary",
       },
     ])
+    expect(stepLabels("month")).toEqual({
+      prev: "Previous month",
+      next: "Next month",
+    })
     expect(openEventId("abc")).toBe("abc")
     expect(openEventId(["abc", "x"])).toBe("abc")
     expect(openEventId("")).toBeNull()

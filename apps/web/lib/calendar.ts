@@ -272,8 +272,15 @@ export function viewLinks(current: CalendarView, date: CalendarDate) {
     label: view === "week" ? "Week" : "Month",
     href: calendarHref(date, { view }),
     active: view === current,
+    variant: view === current ? ("secondary" as const) : ("ghost" as const),
   }))
 }
+
+/** "Previous week" / "Next month" for the arrows. */
+export const stepLabels = (view: CalendarView) => ({
+  prev: `Previous ${view}`,
+  next: `Next ${view}`,
+})
 
 export interface MonthDay extends WeekDay {
   inMonth: boolean

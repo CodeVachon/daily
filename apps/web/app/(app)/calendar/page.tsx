@@ -1,5 +1,4 @@
 import { services } from "@workspace/db"
-import { NotFoundError } from "@workspace/db/core"
 import { calendarDateIn, type CalendarDate } from "@workspace/db/time"
 import {
   Alert,
@@ -24,6 +23,7 @@ import {
   openEventId,
   parseCalendarDate,
   parseView,
+  stepLabels,
   viewLinks,
   weekOf,
   type CalendarView,
@@ -46,10 +46,7 @@ async function MeetingSlot({
   closeHref: string
 }) {
   if (!eventId) return null
-  const event = await services.calendar.get(userId, eventId).catch((error) => {
-    if (error instanceof NotFoundError) return null
-    throw error
-  })
+  const event = await services.calendar.find(userId, eventId)
   if (!event) return null
   return (
     <MeetingSheet
@@ -57,7 +54,10 @@ async function MeetingSlot({
       when={whenLabel(event, timezone)}
       closeHref={closeHref}
     >
-      <MeetingDetails event={event} />
+      <MeetingDetails
+        event={event}
+        taskNumber={await services.meetingTasks.taskFor(userId, event)}
+      />
     </MeetingSheet>
   )
 }
@@ -100,7 +100,7 @@ function Toolbar({
   const go = (date: string) => (
     <Link href={calendarHref(date, { view })} scroll={false} />
   )
-  const unit = view === "month" ? "month" : "week"
+  const labels = stepLabels(view)
   return (
     <>
       <span className="hidden text-sm text-muted-foreground sm:inline">
@@ -111,7 +111,7 @@ function Toolbar({
           <Button
             key={v.view}
             size="xs"
-            variant={v.active ? "secondary" : "ghost"}
+            variant={v.variant}
             nativeButton={false}
             render={<Link href={v.href} scroll={false} />}
           >
@@ -131,7 +131,7 @@ function Toolbar({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={`Previous ${unit}`}
+        aria-label={labels.prev}
         nativeButton={false}
         render={go(period.prev)}
       >
@@ -140,7 +140,7 @@ function Toolbar({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={`Next ${unit}`}
+        aria-label={labels.next}
         nativeButton={false}
         render={go(period.next)}
       >

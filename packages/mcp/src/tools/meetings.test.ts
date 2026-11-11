@@ -169,6 +169,7 @@ describe("meeting tools", () => {
       dial_in: [{ number: "+1 555-0100", pin: "123" }],
       attachments: [{ title: "Notes", url: "https://docs.google.com/d/1" }],
       google_calendar_url: "https://calendar.google.com/event?eid=1",
+      task_number: null,
     })
     expect(meeting.attendees).toContainEqual(
       expect.objectContaining({ name: "Room 4", room: true })

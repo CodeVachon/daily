@@ -1,6 +1,7 @@
 /**
- * The background worker: keeps linked GitHub/Jira items fresh (motte #40)
- * and mirrors the selected Google calendars (motte #67).
+ * The background worker: keeps linked GitHub/Jira items fresh (motte #40),
+ * mirrors the selected Google calendars (motte #67) and keeps a task for
+ * each meeting you're going to (motte #69).
  *
  *   bun run dev      (with turbo dev)      docker: `daily worker`
  *
@@ -41,9 +42,9 @@ await runWorker(
           services.worker.exclusive(CALENDAR_SYNC_JOB, async () => ({
             ...(await integrations.syncCalendars()),
           })),
-        describe: ({ calendars, changed, failed }) =>
-          changed || failed
-            ? `${calendars} calendar(s): ${changed} event change(s), ${failed} failed`
+        describe: ({ calendars, changed, failed, tasks }) =>
+          changed || failed || tasks
+            ? `${calendars} calendar(s): ${changed} event change(s), ${tasks} meeting task(s), ${failed} failed`
             : null,
       },
     ],

@@ -15,7 +15,8 @@ import {
 /**
  * Keeps the open page current: listens to /api/events and refreshes the
  * server components when tasks change, from here, another tab, an agent or
- * the sync worker. Waits while the user is typing or dragging.
+ * the sync worker, and when calendar sync changes events. Waits while the
+ * user is typing or dragging.
  */
 export function LiveUpdates() {
   const router = useRouter()
@@ -33,6 +34,8 @@ export function LiveUpdates() {
       )
       scheduler.notify()
     })
+    // Calendar sync changed events: refresh, no flash.
+    source.addEventListener("calendar", () => scheduler.notify())
     return () => {
       source.close()
       scheduler.dispose()

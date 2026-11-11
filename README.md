@@ -177,6 +177,13 @@ failing ones every 15 minutes (`packages/db/src/sync-policy.ts`). Only repositor
 selected in Settings → Integrations are asked. Changes after the first sync appear in the task's
 activity as "sync".
 
+It also mirrors the selected Google calendars (`calendar-sync`, every pass): the first sync
+fetches events from 30 days ago to a year ahead with every detail (attendees and their answers,
+Meet link and dial-in, attachments), later passes fetch only what changed (Google sync tokens), and
+a full sync every 7 days rolls the one-year window forward. Deselecting a calendar or
+disconnecting Google drops its events. Open pages refresh when events change. A calendar that
+fails (e.g. you lost access) records why and is retried next pass.
+
 - **Dev:** `bun run dev` starts it with the web app (or `bun run --cwd apps/worker dev` alone).
 - **Production:** the `worker` service in `docker-compose.prod.yml` (`daily worker` in the image).
   Run one; a Postgres advisory lock stops a second copy from syncing at the same time.

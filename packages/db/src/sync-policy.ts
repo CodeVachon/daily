@@ -17,3 +17,17 @@ export const WORKER_STALE_AFTER_SECONDS = 5 * MINUTE
 
 /** The background job that keeps linked GitHub/Jira items fresh. */
 export const LINK_SYNC_JOB = "link-sync"
+
+/** The background job that mirrors the selected Google calendars. */
+export const CALENDAR_SYNC_JOB = "calendar-sync"
+
+/** A calendar's first (full) sync starts this many days back. */
+export const CALENDAR_SYNC_PAST_DAYS = 30
+
+/**
+ * Events further ahead aren't kept (Google expands recurring events for
+ * decades). Unchanged instances never come back in an incremental sync, so
+ * a full sync every CALENDAR_FULL_SYNC_DAYS rolls the window forward.
+ */
+export const CALENDAR_SYNC_FUTURE_DAYS = 365
+export const CALENDAR_FULL_SYNC_DAYS = 7

@@ -210,7 +210,11 @@ export interface CalendarListEntry {
   accessRole: string
 }
 
-const calendarGet = <T>(fetch: Fetch, accessToken: string, path: string) =>
+export const calendarGet = <T>(
+  fetch: Fetch,
+  accessToken: string,
+  path: string
+) =>
   getJson<T>(fetch, "Google", `${CALENDAR_API}${path}`, {
     authorization: `Bearer ${accessToken}`,
   })

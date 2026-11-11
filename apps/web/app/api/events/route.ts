@@ -23,6 +23,8 @@ export async function GET(request: Request) {
       services.changes.subscribe(userId, ({ userId: _, ...change }) =>
         onChange(change)
       ),
+    subscribeCalendar: (onChange) =>
+      services.calendarChanges.subscribe(userId, () => onChange()),
     missedSince: async (seq): Promise<LiveChange[]> => {
       const { events } = await services.activity.since(userId, {
         after: seq,

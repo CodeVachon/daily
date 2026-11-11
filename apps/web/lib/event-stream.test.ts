@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { eventStream, formatSse, type LiveChange } from "./event-stream"
+import {
+  CALENDAR_SSE,
+  eventStream,
+  formatSse,
+  type LiveChange,
+} from "./event-stream"
 
 const change = (seq: number, taskId = "t1"): LiveChange => ({
   seq,
@@ -63,6 +68,27 @@ describe("eventStream", () => {
     expect(text.match(/^id: /gm)).toEqual(["id: ", "id: "])
     controller.abort()
     await vi.waitFor(() => expect(b.unsubscribe).toHaveBeenCalled())
+  })
+
+  it("tells the page about calendar changes, without an id", async () => {
+    let push = () => {}
+    const off = vi.fn(async () => {})
+    const controller = new AbortController()
+    const stream = eventStream({
+      subscribe: bus().subscribe,
+      subscribeCalendar: async (onChange) => {
+        push = onChange
+        return off
+      },
+      missedSince: async () => [],
+      lastEventId: null,
+      signal: controller.signal,
+    })
+    await readSome(stream, 1)
+    push()
+    expect(await readSome(stream, 1)).toBe(CALENDAR_SSE)
+    controller.abort()
+    await vi.waitFor(() => expect(off).toHaveBeenCalled())
   })
 
   it("replays what a reconnecting client missed", async () => {

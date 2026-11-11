@@ -1,10 +1,19 @@
 // The worker's run loop, with its effects injected so it can be tested.
 
+/** One kind of work the worker repeats ("link-sync", "calendar-sync"). */
+export interface WorkerJob {
+  name: string
+  /** One pass; null when another worker instance holds the lock. */
+  run: () => Promise<Record<string, number> | null>
+  /** What a pass did, for the log; null to stay quiet. */
+  describe: (summary: Record<string, number>) => string | null
+}
+
 export interface WorkerDeps {
-  /** One sync pass; null when another worker instance holds the lock. */
-  pass: () => Promise<Record<string, number> | null>
-  /** Record a heartbeat with what the pass did. */
-  beat: (details: Record<string, number>) => Promise<void>
+  /** Run in order on every tick; one failing doesn't stop the others. */
+  jobs: WorkerJob[]
+  /** Record a job's heartbeat with what its pass did. */
+  beat: (job: string, details: Record<string, number>) => Promise<void>
   sleep: (ms: number, signal: AbortSignal) => Promise<void>
   log: (message: string) => void
   intervalMs: number
@@ -24,26 +33,30 @@ export function sleep(ms: number, signal: AbortSignal): Promise<void> {
   })
 }
 
-async function tick(deps: WorkerDeps) {
+async function runJob(deps: WorkerDeps, job: WorkerJob) {
   try {
-    const summary = await deps.pass()
-    if (!summary) return deps.log("another worker is syncing; skipped")
-    await deps.beat(summary)
-    if (summary.checked)
-      deps.log(
-        `synced ${summary.checked} link(s), ${summary.failed ?? 0} failed`
-      )
+    const summary = await job.run()
+    if (!summary)
+      return deps.log(`${job.name}: another worker is running it; skipped`)
+    await deps.beat(job.name, summary)
+    const line = job.describe(summary)
+    if (line) deps.log(`${job.name}: ${line}`)
   } catch (error) {
     // Keep going: a database blip shouldn't stop the worker for good.
     deps.log(
-      `sync pass failed: ${error instanceof Error ? error.message : String(error)}`
+      `${job.name} failed: ${error instanceof Error ? error.message : String(error)}`
     )
   }
 }
 
+async function tick(deps: WorkerDeps) {
+  for (const job of deps.jobs) await runJob(deps, job)
+}
+
 /** Run passes every `intervalMs` until `signal` aborts (SIGTERM). */
 export async function runWorker(deps: WorkerDeps, signal: AbortSignal) {
-  deps.log(`sync worker started; every ${deps.intervalMs / 1000}s`)
+  const names = deps.jobs.map((j) => j.name).join(", ")
+  deps.log(`sync worker started (${names}); every ${deps.intervalMs / 1000}s`)
   while (!signal.aborted) {
     await tick(deps)
     await deps.sleep(deps.intervalMs, signal)

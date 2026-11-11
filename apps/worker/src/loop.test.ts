@@ -2,57 +2,69 @@ import { describe, expect, it, vi } from "vitest"
 
 import { runWorker, sleep, type WorkerDeps } from "./loop"
 
-function harness(passes: (Record<string, number> | null | Error)[]) {
+type Pass = Record<string, number> | null | Error
+
+function harness(links: Pass[], calendars: Pass[] = []) {
   const controller = new AbortController()
   const logs: string[] = []
-  const beats: Record<string, number>[] = []
-  const deps: WorkerDeps = {
-    intervalMs: 60_000,
-    pass: async () => {
+  const beats: [string, Record<string, number>][] = []
+  const job = (name: string, passes: Pass[]) => ({
+    name,
+    run: async () => {
       const next = passes.shift()
-      if (passes.length === 0) controller.abort()
       if (next instanceof Error) throw next
       return next ?? null
     },
-    beat: async (details) => {
-      beats.push(details)
+    describe: (s: Record<string, number>) =>
+      s.checked ? `did ${s.checked}` : null,
+  })
+  const deps: WorkerDeps = {
+    intervalMs: 60_000,
+    jobs: [job("link-sync", links), job("calendar-sync", calendars)],
+    beat: async (name, details) => {
+      beats.push([name, details])
     },
-    sleep: async () => {},
+    sleep: async () => {
+      if (links.length === 0) controller.abort()
+    },
     log: (m) => logs.push(m),
   }
   return { deps, signal: controller.signal, logs, beats }
 }
 
 describe("runWorker", () => {
-  it("passes, beats and logs until stopped", async () => {
-    const h = harness([
-      { checked: 2, failed: 1 },
-      { checked: 0, failed: 0 },
-    ])
+  it("runs every job each tick, beating and logging until stopped", async () => {
+    const h = harness(
+      [{ checked: 2 }, { checked: 0 }],
+      [{ checked: 1 }, { checked: 0 }]
+    )
     await runWorker(h.deps, h.signal)
     expect(h.beats).toEqual([
-      { checked: 2, failed: 1 },
-      { checked: 0, failed: 0 },
+      ["link-sync", { checked: 2 }],
+      ["calendar-sync", { checked: 1 }],
+      ["link-sync", { checked: 0 }],
+      ["calendar-sync", { checked: 0 }],
     ])
     expect(h.logs).toEqual([
-      "sync worker started; every 60s",
-      "synced 2 link(s), 1 failed",
+      "sync worker started (link-sync, calendar-sync); every 60s",
+      "link-sync: did 2",
+      "calendar-sync: did 1",
       "sync worker stopped",
     ])
   })
 
   it("skips the beat when another worker holds the lock", async () => {
-    const h = harness([null])
+    const h = harness([null], [{ checked: 0 }])
     await runWorker(h.deps, h.signal)
-    expect(h.beats).toEqual([])
-    expect(h.logs).toContain("another worker is syncing; skipped")
+    expect(h.beats).toEqual([["calendar-sync", { checked: 0 }]])
+    expect(h.logs).toContain("link-sync: another worker is running it; skipped")
   })
 
-  it("survives a failed pass", async () => {
-    const h = harness([new Error("connection refused"), { checked: 1 }])
+  it("keeps going when a job fails", async () => {
+    const h = harness([new Error("connection refused")], [{ checked: 3 }])
     await runWorker(h.deps, h.signal)
-    expect(h.logs).toContain("sync pass failed: connection refused")
-    expect(h.logs).toContain("synced 1 link(s), 0 failed")
+    expect(h.logs).toContain("link-sync failed: connection refused")
+    expect(h.logs).toContain("calendar-sync: did 3")
   })
 })
 

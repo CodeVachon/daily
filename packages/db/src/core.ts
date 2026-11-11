@@ -5,6 +5,7 @@
  */
 export type {
   Services,
+  CalendarSyncTarget,
   UserProfile,
   IntegrationConnection,
   InboxItem,
@@ -21,7 +22,19 @@ export type {
   TimezoneUpdate,
 } from "./services"
 export { NotFoundError, ValidationError } from "./errors"
-export type { ChangeFeed, TaskChange } from "./changes"
+export type { CalendarChange, ChangeFeed, TaskChange } from "./changes"
+export type {
+  CalendarEventInput,
+  CalendarSyncBatch,
+  ConferenceEntry,
+  EventAttachment,
+  EventAttendee,
+  EventPerson,
+  EventStatus,
+  EventType,
+  ResponseStatus,
+} from "./calendar-inputs"
+export { EVENT_TYPES, RESPONSE_STATUSES } from "./calendar-inputs"
 export { COLORS } from "./catalog-inputs"
 export {
   LINK_KINDS,
@@ -69,4 +82,11 @@ export {
   type ActorType,
   type SystemActorName,
 } from "./actor"
-export { LINK_SYNC_JOB, SYNC_INTERVALS } from "./sync-policy"
+export {
+  CALENDAR_FULL_SYNC_DAYS,
+  CALENDAR_SYNC_FUTURE_DAYS,
+  CALENDAR_SYNC_JOB,
+  CALENDAR_SYNC_PAST_DAYS,
+  LINK_SYNC_JOB,
+  SYNC_INTERVALS,
+} from "./sync-policy"

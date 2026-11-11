@@ -5,6 +5,9 @@ import type { ActorType } from "./actor"
 /** Postgres channel the task_event trigger notifies (migration 0013). */
 const CHANGES_CHANNEL = "task_events"
 
+/** Notified when a user's cached calendar events change (calendar sync). */
+export const CALENDAR_CHANNEL = "calendar_changes"
+
 /** One task event, announced as soon as its transaction commits. Ids only. */
 export interface TaskChange {
   /** The event's cursor: fetch details with activity.since({ after: seq - 1 }). */
@@ -22,14 +25,18 @@ export type Listen = (
   onPayload: (payload: string) => void
 ) => Promise<() => Promise<void>>
 
-type Handler = (change: TaskChange) => void
+/** Some of a user's calendar events changed (no details: refetch). */
+export interface CalendarChange {
+  userId: string
+}
 
-function parse(payload: string): TaskChange | null {
+function parseJson<T extends { userId: string }>(
+  payload: string,
+  valid: (value: T) => boolean
+): T | null {
   try {
-    const change = JSON.parse(payload) as TaskChange
-    return typeof change.userId === "string" && typeof change.seq === "number"
-      ? change
-      : null
+    const value = JSON.parse(payload) as T
+    return typeof value.userId === "string" && valid(value) ? value : null
   } catch {
     return null
   }
@@ -39,7 +46,12 @@ function parse(payload: string): TaskChange | null {
  * Fans one LISTEN connection out to per-user subscribers. Listens while
  * anyone is subscribed and stops when the last one leaves.
  */
-export function createChangeFeed(listen: Listen) {
+function createFeed<T extends { userId: string }>(
+  listen: Listen,
+  channel: string,
+  parse: (payload: string) => T | null
+) {
+  type Handler = (change: T) => void
   const handlers = new Map<string, Set<Handler>>()
   let listening: Promise<() => Promise<void>> | null = null
 
@@ -53,7 +65,7 @@ export function createChangeFeed(listen: Listen) {
   }
 
   async function start() {
-    listening ??= listen(CHANGES_CHANNEL, dispatch)
+    listening ??= listen(channel, dispatch)
     try {
       await listening
     } catch (error) {
@@ -71,7 +83,7 @@ export function createChangeFeed(listen: Listen) {
 
   return {
     /**
-     * Call `handler` with each of `userId`'s task changes, from any process.
+     * Call `handler` with each of `userId`'s changes, from any process.
      * Resolves once listening; the result unsubscribes.
      */
     async subscribe(
@@ -94,5 +106,17 @@ export function createChangeFeed(listen: Listen) {
     },
   }
 }
+
+/** Every task event, as it commits. */
+export const createChangeFeed = (listen: Listen) =>
+  createFeed<TaskChange>(listen, CHANGES_CHANNEL, (payload) =>
+    parseJson<TaskChange>(payload, (c) => typeof c.seq === "number")
+  )
+
+/** Calendar syncs that changed something. */
+export const createCalendarFeed = (listen: Listen) =>
+  createFeed<CalendarChange>(listen, CALENDAR_CHANNEL, (payload) =>
+    parseJson<CalendarChange>(payload, () => true)
+  )
 
 export type ChangeFeed = ReturnType<typeof createChangeFeed>

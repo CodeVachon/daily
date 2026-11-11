@@ -12,6 +12,7 @@ import {
 import { z } from "zod"
 
 import { github } from "./github"
+import { fetchCalendarChanges } from "./google-events"
 import {
   exchangeGoogleCode,
   googleAuthorizeUrl,
@@ -103,8 +104,17 @@ export interface SyncSummary {
   failed: number
 }
 
+/** What one calendar sync pass did. */
+export interface CalendarSyncSummary {
+  /** Selected calendars asked. */
+  calendars: number
+  /** Events added, changed or removed. */
+  changed: number
+  failed: number
+}
+
 export interface IntegrationsOptions {
-  services: Pick<Services, "integrations" | "links">
+  services: Pick<Services, "integrations" | "links" | "calendar">
   fetch?: Fetch
   /** The Google OAuth client; without it Google can't be connected. */
   google?: GoogleConfig | null
@@ -251,6 +261,36 @@ export function createIntegrations({
       ),
 
     googleAccessToken,
+
+    /**
+     * One calendar sync pass (all users): drop calendars no longer selected,
+     * then fetch each selected calendar's changes since its sync token. A
+     * failing calendar records why and is retried next pass.
+     */
+    async syncCalendars(now = new Date()): Promise<CalendarSyncSummary> {
+      const calendar = services.calendar
+      const targets = await calendar.syncTargets()
+      let changed = await calendar.retainOnly(targets)
+      let failed = 0
+      for (const { userId, calendarId, syncToken } of targets) {
+        try {
+          const batch = await fetchCalendarChanges(
+            fetch,
+            await googleAccessToken(userId),
+            calendarId,
+            syncToken,
+            now
+          )
+          changed += await calendar.applySync(userId, calendarId, batch, now)
+        } catch (error) {
+          // Provider refusals, and Google not being set up on this server.
+          if (!(error instanceof ValidationError)) throw error
+          failed++
+          await calendar.recordSyncError(userId, calendarId, error.message)
+        }
+      }
+      return { calendars: targets.length, changed, failed }
+    },
 
     /** Google's consent page, for the Connect button (PKCE challenge). */
     googleAuthorizeUrl: (params: { state: string; codeChallenge: string }) =>

@@ -7,7 +7,11 @@ import type { Fetch } from "./types"
  * MCP tools show the message instead of treating it as a bug.
  */
 export class ProviderError extends ValidationError {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    /** The provider's HTTP status, when it answered. */
+    readonly status: number | null = null
+  ) {
     super(message)
     this.name = "ProviderError"
   }
@@ -18,8 +22,15 @@ async function errorDetail(response: Response): Promise<string> {
     const body = (await response.json()) as {
       message?: string
       errorMessages?: string[]
+      /** Google's shape. */
+      error?: { message?: string }
     }
-    return body.message ?? body.errorMessages?.join("; ") ?? ""
+    return (
+      body.message ??
+      body.error?.message ??
+      body.errorMessages?.join("; ") ??
+      ""
+    )
   } catch {
     return ""
   }
@@ -44,14 +55,17 @@ export async function getJson<T>(
   if (response.ok) return (await response.json()) as T
   if (response.status === 401 || response.status === 403)
     throw new ProviderError(
-      `${provider} rejected the credentials (${response.status}). Check them, or create new ones.`
+      `${provider} rejected the credentials (${response.status}). Check them, or create new ones.`,
+      response.status
     )
   if (response.status === 404)
     throw new ProviderError(
-      `${provider} returned 404 (not found). Check the address and that the account can see it.`
+      `${provider} returned 404 (not found). Check the address and that the account can see it.`,
+      404
     )
   const detail = await errorDetail(response)
   throw new ProviderError(
-    `${provider} returned ${response.status}${detail ? `: ${detail}` : ""}`
+    `${provider} returned ${response.status}${detail ? `: ${detail}` : ""}`,
+    response.status
   )
 }

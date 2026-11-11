@@ -1,8 +1,9 @@
-import { createChangeFeed, type Listen } from "../changes"
+import { createCalendarFeed, createChangeFeed, type Listen } from "../changes"
 import type { KeySource } from "../crypto"
 import type { Database } from "../database"
 import { createActivityService } from "./activity"
 import { createActorService } from "./actors"
+import { createCalendarService } from "./calendar"
 import { createChecklistService } from "./checklist"
 import { createCommentService } from "./comments"
 import { createDependencyService } from "./dependencies"
@@ -34,6 +35,9 @@ export function createServices(db: Database, options: ServiceOptions) {
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
+    calendar: createCalendarService(db),
+    /** Live calendar changes (calendar sync, any process). */
+    calendarChanges: createCalendarFeed(options.listen),
     /** Live task changes from every process (web, MCP, sync worker). */
     changes: createChangeFeed(options.listen),
     checklist: createChecklistService(db),
@@ -64,6 +68,7 @@ export type {
   TaskLink,
 } from "./links"
 export type { WorkerStatus } from "./worker"
+export type { CalendarSyncTarget } from "./calendar"
 export type { InboxItem } from "./inbox"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"

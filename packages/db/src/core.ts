@@ -5,6 +5,7 @@
  */
 export type {
   Services,
+  CalendarEvent,
   CalendarSyncTarget,
   UserProfile,
   IntegrationConnection,

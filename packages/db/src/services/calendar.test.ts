@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { userActor } from "../actor"
+import { NotFoundError } from "../errors"
 import type { CalendarEventInput } from "../calendar-inputs"
 import type { CalendarChange } from "../changes"
 import { createTestDatabase, type TestDatabase } from "../testing"
@@ -215,5 +216,92 @@ describe("calendar", () => {
       )
     ).toBe(1)
     expect(await stored(TEAM)).toEqual([])
+  })
+})
+
+describe("calendar reads", () => {
+  let me: string
+  const at = (iso: string) => new Date(iso)
+  beforeAll(async () => {
+    me = (await t.seed.user()).id
+    await t.services.calendar.applySync(me, PRIMARY, {
+      full: true,
+      upserts: [
+        event("standup", {
+          title: "Standup",
+          startAt: at("2026-11-12T14:00:00Z"),
+          endAt: at("2026-11-12T14:15:00Z"),
+        }),
+        event("holiday", {
+          title: "Holiday",
+          allDay: true,
+          startAt: at("2026-11-12T00:00:00Z"),
+          endAt: at("2026-11-13T00:00:00Z"),
+        }),
+        event("declined", {
+          title: "Skipped",
+          myResponse: "declined",
+          startAt: at("2026-11-12T13:00:00Z"),
+          endAt: at("2026-11-12T13:30:00Z"),
+        }),
+        event("focus", {
+          title: "Focus",
+          eventType: "focusTime",
+          startAt: at("2026-11-12T12:00:00Z"),
+          endAt: at("2026-11-12T13:00:00Z"),
+        }),
+        event("later", {
+          title: "Next week",
+          startAt: at("2026-11-19T14:00:00Z"),
+          endAt: at("2026-11-19T15:00:00Z"),
+        }),
+      ],
+      deletes: [],
+      nextSyncToken: "t",
+    })
+  })
+
+  it("lists what overlaps a range, all-day first", async () => {
+    const day = await t.services.calendar.list(me, {
+      start: at("2026-11-12T00:00:00Z"),
+      end: at("2026-11-13T00:00:00Z"),
+    })
+    expect(day.map((e) => e.title)).toEqual([
+      "Holiday",
+      "Focus",
+      "Skipped",
+      "Standup",
+    ])
+    expect(day[0]).not.toHaveProperty("userId")
+    expect(
+      await t.services.calendar.list(otherId, {
+        start: at("2026-11-12T00:00:00Z"),
+        end: at("2026-11-13T00:00:00Z"),
+      })
+    ).toEqual([])
+  })
+
+  it("gets one of the user's events, and only theirs", async () => {
+    const standup = (
+      await t.services.calendar.list(me, {
+        start: at("2026-11-12T14:00:00Z"),
+        end: at("2026-11-12T14:01:00Z"),
+      })
+    ).find((e) => e.title === "Standup")
+    expect((await t.services.calendar.get(me, standup!.id)).title).toBe(
+      "Standup"
+    )
+    await expect(t.services.calendar.get(otherId, standup!.id)).rejects.toThrow(
+      NotFoundError
+    )
+  })
+
+  it("finds the meeting on now or next, skipping declined and focus time", async () => {
+    const next = (iso: string) =>
+      t.services.calendar.next(me, at(iso)).then((e) => e?.title ?? null)
+    expect(await next("2026-11-12T11:30:00Z")).toBe("Standup")
+    expect(await next("2026-11-12T14:10:00Z")).toBe("Standup")
+    expect(await next("2026-11-12T14:20:00Z")).toBeNull()
+    expect(await next("2026-11-18T15:00:00Z")).toBe("Next week")
   })
 })

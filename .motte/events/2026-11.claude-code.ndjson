@@ -144,3 +144,14 @@
 {"at":"2026-11-11T20:38:30Z","id":67,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
 {"at":"2026-11-11T20:38:30Z","id":67,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
 {"at":"2026-11-11T20:47:43Z","id":67,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-11T21:23:24Z","id":72,"by":"claude-code","as":"agent","type":"created","title":"Calendar week view: this week's meetings, meeting details, Next meeting line","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":73,"by":"claude-code","as":"agent","type":"created","title":"Calendar month view","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"created","title":"Tasks with due dates on the calendar; drag to reschedule","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":73,"by":"claude-code","as":"agent","type":"blocked","blocker":72}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":72}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":73}
+{"at":"2026-11-11T21:23:27Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":69}
+{"at":"2026-11-11T21:23:28Z","id":72,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:23:28Z","id":72,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T21:23:30Z","id":71,"by":"claude-code","as":"agent","type":"title","from":"MCP tools for meetings (read-only)","to":"MCP tool for invitations (read-only)"}
+{"at":"2026-11-11T21:33:00Z","id":72,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

@@ -277,3 +277,41 @@ export async function fetchCalendarChanges(
     now
   )
 }
+
+const ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+  nbsp: " ",
+}
+
+/**
+ * Google's HTML description as Markdown text: links kept (http/https only),
+ * line breaks kept, every other tag dropped. Rendered by the Markdown
+ * component, which never renders raw HTML.
+ */
+export function descriptionMarkdown(html: string | null): string | null {
+  if (!html?.trim()) return null
+  const text = html
+    .replace(/<(script|style)[^>]*>.*?<\/\1>/gis, "")
+    .replace(
+      /<a\s[^>]*href="(https?:[^"]+)"[^>]*>(.*?)<\/a>/gis,
+      (_, href: string, label: string) => {
+        const inner = label.replace(/<[^>]+>/g, "").trim()
+        return inner && inner !== href ? `[${inner}](${href})` : href
+      }
+    )
+    .replace(/<br\s*\/?>/gi, "  \n")
+    .replace(/<\/?(p|div|h[1-6])(\s[^>]*)?>|<\/li>/gi, "\n\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<[^>]+>/g, "")
+    .replace(
+      /&(amp|lt|gt|quot|#39|nbsp);/g,
+      (_, name: string) => ENTITIES[name]!
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+  return text || null
+}

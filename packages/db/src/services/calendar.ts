@@ -1,10 +1,16 @@
 import {
   and,
+  asc,
   eq,
   getTableColumns,
+  gt,
   inArray,
   isNotNull,
+  isNull,
+  lt,
+  ne,
   notInArray,
+  or,
   sql,
 } from "drizzle-orm"
 
@@ -12,11 +18,21 @@ import type { CalendarSyncBatch } from "../calendar-inputs"
 import { CALENDAR_FULL_SYNC_DAYS } from "../sync-policy"
 import { CALENDAR_CHANNEL } from "../changes"
 import type { Database } from "../database"
+import { NotFoundError } from "../errors"
 import {
   calendarEvent,
   calendarSyncState,
   integrationConnection,
 } from "../schema"
+
+/** One event as the app reads it. */
+export type CalendarEvent = Omit<
+  typeof calendarEvent.$inferSelect,
+  "userId" | "syncedAt"
+>
+
+/** How far ahead "next meeting" looks. */
+const NEXT_WITHIN_MS = 24 * 60 * 60 * 1000
 
 /** One selected calendar of a connected user, and where its sync resumes. */
 export interface CalendarSyncTarget {
@@ -47,7 +63,15 @@ const DAY_MS = 86_400_000
 const pairKey = (userId: string, calendarId: string) =>
   `${userId}\n${calendarId}`
 
+const {
+  userId: _userId,
+  syncedAt: _syncedAt,
+  ...eventColumns
+} = getTableColumns(calendarEvent)
+
 export function createCalendarService(db: Database) {
+  const events = () => db.select(eventColumns).from(calendarEvent)
+
   async function saveState(
     userId: string,
     calendarId: string,
@@ -183,6 +207,64 @@ export function createCalendarService(db: Database) {
     /** The last sync of a calendar failed; keep its token for next time. */
     async recordSyncError(userId: string, calendarId: string, error: string) {
       await saveState(userId, calendarId, { lastError: error })
+    },
+
+    /**
+     * The user's events overlapping [start, end), earliest first (all-day
+     * ones first on their day). Every answer is included; views decide.
+     */
+    async list(
+      userId: string,
+      { start, end }: { start: Date; end: Date }
+    ): Promise<CalendarEvent[]> {
+      return events()
+        .where(
+          and(
+            eq(calendarEvent.userId, userId),
+            lt(calendarEvent.startAt, end),
+            gt(calendarEvent.endAt, start)
+          )
+        )
+        .orderBy(
+          asc(calendarEvent.startAt),
+          sql`${calendarEvent.allDay} desc`,
+          asc(calendarEvent.title)
+        )
+    },
+
+    async get(userId: string, id: string): Promise<CalendarEvent> {
+      const [event] = await events().where(
+        and(eq(calendarEvent.userId, userId), eq(calendarEvent.id, id))
+      )
+      if (!event) throw new NotFoundError("Meeting")
+      return event
+    },
+
+    /**
+     * The meeting on now or next within 24 hours: timed, not declined, not
+     * focus time / out of office. Null when there's none.
+     */
+    async next(
+      userId: string,
+      now = new Date()
+    ): Promise<CalendarEvent | null> {
+      const [event] = await events()
+        .where(
+          and(
+            eq(calendarEvent.userId, userId),
+            eq(calendarEvent.allDay, false),
+            eq(calendarEvent.eventType, "default"),
+            or(
+              isNull(calendarEvent.myResponse),
+              ne(calendarEvent.myResponse, "declined")
+            ),
+            gt(calendarEvent.endAt, now),
+            lt(calendarEvent.startAt, new Date(now.getTime() + NEXT_WITHIN_MS))
+          )
+        )
+        .orderBy(asc(calendarEvent.startAt))
+        .limit(1)
+      return event ?? null
     },
 
     /** How each of the user's calendars last synced. */

@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { fakeFetch } from "./fake-fetch"
 import {
+  descriptionMarkdown,
   fetchCalendarChanges,
   normalizeEvent,
   type GoogleEvent,
@@ -341,5 +342,28 @@ describe("syncCalendars", () => {
       expiresAt: "2000-01-01T00:00:00.000Z",
     })
     expect(await sync({})).toEqual({ calendars: 2, changed: 0, failed: 2 })
+  })
+})
+
+describe("descriptionMarkdown", () => {
+  it("keeps links and line breaks, drops other HTML", () => {
+    expect(
+      descriptionMarkdown(
+        'Agenda:<br>1. <b>Plan</b> &amp; review<br><a href="https://docs.example.com/x">Doc</a> <a href="https://a.example.com">https://a.example.com</a><p>Done</p><script>alert(1)</script>'
+      )
+    ).toBe(
+      "Agenda:  \n1. Plan & review  \n[Doc](https://docs.example.com/x) https://a.example.com\n\nDone"
+    )
+  })
+
+  it("drops non-web links, lists and empties", () => {
+    expect(
+      descriptionMarkdown(
+        '<ul><li>One</li><li>Two</li></ul><a href="javascript:alert(1)">x</a>'
+      )
+    ).toBe("- One\n\n- Two\n\nx")
+    expect(descriptionMarkdown("  ")).toBeNull()
+    expect(descriptionMarkdown(null)).toBeNull()
+    expect(descriptionMarkdown("<br>")).toBeNull()
   })
 })

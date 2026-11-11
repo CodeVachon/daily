@@ -1,4 +1,5 @@
 import {
+  CalendarIcon,
   FolderIcon,
   InboxIcon,
   KanbanSquareIcon,
@@ -17,6 +18,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { title: "Board", href: "/board", icon: KanbanSquareIcon },
   { title: "Tasks", href: "/tasks", icon: ListIcon },
+  { title: "Calendar", href: "/calendar", icon: CalendarIcon },
   { title: "Updates", href: "/updates", icon: InboxIcon },
   { title: "Projects", href: "/projects", icon: FolderIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },

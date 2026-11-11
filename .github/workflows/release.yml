@@ -2,7 +2,8 @@
 #
 # Publish a GitHub Release tagged vX.Y.Z (e.g. `gh release create v0.1.0
 # --generate-notes`) and this checks the code, then pushes
-# ghcr.io/codevachon/daily:X.Y.Z (+ X.Y, latest, sha-…). The version is baked
+# ghcr.io/codevachon/daily:X.Y.Z (+ sha-…, and X.Y / latest when it is the
+# newest stable release). The version is baked
 # into the image (APP_VERSION) and shown in Settings → About.
 name: Release
 
@@ -63,8 +64,35 @@ jobs:
             echo "::error::Release tag '$TAG' is not vX.Y.Z"
             exit 1
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+          # Moving tags only move forwards: `latest` follows the newest stable
+          # release and `X.Y` the newest patch of its line, so rebuilding an old
+          # tag or shipping a hotfix for an old line never downgrades them.
+          minor="${version%.*}"
+          latest=false
+          minor_head=false
+          if [[ "$version" != *-* ]]; then
+            stable="$(git ls-remote --tags --refs origin 'refs/tags/v*' \
+              | sed 's|.*refs/tags/v||' \
+              | { grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true; })"
+            line="$(grep -E "^${minor//./\\.}\.[0-9]+$" <<< "$stable" || true)"
+            newest() { printf '%s\n' "$version" "$@" | sort -V | tail -n 1; }
+            # shellcheck disable=SC2086
+            if [[ "$(newest $stable)" == "$version" ]]; then latest=true; fi
+            # shellcheck disable=SC2086
+            if [[ "$(newest $line)" == "$version" ]]; then minor_head=true; fi
+          fi
+
+          # From the checked-out tag, not github.sha: on workflow_dispatch that
+          # is the head of the dispatching branch.
+          {
+            echo "version=$version"
+            echo "minor=$minor"
+            echo "latest=$latest"
+            echo "minor_head=$minor_head"
+            echo "sha=$(git rev-parse HEAD)"
+            echo "short_sha=$(git rev-parse --short=7 HEAD)"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -78,16 +106,18 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE }}
-          # latest only for stable releases (not -rc etc.).
+          # X.Y and latest only for stable releases, and only when this is the
+          # newest one (see "Version from tag").
           tags: |
-            type=semver,pattern={{version}},value=${{ env.TAG }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }}
-            type=raw,value=latest,enable=${{ !contains(env.TAG, '-') }}
-            type=sha,format=short
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=${{ steps.version.outputs.minor }},enable=${{ steps.version.outputs.minor_head }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.latest }}
+            type=raw,value=sha-${{ steps.version.outputs.short_sha }}
           flavor: latest=false
           labels: |
             org.opencontainers.image.title=Daily
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ steps.version.outputs.sha }}
 
       - uses: docker/build-push-action@v6
         with:

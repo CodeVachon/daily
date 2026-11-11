@@ -173,7 +173,7 @@ One Docker image runs every role; the droplet's env file supplies all settings
 
 ```bash
 docker build -t daily --build-arg GIT_SHA=$(git rev-parse HEAD) .
-docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web
+docker compose --env-file /etc/daily/daily.env -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web
 ```
 
 - **Roles** (`docker/entrypoint.sh`): `web` (default, the Next.js standalone
@@ -183,14 +183,17 @@ docker compose -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot)
 - **No values are baked in.** `.env.schema` sets `@defaultDynamic=true`, so
   nothing is inlined at build time; the build uses throwaway placeholders.
 - **Production env:** `APP_ENV=production`, `BETTER_AUTH_URL` (required,
-  `https://<domain>`), `DATABASE_URL` (`postgres://daily:<password>@postgres:5432/daily`),
-  `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`,
+  `https://<domain>`), `DATABASE_URL` (required,
+  `postgres://daily:<password>@postgres:5432/daily`), `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`,
   `GITHUB_CLIENT_SECRET`, `AUTH_GITHUB_ALLOWED_USERS`. Tailscale detection
   never runs outside development.
+- **One env file, two readers.** The app containers load the whole file
+  (`env_file`); postgres gets only `POSTGRES_PASSWORD`, which compose reads from
+  `--env-file`, so the app's secrets never reach the database container.
 - **Health:** `GET /api/health` returns 200 when the database answers and every
   migration in the image is applied, else 503. The image's `HEALTHCHECK` uses it.
 - **Local trial:** `DAILY_IMAGE=daily DAILY_ENV_FILE=./prod.env DAILY_WEB_PORT=3100
-docker compose -p daily-prodtest -f docker-compose.prod.yml up -d --wait`.
+docker compose --env-file ./prod.env -p daily-prodtest -f docker-compose.prod.yml up -d --wait`.
 
 ### Releases
 
@@ -202,7 +205,9 @@ gh release create v0.1.0 --generate-notes      # tag must be vX.Y.Z (or vX.Y.Z-r
 ```
 
 The workflow runs the checks, then pushes `ghcr.io/codevachon/daily` tagged
-`0.1.0`, `0.1`, `latest` (stable releases only) and `sha-<short>`. The version
+`0.1.0` and `sha-<short>`, plus `0.1` and `latest` for stable releases when
+they are the newest (of the `0.1` line / overall), so rebuilding an old tag or
+shipping a hotfix for an old line never moves them backwards. The version
 and commit are baked in (`APP_VERSION`, `APP_COMMIT`) and shown in
 **Settings → About**; MCP clients see the version in `initialize`. To rebuild an
 existing tag, run the workflow manually with that tag. Local builds report `dev`.

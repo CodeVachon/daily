@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest"
 import {
   blockPosition,
   calendarHref,
+  layoutMonth,
+  monthOf,
   openEventId,
+  parseView,
+  viewLinks,
   hourLabels,
   layoutWeek,
   nowPosition,
@@ -180,12 +184,94 @@ describe("positions", () => {
 describe("calendar links", () => {
   it("keeps the week and the open meeting in the URL", () => {
     expect(calendarHref("2026-11-12")).toBe("/calendar?date=2026-11-12")
-    expect(calendarHref("2026-11-12", "e 1")).toBe(
+    expect(calendarHref("2026-11-12", { event: "e 1" })).toBe(
       "/calendar?date=2026-11-12&event=e+1"
     )
+    expect(calendarHref("2026-11-12", { view: "month", event: "x" })).toBe(
+      "/calendar?date=2026-11-12&view=month&event=x"
+    )
+    expect(parseView("month")).toBe("month")
+    expect(parseView(["month"])).toBe("month")
+    expect(parseView("year")).toBe("week")
+    expect(parseView(undefined)).toBe("week")
+    expect(viewLinks("month", "2026-11-12")).toEqual([
+      {
+        view: "week",
+        label: "Week",
+        href: "/calendar?date=2026-11-12",
+        active: false,
+      },
+      {
+        view: "month",
+        label: "Month",
+        href: "/calendar?date=2026-11-12&view=month",
+        active: true,
+      },
+    ])
     expect(openEventId("abc")).toBe("abc")
     expect(openEventId(["abc", "x"])).toBe("abc")
     expect(openEventId("")).toBeNull()
     expect(openEventId(undefined)).toBeNull()
+  })
+})
+
+describe("monthOf", () => {
+  it("covers the month in whole Monday-start weeks", () => {
+    const month = monthOf("2026-11-12", now, TZ)
+    expect(month.weeks).toHaveLength(6) // Oct 26 – Dec 6
+    expect(month.weeks[0]![0]!.date).toBe("2026-10-26")
+    expect(month.weeks[0]![0]!.inMonth).toBe(false)
+    expect(month.weeks[0]![6]).toMatchObject({
+      date: "2026-11-01",
+      inMonth: true,
+    })
+    expect(month.weeks.at(-1)!.at(-1)!.date).toBe("2026-12-06")
+    expect(month).toMatchObject({
+      title: "November 2026",
+      prev: "2026-10-01",
+      next: "2026-12-01",
+      today: "2026-11-11",
+      isCurrent: true,
+    })
+    expect(month.interval.start).toEqual(at("2026-10-26T04:00:00Z"))
+    expect(month.interval.end).toEqual(at("2026-12-07T05:00:00Z"))
+  })
+
+  it("handles months that start on a Monday and year ends", () => {
+    const feb = monthOf("2027-02-10", now, TZ)
+    expect(feb.weeks).toHaveLength(4) // Feb 2027: Mon 1 – Sun 28
+    expect(feb.isCurrent).toBe(false)
+    const dec = monthOf("2026-12-31", now, TZ)
+    expect(dec).toMatchObject({ prev: "2026-11-01", next: "2027-01-01" })
+  })
+})
+
+describe("layoutMonth", () => {
+  it("lists each day's events, all-day first, with +N more", () => {
+    const month = monthOf("2026-11-12", now, TZ)
+    const day = (h: number) =>
+      calendarEvent({
+        startAt: at(`2026-11-12T${h}:00:00Z`),
+        endAt: at(`2026-11-12T${h}:30:00Z`),
+      })
+    const allDay = calendarEvent({
+      allDay: true,
+      startAt: at("2026-11-12T00:00:00Z"),
+      endAt: at("2026-11-13T00:00:00Z"),
+    })
+    const declined = calendarEvent({ myResponse: "declined" })
+    const cells = layoutMonth(
+      [day(18), day(15), day(16), allDay, declined],
+      month
+    )
+    const thursday = cells[2]![3]!
+    expect(thursday.day.date).toBe("2026-11-12")
+    expect(thursday.events.map((e) => e.startAt.toISOString())).toEqual([
+      "2026-11-12T00:00:00.000Z",
+      "2026-11-12T15:00:00.000Z",
+      "2026-11-12T16:00:00.000Z",
+    ])
+    expect(thursday.more).toBe(1)
+    expect(cells[2]![2]!).toMatchObject({ events: [], more: 0 })
   })
 })

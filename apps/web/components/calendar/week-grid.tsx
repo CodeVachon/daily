@@ -9,18 +9,12 @@ import {
   type Week,
   type WeekLayout,
 } from "@/lib/calendar"
-import { meetingTone, timeRange, type MeetingTone } from "@/lib/meeting"
+import { meetingTone, timeRange } from "@/lib/meeting"
+
+import { TONE } from "./tone"
 
 /** Height of one hour in the grid. */
 const HOUR_REM = 3
-
-const TONE: Record<MeetingTone, string> = {
-  accepted: "border-l-2 border-primary bg-primary/15 text-foreground",
-  tentative: "border border-dashed border-primary bg-primary/5 text-foreground",
-  pending:
-    "border border-dashed border-muted-foreground/60 bg-background text-muted-foreground",
-  block: "bg-muted text-muted-foreground",
-}
 
 const COLUMNS = "grid grid-cols-[3.5rem_repeat(7,minmax(7rem,1fr))]"
 

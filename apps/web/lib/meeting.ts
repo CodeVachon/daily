@@ -43,6 +43,10 @@ export function timeRange(e: CalendarEvent, timezone: string): string {
     : `${start} – ${end}`
 }
 
+/** "10:00 AM" before a title in the month view; nothing for all-day. */
+export const chipTime = (e: CalendarEvent, timezone: string): string =>
+  e.allDay ? "" : local(e.startAt, "h:mm a", timezone)
+
 /** "Thu, Nov 12 · 10:00 – 10:15 AM"; all-day ones by date (end exclusive). */
 export function whenLabel(e: CalendarEvent, timezone: string): string {
   if (e.allDay) {
@@ -123,7 +127,7 @@ export function nextMeetingView(
   return {
     title: e.title,
     when: nextWhen(e.startAt, now, timezone),
-    href: calendarHref(calendarDateIn(e.startAt, timezone), e.id),
+    href: calendarHref(calendarDateIn(e.startAt, timezone), { event: e.id }),
     meetUrl: e.meetUrl,
   }
 }

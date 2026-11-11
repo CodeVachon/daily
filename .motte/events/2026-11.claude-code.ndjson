@@ -155,3 +155,5 @@
 {"at":"2026-11-11T21:23:28Z","id":72,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
 {"at":"2026-11-11T21:23:30Z","id":71,"by":"claude-code","as":"agent","type":"title","from":"MCP tools for meetings (read-only)","to":"MCP tool for invitations (read-only)"}
 {"at":"2026-11-11T21:33:00Z","id":72,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-11T21:37:22Z","id":73,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:37:22Z","id":73,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}

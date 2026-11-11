@@ -9,7 +9,7 @@ import {
   type CalendarDate,
   type Interval,
 } from "@workspace/db/time"
-import { addDays, format } from "date-fns"
+import { addDays, addMonths, format } from "date-fns"
 
 const MINUTE = 60_000
 const DAY_MINUTES = 24 * 60
@@ -243,11 +243,121 @@ export function nowPosition(
   return { dayIndex, top: `${Math.round((offset / span) * 10000) / 100}%` }
 }
 
-/** `/calendar?date=…[&event=…]`: the week of `date`, maybe with a meeting open. */
-export function calendarHref(date: CalendarDate, event?: string): string {
+export type CalendarView = "week" | "month"
+
+/** `?view=`: the month view, else the week. */
+export const parseView = (
+  value: string | string[] | undefined
+): CalendarView =>
+  (Array.isArray(value) ? value[0] : value) === "month" ? "month" : "week"
+
+/**
+ * `/calendar?date=…[&view=month][&event=…]`: the week (or month) of `date`,
+ * maybe with a meeting open.
+ */
+export function calendarHref(
+  date: CalendarDate,
+  { view = "week", event }: { view?: CalendarView; event?: string } = {}
+): string {
   const params = new URLSearchParams({ date })
+  if (view === "month") params.set("view", view)
   if (event) params.set("event", event)
   return `/calendar?${params}`
+}
+
+/** The Week / Month switch, keeping the date. */
+export function viewLinks(current: CalendarView, date: CalendarDate) {
+  return (["week", "month"] as const).map((view) => ({
+    view,
+    label: view === "week" ? "Week" : "Month",
+    href: calendarHref(date, { view }),
+    active: view === current,
+  }))
+}
+
+export interface MonthDay extends WeekDay {
+  inMonth: boolean
+}
+
+export interface Month {
+  /** Monday-start weeks covering the month. */
+  weeks: MonthDay[][]
+  interval: Interval
+  /** "November 2026" */
+  title: string
+  /** First days of the neighbouring months. */
+  prev: CalendarDate
+  next: CalendarDate
+  today: CalendarDate
+  isCurrent: boolean
+}
+
+/** The month containing `anchor`, as whole weeks, in `timezone`. */
+export function monthOf(
+  anchor: CalendarDate,
+  now: Date,
+  timezone: string
+): Month {
+  const month = anchor.slice(0, 7)
+  const first = `${month}-01`
+  const weeks: MonthDay[][] = []
+  let date = first
+  do {
+    const week = weekOf(date, now, timezone)
+    weeks.push(
+      week.days.map((d) => ({ ...d, inMonth: d.date.startsWith(month) }))
+    )
+    date = week.next
+  } while (date.startsWith(month))
+  const start = new TZDate(+dayInterval(first, timezone).start, timezone)
+  const shift = (n: number) =>
+    calendarDateIn(addMonths(start, n), timezone).slice(0, 7) + "-01"
+  const today = calendarDateIn(now, timezone)
+  return {
+    weeks,
+    interval: {
+      start: weeks[0]![0]!.interval.start,
+      end: weeks.at(-1)!.at(-1)!.interval.end,
+    },
+    title: format(start, "MMMM yyyy", { in: tz(timezone) }),
+    prev: shift(-1),
+    next: shift(1),
+    today,
+    isCurrent: today.startsWith(month),
+  }
+}
+
+/** Chips shown per day before "+N more". */
+const MONTH_CHIPS = 3
+
+export interface MonthCell {
+  day: MonthDay
+  events: CalendarEvent[]
+  more: number
+}
+
+/** Each day's (visible) events: all-day first, then by start time. */
+export function layoutMonth(
+  events: CalendarEvent[],
+  month: Month
+): MonthCell[][] {
+  const shown = visibleEvents(events)
+  return month.weeks.map((week) =>
+    week.map((day) => {
+      const all = shown
+        .filter((e) => coversDay(e, day))
+        .sort(
+          (a, b) =>
+            Number(b.allDay) - Number(a.allDay) ||
+            a.startAt.getTime() - b.startAt.getTime()
+        )
+      return {
+        day,
+        events: all.slice(0, MONTH_CHIPS),
+        more: Math.max(0, all.length - MONTH_CHIPS),
+      }
+    })
+  )
 }
 
 /** The meeting id in `?event=`, if any. */

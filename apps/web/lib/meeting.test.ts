@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { calendarEvent } from "./calendar-fixtures"
 import {
   answerSummary,
+  chipTime,
   attendeeGroups,
   meetingDetailsView,
   meetingTone,
@@ -49,6 +50,8 @@ describe("meeting labels", () => {
       endAt: at("2026-11-12T15:15:00Z"),
     })
     expect(timeRange(standup, TZ)).toBe("10:00 – 10:15 AM")
+    expect(chipTime(standup, TZ)).toBe("10:00 AM")
+    expect(chipTime({ ...standup, allDay: true }, TZ)).toBe("")
     expect(whenLabel(standup, TZ)).toBe("Thu, Nov 12 · 10:00 – 10:15 AM")
     const lunch = calendarEvent({
       startAt: at("2026-11-12T16:30:00Z"),

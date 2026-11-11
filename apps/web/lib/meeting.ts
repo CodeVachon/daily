@@ -1,9 +1,13 @@
 // What the calendar shows about one meeting (motte #72). Pure.
 import { tz } from "@date-fns/tz"
-import type {
-  CalendarEvent,
-  EventAttendee,
-  ResponseStatus,
+import {
+  RSVP_RESPONSES,
+  type CalendarEvent,
+  type EventAttendee,
+  type Invitation,
+  type ResponseStatus,
+  type RsvpResponse,
+  type RsvpScope,
 } from "@workspace/db/core"
 import { calendarDateIn } from "@workspace/db/time"
 import { format } from "date-fns"
@@ -141,8 +145,6 @@ export interface PersonView {
 }
 
 export interface MeetingDetailsView {
-  /** "Going" etc.; null when I'm not invited. */
-  answer: string | null
   join: { url: string; label: string } | null
   /** Dial-in numbers: "+1 555-0100 · PIN 123". */
   phones: { href: string; label: string }[]
@@ -155,6 +157,41 @@ export interface MeetingDetailsView {
   description: string | null
   attachments: { title: string; url: string }[]
   googleUrl: string | null
+  /** Answer buttons: when I'm invited (not the organizer). */
+  rsvp: RsvpView | null
+}
+
+export interface RsvpView {
+  eventId: string
+  current: ResponseStatus
+  /** Offer "this event / all events" for recurring meetings. */
+  recurring: boolean
+}
+
+/** Accept / Maybe / Decline, marking the current answer. */
+export function rsvpChoices(current: ResponseStatus) {
+  return RSVP_RESPONSES.map((response) => ({
+    response,
+    label: RSVP_LABELS[response],
+    active: response === current,
+  }))
+}
+
+const RSVP_LABELS: Record<RsvpResponse, string> = {
+  accepted: "Accept",
+  tentative: "Maybe",
+  declined: "Decline",
+}
+
+/** The answer buttons, when there's something to answer. */
+export function rsvpView(e: CalendarEvent): RsvpView | null {
+  const me = e.attendees.find((a) => a.self)
+  if (!me || me.organizer) return null
+  return {
+    eventId: e.id,
+    current: me.response,
+    recurring: Boolean(e.recurringEventId),
+  }
 }
 
 const tagsOf = (a: EventAttendee) =>
@@ -171,7 +208,6 @@ export function meetingDetailsView(
 ): MeetingDetailsView {
   const { people, rooms } = attendeeGroups(e)
   return {
-    answer: e.myResponse && responseLabel(e.myResponse),
     join: e.meetUrl
       ? { url: e.meetUrl, label: `Join ${e.conferenceName ?? "meeting"}` }
       : null,
@@ -195,5 +231,44 @@ export function meetingDetailsView(
     description,
     attachments: e.attachments.map(({ title, url }) => ({ title, url })),
     googleUrl: e.htmlLink,
+    rsvp: rsvpView(e),
   }
+}
+
+export interface InvitationView {
+  key: string
+  title: string
+  /** "Thu, Nov 12 · 10:00 – 10:15 AM" (the next occurrence). */
+  when: string
+  /** "Recurring · 3 upcoming", or null for a one-off. */
+  repeats: string | null
+  href: string
+  rsvp: RsvpView
+  /** Recurring invitations are answered for the whole series by default. */
+  scope: RsvpScope
+}
+
+/** The Invitations list on the Updates page. */
+export function invitationViews(
+  invitations: Invitation[],
+  timezone: string
+): InvitationView[] {
+  return invitations.flatMap(({ event, occurrences }) => {
+    const rsvp = rsvpView(event)
+    if (!rsvp) return []
+    const recurring = Boolean(event.recurringEventId)
+    return [
+      {
+        key: event.id,
+        title: event.title,
+        when: whenLabel(event, timezone),
+        repeats: recurring ? `Recurring · ${occurrences} upcoming` : null,
+        href: calendarHref(calendarDateIn(event.startAt, timezone), {
+          event: event.id,
+        }),
+        rsvp,
+        scope: recurring ? "series" : "event",
+      },
+    ]
+  })
 }

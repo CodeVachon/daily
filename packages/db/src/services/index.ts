@@ -68,7 +68,7 @@ export type {
   TaskLink,
 } from "./links"
 export type { WorkerStatus } from "./worker"
-export type { CalendarEvent, CalendarSyncTarget } from "./calendar"
+export type { CalendarEvent, CalendarSyncTarget, Invitation } from "./calendar"
 export type { InboxItem } from "./inbox"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"

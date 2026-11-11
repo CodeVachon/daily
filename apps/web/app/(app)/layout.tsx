@@ -15,9 +15,10 @@ export default async function AppLayout({
 }) {
   const { user } = await requireSession()
   const now = new Date()
-  const [appearance, unread, next, timezone] = await Promise.all([
+  const [appearance, unread, invitations, next, timezone] = await Promise.all([
     services.settings.getAppearance(user.id),
     services.inbox.count(user.id),
+    services.calendar.invitations(user.id, now),
     services.calendar.next(user.id, now),
     services.settings.getTimezone(user.id),
   ])
@@ -30,7 +31,7 @@ export default async function AppLayout({
       />
       <AppSidebar
         user={{ name: user.name, email: user.email, image: user.image }}
-        counts={{ "/updates": unread }}
+        counts={{ "/updates": unread + invitations.length }}
         nextMeeting={next && nextMeetingView(next, now, timezone)}
       />
       {/* min-w-0: let the page shrink to the window so only wide content (the board) scrolls. */}

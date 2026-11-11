@@ -9,6 +9,9 @@ import {
   meetingTone,
   nextMeetingView,
   responseLabel,
+  invitationViews,
+  rsvpChoices,
+  rsvpView,
   timeRange,
   whenLabel,
 } from "./meeting"
@@ -163,7 +166,6 @@ describe("meetingDetailsView", () => {
       "Agenda"
     )
     expect(view).toEqual({
-      answer: "Maybe",
       join: { url: "https://meet.google.com/abc", label: "Join Google Meet" },
       phones: [
         { href: "tel:+15550100", label: "+1 555-0100 · PIN 123" },
@@ -189,6 +191,11 @@ describe("meetingDetailsView", () => {
       description: "Agenda",
       attachments: [{ title: "Notes", url: "https://docs.google.com/d/1" }],
       googleUrl: "https://calendar.google.com/e",
+      rsvp: {
+        eventId: expect.any(String),
+        current: "tentative",
+        recurring: false,
+      },
     })
   })
 
@@ -202,13 +209,85 @@ describe("meetingDetailsView", () => {
         null
       )
     ).toMatchObject({
-      answer: null,
       join: null,
       phones: [],
       guestsTitle: "1 going",
       people: [{ key: "", name: "Someone" }],
       rooms: null,
       googleUrl: null,
+      rsvp: null,
     })
+  })
+})
+
+describe("rsvp", () => {
+  it("offers answers when I'm invited, not when I organize", () => {
+    const invited = calendarEvent({
+      id: "inv",
+      recurringEventId: "s",
+      attendees: [person("Me", "needsAction", { self: true })],
+    })
+    expect(rsvpView(invited)).toEqual({
+      eventId: "inv",
+      current: "needsAction",
+      recurring: true,
+    })
+    expect(
+      rsvpView(
+        calendarEvent({
+          attendees: [
+            person("Me", "accepted", { self: true, organizer: true }),
+          ],
+        })
+      )
+    ).toBeNull()
+    expect(rsvpView(calendarEvent())).toBeNull()
+  })
+
+  it("marks the current answer", () => {
+    expect(rsvpChoices("tentative")).toEqual([
+      { response: "accepted", label: "Accept", active: false },
+      { response: "tentative", label: "Maybe", active: true },
+      { response: "declined", label: "Decline", active: false },
+    ])
+  })
+})
+
+describe("invitationViews", () => {
+  it("lists what I can answer; series answered as a whole by default", () => {
+    const me = person("Me", "needsAction", { self: true })
+    const views = invitationViews(
+      [
+        {
+          event: calendarEvent({
+            id: "s1",
+            title: "Standup",
+            recurringEventId: "s",
+            attendees: [me],
+            startAt: at("2026-11-12T13:15:00Z"),
+            endAt: at("2026-11-12T13:30:00Z"),
+          }),
+          occurrences: 3,
+        },
+        {
+          event: calendarEvent({ id: "r", title: "Review", attendees: [me] }),
+          occurrences: 1,
+        },
+        { event: calendarEvent({ id: "x" }), occurrences: 1 },
+      ],
+      TZ
+    )
+    expect(views).toEqual([
+      {
+        key: "s1",
+        title: "Standup",
+        when: "Thu, Nov 12 · 8:15 – 8:30 AM",
+        repeats: "Recurring · 3 upcoming",
+        href: "/calendar?date=2026-11-12&event=s1",
+        rsvp: { eventId: "s1", current: "needsAction", recurring: true },
+        scope: "series",
+      },
+      expect.objectContaining({ key: "r", repeats: null, scope: "event" }),
+    ])
   })
 })

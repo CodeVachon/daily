@@ -13,9 +13,10 @@ import {
   type EventPerson,
   type EventType,
   type ResponseStatus,
+  type RsvpResponse,
 } from "@workspace/db/core"
 
-import { calendarGet } from "./google"
+import { calendarGet, calendarPatch } from "./google"
 import { ProviderError } from "./http"
 import type { Fetch } from "./types"
 
@@ -314,4 +315,33 @@ export function descriptionMarkdown(html: string | null): string | null {
     .replace(/\n{3,}/g, "\n\n")
     .trim()
   return text || null
+}
+
+/**
+ * Answer an invitation as `email`. Only that attendee is sent
+ * (attendeesOmitted), so nobody else's answer can be touched; Google emails
+ * the organizer (sendUpdates=all), as when answering in Google Calendar.
+ * `eventId` is an occurrence, or a recurring series' id for all of them.
+ */
+export async function answerInvitation(
+  fetch: Fetch,
+  accessToken: string,
+  {
+    calendarId,
+    eventId,
+    email,
+    response,
+  }: {
+    calendarId: string
+    eventId: string
+    email: string
+    response: RsvpResponse
+  }
+): Promise<void> {
+  await calendarPatch(
+    fetch,
+    accessToken,
+    `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
+    { attendeesOmitted: true, attendees: [{ email, responseStatus: response }] }
+  )
 }

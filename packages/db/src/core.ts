@@ -7,6 +7,7 @@ export type {
   Services,
   CalendarEvent,
   CalendarSyncTarget,
+  Invitation,
   UserProfile,
   IntegrationConnection,
   InboxItem,
@@ -34,8 +35,14 @@ export type {
   EventStatus,
   EventType,
   ResponseStatus,
+  RsvpResponse,
+  RsvpScope,
 } from "./calendar-inputs"
-export { EVENT_TYPES, RESPONSE_STATUSES } from "./calendar-inputs"
+export {
+  EVENT_TYPES,
+  RESPONSE_STATUSES,
+  RSVP_RESPONSES,
+} from "./calendar-inputs"
 export { COLORS } from "./catalog-inputs"
 export {
   LINK_KINDS,

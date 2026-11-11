@@ -23,6 +23,8 @@ import {
   type PersonView,
 } from "@/lib/meeting"
 
+import { RsvpButtons } from "./rsvp-buttons"
+
 const RESPONSE_ICONS: Record<ResponseStatus, LucideIcon> = {
   accepted: CheckIcon,
   tentative: CircleHelpIcon,
@@ -63,13 +65,10 @@ function Person({ person }: { person: PersonView }) {
   )
 }
 
-function Answer({ answer }: { answer: string | null }) {
-  if (!answer) return null
-  return (
-    <p className="text-sm">
-      Your answer: <span className="font-medium">{answer}</span>
-    </p>
-  )
+/** Answer buttons when invited; else (e.g. my own event) nothing. */
+function Answer({ view }: { view: MeetingDetailsView }) {
+  if (!view.rsvp) return null
+  return <RsvpButtons rsvp={view.rsvp} />
 }
 
 function Join({ view }: { view: MeetingDetailsView }) {
@@ -176,7 +175,7 @@ export function MeetingDetails({ event }: { event: CalendarEvent }) {
   const view = meetingDetailsView(event, descriptionMarkdown(event.description))
   return (
     <>
-      <Answer answer={view.answer} />
+      <Answer view={view} />
       <Join view={view} />
       <Place text={view.location} />
       <Guests view={view} />

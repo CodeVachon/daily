@@ -186,6 +186,39 @@ export const meetingTools: ToolModule = (server, ctx) => {
   )
 
   server.registerTool(
+    "list_invitations",
+    {
+      title: "List invitations",
+      description:
+        "Upcoming meetings the user hasn't answered yet, soonest first: one entry per recurring series (its next occurrence, with how many are open). Read-only: only the user can accept or decline, in Daily or Google Calendar.",
+      inputSchema: z.object({}),
+      outputSchema: z.object({
+        invitations: z.array(
+          meetingOutput.extend({
+            open_occurrences: z
+              .number()
+              .describe("Unanswered upcoming occurrences (1 unless recurring)"),
+          })
+        ),
+      }),
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      const invitations = await calendar.invitations(ctx.userId)
+      return json({
+        invitations: invitations.map(({ event, occurrences }) => ({
+          ...toMeeting(event, ctx.timezone),
+          open_occurrences: occurrences,
+        })),
+      })
+    }
+  )
+
+  server.registerTool(
     "next_meeting",
     {
       title: "Next meeting",

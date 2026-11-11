@@ -14,7 +14,11 @@ import {
   sql,
 } from "drizzle-orm"
 
-import type { CalendarSyncBatch } from "../calendar-inputs"
+import type {
+  CalendarSyncBatch,
+  RsvpResponse,
+  RsvpScope,
+} from "../calendar-inputs"
 import { CALENDAR_FULL_SYNC_DAYS } from "../sync-policy"
 import { CALENDAR_CHANNEL } from "../changes"
 import type { Database } from "../database"
@@ -30,6 +34,13 @@ export type CalendarEvent = Omit<
   typeof calendarEvent.$inferSelect,
   "userId" | "syncedAt"
 >
+
+/** One invitation to answer: the next occurrence, and how many are open. */
+export interface Invitation {
+  event: CalendarEvent
+  /** Unanswered upcoming occurrences (1 unless it's recurring). */
+  occurrences: number
+}
 
 /** How far ahead "next meeting" looks. */
 const NEXT_WITHIN_MS = 24 * 60 * 60 * 1000
@@ -71,6 +82,14 @@ const {
 
 export function createCalendarService(db: Database) {
   const events = () => db.select(eventColumns).from(calendarEvent)
+
+  async function get(userId: string, id: string): Promise<CalendarEvent> {
+    const [event] = await events().where(
+      and(eq(calendarEvent.userId, userId), eq(calendarEvent.id, id))
+    )
+    if (!event) throw new NotFoundError("Meeting")
+    return event
+  }
 
   async function saveState(
     userId: string,
@@ -232,13 +251,7 @@ export function createCalendarService(db: Database) {
         )
     },
 
-    async get(userId: string, id: string): Promise<CalendarEvent> {
-      const [event] = await events().where(
-        and(eq(calendarEvent.userId, userId), eq(calendarEvent.id, id))
-      )
-      if (!event) throw new NotFoundError("Meeting")
-      return event
-    },
+    get,
 
     /**
      * The meeting on now or next within 24 hours: timed, not declined, not
@@ -265,6 +278,73 @@ export function createCalendarService(db: Database) {
         .orderBy(asc(calendarEvent.startAt))
         .limit(1)
       return event ?? null
+    },
+
+    /**
+     * Record my answer locally, straight after telling Google, so the page
+     * shows it now; the next sync confirms it. `series` answers every
+     * cached occurrence. Returns how many occurrences changed.
+     */
+    async setMyResponse(
+      userId: string,
+      eventId: string,
+      response: RsvpResponse,
+      scope: RsvpScope = "event"
+    ): Promise<number> {
+      const event = await get(userId, eventId)
+      const series = scope === "series" && event.recurringEventId
+      const where = and(
+        eq(calendarEvent.userId, userId),
+        eq(calendarEvent.calendarId, event.calendarId),
+        series
+          ? eq(calendarEvent.recurringEventId, event.recurringEventId!)
+          : eq(calendarEvent.id, eventId)
+      )
+      return db.transaction(async (tx) => {
+        const rows = await tx
+          .select({ id: calendarEvent.id, attendees: calendarEvent.attendees })
+          .from(calendarEvent)
+          .where(where)
+        for (const row of rows)
+          await tx
+            .update(calendarEvent)
+            .set({
+              myResponse: response,
+              attendees: row.attendees.map((a) =>
+                a.self ? { ...a, response } : a
+              ),
+            })
+            .where(eq(calendarEvent.id, row.id))
+        await tx.execute(
+          sql`select pg_notify(${CALENDAR_CHANNEL}, ${JSON.stringify({ userId })})`
+        )
+        return rows.length
+      })
+    },
+
+    /**
+     * Meetings waiting for my answer, soonest first: one per recurring
+     * series (its next occurrence), upcoming and not personal blocks.
+     */
+    async invitations(userId: string, now = new Date()): Promise<Invitation[]> {
+      const pending = await events()
+        .where(
+          and(
+            eq(calendarEvent.userId, userId),
+            eq(calendarEvent.myResponse, "needsAction"),
+            eq(calendarEvent.eventType, "default"),
+            gt(calendarEvent.endAt, now)
+          )
+        )
+        .orderBy(asc(calendarEvent.startAt))
+      const bySeries = new Map<string, Invitation>()
+      for (const event of pending) {
+        const key = event.recurringEventId ?? event.id
+        const seen = bySeries.get(key)
+        if (seen) seen.occurrences++
+        else bySeries.set(key, { event, occurrences: 1 })
+      }
+      return [...bySeries.values()]
     },
 
     /** How each of the user's calendars last synced. */

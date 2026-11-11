@@ -23,6 +23,13 @@ export const RESPONSE_STATUSES = [
 ] as const
 export type ResponseStatus = (typeof RESPONSE_STATUSES)[number]
 
+/** The answers you can give an invitation. */
+export const RSVP_RESPONSES = ["accepted", "tentative", "declined"] as const
+export type RsvpResponse = (typeof RSVP_RESPONSES)[number]
+
+/** Answer one occurrence, or every occurrence of a recurring meeting. */
+export type RsvpScope = "event" | "series"
+
 export interface EventPerson {
   email: string | null
   name: string | null

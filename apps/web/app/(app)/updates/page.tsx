@@ -18,8 +18,10 @@ import {
   MarkAllReadButton,
   MarkReadButton,
 } from "@/components/updates/inbox-actions"
+import { Invitations } from "@/components/updates/invitations"
 import { drawerHref, drawerTask, searchWithoutDrawer } from "@/lib/drawer"
 import { requireSession } from "@/lib/session"
+import { invitationViews } from "@/lib/meeting"
 import { loadTaskOptions } from "@/lib/task-options"
 import { toUpdates, type UpdateView } from "@/lib/updates"
 
@@ -59,7 +61,10 @@ function UpdateCard({ update, href }: { update: UpdateView; href: string }) {
   )
 }
 
-/** What agents and sync changed since you last looked, by task. */
+/**
+ * What needs you: meeting invitations to answer, then what agents and sync
+ * changed since you last looked, by task.
+ */
 export default async function UpdatesPage({
   searchParams,
 }: {
@@ -68,9 +73,10 @@ export default async function UpdatesPage({
   const { user } = await requireSession()
   const params = await searchParams
   const search = searchWithoutDrawer(params)
-  const [items, options] = await Promise.all([
+  const [items, options, invitations] = await Promise.all([
     services.inbox.list(user.id),
     loadTaskOptions(user.id),
+    services.calendar.invitations(user.id),
   ])
   const updates = toUpdates(items, {
     now: new Date(),
@@ -86,6 +92,7 @@ export default async function UpdatesPage({
         {updates.length > 0 && <MarkAllReadButton />}
       </PageHeader>
       <div className="flex max-w-3xl flex-col gap-3 p-4">
+        <Invitations items={invitationViews(invitations, options.timezone)} />
         {updates.map((update) => (
           <UpdateCard
             key={update.taskId}

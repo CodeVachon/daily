@@ -305,3 +305,117 @@ describe("calendar reads", () => {
     expect(await next("2026-11-18T15:00:00Z")).toBe("Next week")
   })
 })
+
+describe("invitations and answers", () => {
+  let me: string
+  const at = (iso: string) => new Date(iso)
+  const now = at("2026-11-11T12:00:00Z")
+  const self = {
+    email: "me@example.com",
+    name: null,
+    self: true,
+    response: "needsAction" as const,
+    optional: false,
+    organizer: false,
+    resource: false,
+  }
+  const boss = {
+    ...self,
+    email: "boss@example.com",
+    self: false,
+    response: "accepted" as const,
+    organizer: true,
+  }
+  const invite = (
+    id: string,
+    day: number,
+    over: Partial<CalendarEventInput> = {}
+  ) =>
+    event(id, {
+      title: id,
+      myResponse: "needsAction",
+      attendees: [boss, self],
+      startAt: at(`2026-11-${day}T15:00:00Z`),
+      endAt: at(`2026-11-${day}T15:30:00Z`),
+      ...over,
+    })
+  const byId = async (id: string) =>
+    (
+      await t.services.calendar.list(me, {
+        start: at("2026-11-01T00:00:00Z"),
+        end: at("2026-12-01T00:00:00Z"),
+      })
+    ).find((e) => e.externalId === id)!
+
+  beforeAll(async () => {
+    me = (await t.seed.user()).id
+    await t.services.calendar.applySync(me, PRIMARY, {
+      full: true,
+      upserts: [
+        invite("standup_1", 13, { recurringEventId: "standup" }),
+        invite("standup_2", 12, { recurringEventId: "standup" }),
+        invite("standup_3", 16, { recurringEventId: "standup" }),
+        invite("review", 14),
+        invite("past", 10),
+        invite("focus", 12, { eventType: "focusTime" }),
+        invite("answered", 12, { myResponse: "accepted" }),
+      ],
+      deletes: [],
+      nextSyncToken: "t",
+    })
+  })
+
+  it("lists one invitation per series, soonest first", async () => {
+    const list = await t.services.calendar.invitations(me, now)
+    expect(list.map((i) => [i.event.externalId, i.occurrences])).toEqual([
+      ["standup_2", 3],
+      ["review", 1],
+    ])
+  })
+
+  it("records my answer on one occurrence, or the whole series", async () => {
+    const heard: CalendarChange[] = []
+    const off = await t.services.calendarChanges.subscribe(me, (c) =>
+      heard.push(c)
+    )
+    const review = await byId("review")
+    expect(
+      await t.services.calendar.setMyResponse(me, review.id, "tentative")
+    ).toBe(1)
+    expect(await byId("review")).toMatchObject({
+      myResponse: "tentative",
+      attendees: [
+        expect.objectContaining({
+          email: "boss@example.com",
+          response: "accepted",
+        }),
+        expect.objectContaining({ self: true, response: "tentative" }),
+      ],
+    })
+    const standup = await byId("standup_1")
+    expect(
+      await t.services.calendar.setMyResponse(
+        me,
+        standup.id,
+        "accepted",
+        "series"
+      )
+    ).toBe(3)
+    expect((await byId("standup_3")).myResponse).toBe("accepted")
+    expect(await t.services.calendar.invitations(me, now)).toEqual([])
+    await vi.waitFor(() => expect(heard).toHaveLength(2))
+    await off()
+    // "series" on a one-off answers just it.
+    expect(
+      await t.services.calendar.setMyResponse(
+        me,
+        review.id,
+        "declined",
+        "series"
+      )
+    ).toBe(1)
+    await expect(
+      t.services.calendar.setMyResponse(otherId, review.id, "declined")
+    ).rejects.toThrow(NotFoundError)
+  })
+})

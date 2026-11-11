@@ -37,16 +37,48 @@ async function errorDetail(response: Response): Promise<string> {
 }
 
 /** GET JSON from a provider; every failure becomes a readable ProviderError. */
-export async function getJson<T>(
+export function getJson<T>(
   fetch: Fetch,
   provider: string,
   url: string,
   headers: Record<string, string>
 ): Promise<T> {
+  return requestJson<T>(fetch, provider, url, { headers })
+}
+
+/** Send JSON (PATCH, POST) to a provider; failures as for getJson. */
+export function sendJson<T>(
+  fetch: Fetch,
+  provider: string,
+  url: string,
+  {
+    method,
+    headers,
+    body,
+  }: {
+    method: "PATCH" | "POST"
+    headers: Record<string, string>
+    body: unknown
+  }
+): Promise<T> {
+  return requestJson<T>(fetch, provider, url, {
+    method,
+    headers: { "content-type": "application/json", ...headers },
+    body: JSON.stringify(body),
+  })
+}
+
+async function requestJson<T>(
+  fetch: Fetch,
+  provider: string,
+  url: string,
+  init: { method?: string; headers: Record<string, string>; body?: string }
+): Promise<T> {
   let response: Response
   try {
     response = await fetch(url, {
-      headers: { accept: "application/json", ...headers },
+      ...init,
+      headers: { accept: "application/json", ...init.headers },
       signal: AbortSignal.timeout(15_000),
     })
   } catch {

@@ -3,7 +3,7 @@
 // and refreshes access tokens itself.
 import { z } from "zod"
 
-import { getJson, ProviderError } from "./http"
+import { getJson, ProviderError, sendJson } from "./http"
 import type { AvailableResource, Fetch } from "./types"
 
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -209,6 +209,19 @@ export interface CalendarListEntry {
   primary?: boolean
   accessRole: string
 }
+
+/** PATCH a Calendar API resource (e.g. answer an invitation). */
+export const calendarPatch = <T>(
+  fetch: Fetch,
+  accessToken: string,
+  path: string,
+  body: unknown
+) =>
+  sendJson<T>(fetch, "Google", `${CALENDAR_API}${path}`, {
+    method: "PATCH",
+    headers: { authorization: `Bearer ${accessToken}` },
+    body,
+  })
 
 export const calendarGet = <T>(
   fetch: Fetch,

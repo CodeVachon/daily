@@ -5,6 +5,8 @@ import {
   type Actor,
   type IntegrationConnection,
   type LinkProvider,
+  type RsvpResponse,
+  type RsvpScope,
   type Services,
   type SyncResult,
   type TaskLink,
@@ -12,7 +14,7 @@ import {
 import { z } from "zod"
 
 import { github } from "./github"
-import { fetchCalendarChanges } from "./google-events"
+import { answerInvitation, fetchCalendarChanges } from "./google-events"
 import {
   exchangeGoogleCode,
   googleAuthorizeUrl,
@@ -261,6 +263,36 @@ export function createIntegrations({
       ),
 
     googleAccessToken,
+
+    /**
+     * Answer an invitation (the user's call: there's no agent tool). Google
+     * hears first and notifies the organizer; then Daily's copy is updated
+     * so the page shows the answer at once. `series` answers every
+     * occurrence of a recurring meeting.
+     */
+    async rsvp(
+      userId: string,
+      eventId: string,
+      response: RsvpResponse,
+      scope: RsvpScope = "event"
+    ): Promise<number> {
+      const event = await services.calendar.get(userId, eventId)
+      const me = event.attendees.find((a) => a.self)
+      if (!me?.email)
+        throw new ValidationError("You aren't invited to this meeting")
+      if (me.organizer)
+        throw new ValidationError(
+          "You organize this meeting; there's nothing to answer"
+        )
+      const series = scope === "series" ? event.recurringEventId : null
+      await answerInvitation(fetch, await googleAccessToken(userId), {
+        calendarId: event.calendarId,
+        eventId: series ?? event.externalId,
+        email: me.email,
+        response,
+      })
+      return services.calendar.setMyResponse(userId, eventId, response, scope)
+    },
 
     /**
      * One calendar sync pass (all users): drop calendars no longer selected,

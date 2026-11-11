@@ -367,3 +367,135 @@ describe("descriptionMarkdown", () => {
     expect(descriptionMarkdown("<br>")).toBeNull()
   })
 })
+
+describe("rsvp", () => {
+  let t: TestDatabase
+  let userId: string
+  const ids: Record<string, string> = {}
+  const person = (email: string, over = {}) => ({
+    email,
+    name: null,
+    self: false,
+    response: "needsAction" as const,
+    optional: false,
+    organizer: false,
+    resource: false,
+    ...over,
+  })
+  beforeAll(async () => {
+    t = await createTestDatabase()
+    userId = (await t.seed.user()).id
+    await t.services.integrations.connect(userId, {
+      provider: "google",
+      account: ME,
+      credentials: {
+        refreshToken: "r",
+        accessToken: "a",
+        expiresAt: "2099-01-01T00:00:00.000Z",
+      },
+    })
+    const base = normalizeEvent(meeting)
+    const guest = [
+      person("boss@example.com", { organizer: true }),
+      person(ME, { self: true }),
+    ]
+    await t.services.calendar.applySync(userId, ME, {
+      full: true,
+      upserts: [
+        {
+          ...base,
+          externalId: "one",
+          recurringEventId: null,
+          attendees: guest,
+        },
+        {
+          ...base,
+          externalId: "series_1",
+          recurringEventId: "series",
+          attendees: guest,
+        },
+        {
+          ...base,
+          externalId: "series_2",
+          recurringEventId: "series",
+          attendees: guest,
+        },
+        {
+          ...base,
+          externalId: "mine",
+          recurringEventId: null,
+          attendees: [person(ME, { self: true, organizer: true })],
+        },
+        { ...base, externalId: "solo", recurringEventId: null, attendees: [] },
+      ],
+      deletes: [],
+      nextSyncToken: "t",
+    })
+    for (const e of await t.services.calendar.list(userId, {
+      start: new Date("2026-11-01T00:00:00Z"),
+      end: new Date("2026-12-01T00:00:00Z"),
+    }))
+      ids[e.externalId] = e.id
+  })
+  afterAll(() => t.close())
+
+  const rsvp = (
+    routes: Parameters<typeof fakeFetch>[0] = { [EVENTS]: { body: {} } }
+  ) => {
+    const fake = fakeFetch(routes)
+    return {
+      ...fake,
+      integrations: createIntegrations({
+        services: t.services,
+        fetch: fake.fetch,
+      }),
+    }
+  }
+
+  it("answers one occurrence as me only, notifying the organizer", async () => {
+    const { integrations, calls } = rsvp()
+    expect(await integrations.rsvp(userId, ids.one!, "tentative")).toBe(1)
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({
+      url: `${EVENTS}/one?sendUpdates=all`,
+      method: "PATCH",
+    })
+    expect(calls[0]!.headers.authorization).toBe("Bearer a")
+    expect(JSON.parse(calls[0]!.body!)).toEqual({
+      attendeesOmitted: true,
+      attendees: [{ email: ME, responseStatus: "tentative" }],
+    })
+    expect((await t.services.calendar.get(userId, ids.one!)).myResponse).toBe(
+      "tentative"
+    )
+  })
+
+  it("answers a whole series through its recurring id", async () => {
+    const { integrations, calls } = rsvp()
+    expect(
+      await integrations.rsvp(userId, ids.series_1!, "declined", "series")
+    ).toBe(2)
+    expect(calls[0]!.url).toBe(`${EVENTS}/series?sendUpdates=all`)
+    expect(
+      (await t.services.calendar.get(userId, ids.series_2!)).myResponse
+    ).toBe("declined")
+  })
+
+  it("refuses what can't be answered, and keeps the answer when Google says no", async () => {
+    const { integrations, calls } = rsvp()
+    await expect(
+      integrations.rsvp(userId, ids.mine!, "accepted")
+    ).rejects.toThrow(/You organize this meeting/)
+    await expect(
+      integrations.rsvp(userId, ids.solo!, "accepted")
+    ).rejects.toThrow(/aren't invited/)
+    expect(calls).toHaveLength(0)
+    const failing = rsvp({ [EVENTS]: { status: 403, body: {} } })
+    await expect(
+      failing.integrations.rsvp(userId, ids.one!, "accepted")
+    ).rejects.toThrow(/Google rejected the credentials/)
+    expect((await t.services.calendar.get(userId, ids.one!)).myResponse).toBe(
+      "tentative"
+    )
+  })
+})

@@ -14,8 +14,8 @@ const event = (
   title: externalId,
   description: null,
   location: null,
-  startAt: new Date("2026-11-12T15:00:00Z"),
-  endAt: new Date("2026-11-12T15:30:00Z"),
+  startAt: new Date("2025-11-12T15:00:00Z"),
+  endAt: new Date("2025-11-12T15:30:00Z"),
   allDay: false,
   timeZone: null,
   status: "confirmed",
@@ -73,17 +73,29 @@ beforeAll(async () => {
       event("Standup", { description: "<b>Agenda</b><br>Demo" }),
       event("Skipped", {
         myResponse: "declined",
-        startAt: new Date("2026-11-12T16:00:00Z"),
-        endAt: new Date("2026-11-12T16:30:00Z"),
+        startAt: new Date("2025-11-12T16:00:00Z"),
+        endAt: new Date("2025-11-12T16:30:00Z"),
       }),
       event("Holiday", {
         allDay: true,
-        startAt: new Date("2026-11-13T00:00:00Z"),
-        endAt: new Date("2026-11-14T00:00:00Z"),
+        startAt: new Date("2025-11-13T00:00:00Z"),
+        endAt: new Date("2025-11-14T00:00:00Z"),
       }),
       event("Soon", {
         startAt: new Date(soon),
         endAt: new Date(soon + HOUR),
+      }),
+      event("Planning 1", {
+        myResponse: "needsAction",
+        recurringEventId: "planning",
+        startAt: new Date(soon + 240 * HOUR),
+        endAt: new Date(soon + 241 * HOUR),
+      }),
+      event("Planning 2", {
+        myResponse: "needsAction",
+        recurringEventId: "planning",
+        startAt: new Date(soon + 264 * HOUR),
+        endAt: new Date(soon + 265 * HOUR),
       }),
     ],
     deletes: [],
@@ -101,16 +113,16 @@ async function call(name: string, args: object = {}) {
 describe("meeting tools", () => {
   it("lists meetings between dates in the user's zone, declined left out", async () => {
     const { meetings } = await call("list_meetings", {
-      from: "2026-11-12",
-      to: "2026-11-13",
+      from: "2025-11-12",
+      to: "2025-11-13",
     })
     expect(meetings.map((m: { title: string }) => m.title)).toEqual([
       "Standup",
       "Holiday",
     ])
     expect(meetings[0]).toMatchObject({
-      start: "2026-11-12T15:00:00.000Z",
-      start_local: "2026-11-12 10:00",
+      start: "2025-11-12T15:00:00.000Z",
+      start_local: "2025-11-12 10:00",
       my_response: "accepted",
       meet_url: "https://meet.google.com/abc",
       organizer: { name: "Boss", email: "boss@example.com" },
@@ -119,11 +131,11 @@ describe("meeting tools", () => {
     })
     expect(meetings[1]).toMatchObject({
       all_day: true,
-      start_local: "2026-11-13",
+      start_local: "2025-11-13",
     })
     const all = await call("list_meetings", {
-      from: "2026-11-12",
-      to: "2026-11-12",
+      from: "2025-11-12",
+      to: "2025-11-12",
       include_declined: true,
     })
     expect(all.meetings).toHaveLength(2)
@@ -136,8 +148,8 @@ describe("meeting tools", () => {
 
   it("refuses huge ranges and bad dates", async () => {
     const huge = await h.callTool("list_meetings", {
-      from: "2026-11-01",
-      to: "2027-01-01",
+      from: "2025-11-01",
+      to: "2026-01-01",
     })
     expect(huge.isError).toBe(true)
     expect(huge.content[0].text).toMatch(/at most 31 days/)
@@ -147,8 +159,8 @@ describe("meeting tools", () => {
 
   it("gets every detail of a meeting", async () => {
     const { meetings } = await call("list_meetings", {
-      from: "2026-11-12",
-      to: "2026-11-12",
+      from: "2025-11-12",
+      to: "2025-11-12",
     })
     const { meeting } = await call("get_meeting", { id: meetings[0].id })
     expect(meeting).toMatchObject({
@@ -163,6 +175,13 @@ describe("meeting tools", () => {
     )
     const missing = await h.callTool("get_meeting", { id: "nope" })
     expect(missing.isError).toBe(true)
+  })
+
+  it("lists invitations, one per series", async () => {
+    const { invitations } = await call("list_invitations")
+    expect(invitations).toEqual([
+      expect.objectContaining({ title: "Planning 1", open_occurrences: 2 }),
+    ])
   })
 
   it("finds the next meeting", async () => {

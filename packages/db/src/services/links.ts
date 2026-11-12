@@ -60,6 +60,7 @@ export interface LinkChip {
   provider: LinkProvider
   kind: LinkKind
   key: string
+  url: string
   state: string | null
   stateCategory: LinkStateCategory | null
 }
@@ -149,6 +150,7 @@ export function createLinkService(
           provider: taskLink.provider,
           kind: taskLink.kind,
           key: taskLink.key,
+          url: taskLink.url,
           state: taskLink.state,
           stateCategory: taskLink.stateCategory,
         })

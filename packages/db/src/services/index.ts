@@ -16,6 +16,7 @@ import { createMeetingTaskService } from "./meeting-tasks"
 import { createOAuthClientService } from "./oauth-clients"
 import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
+import { createStandupService } from "./standup"
 import { createTaskService } from "./tasks"
 import { createUserService } from "./users"
 import { createWorkerService } from "./worker"
@@ -37,6 +38,8 @@ export function createServices(db: Database, options: ServiceOptions) {
   const tasks = createTaskService(db)
   const labels = createLabelService(db)
   const settings = createSettingsService(db)
+  const links = createLinkService(db, integrations)
+  const dependencies = createDependencyService(db)
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
@@ -54,16 +57,23 @@ export function createServices(db: Database, options: ServiceOptions) {
     changes: createChangeFeed(options.listen),
     checklist: createChecklistService(db),
     comments: createCommentService(db),
-    dependencies: createDependencyService(db),
+    dependencies,
     health: createHealthService(db),
     inbox: createInboxService(db),
     integrations,
     users: createUserService(db),
     labels,
-    links: createLinkService(db, integrations),
+    links,
     oauthClients: createOAuthClientService(db),
     projects: createProjectService(db),
     settings,
+    /** The standup draft, and the standups I've posted. */
+    standup: createStandupService(db, {
+      tasks,
+      links,
+      dependencies,
+      settings,
+    }),
     tasks,
     worker: createWorkerService(db),
   }
@@ -84,4 +94,5 @@ export type { CalendarEvent, CalendarSyncTarget, Invitation } from "./calendar"
 export type { InboxItem } from "./inbox"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
+export type { StandupDraft, StandupPost } from "./standup"
 export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

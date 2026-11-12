@@ -18,6 +18,8 @@ export type {
   SyncResult,
   TaskLink,
   OAuthClientDisplay,
+  StandupDraft,
+  StandupPost,
   TaskDetail,
   TaskRef,
   TaskSummary,

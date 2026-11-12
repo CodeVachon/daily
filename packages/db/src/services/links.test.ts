@@ -228,6 +228,7 @@ describe("links", () => {
         provider: "jira",
         kind: "issue",
         key: "PROJ-42",
+        url: "https://acme.atlassian.net/browse/PROJ-42",
         state: null,
         stateCategory: null,
       },

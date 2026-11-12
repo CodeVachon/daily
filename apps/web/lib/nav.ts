@@ -4,6 +4,7 @@ import {
   InboxIcon,
   KanbanSquareIcon,
   ListIcon,
+  MessageSquareTextIcon,
   SettingsIcon,
   type LucideIcon,
 } from "lucide-react"
@@ -20,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Tasks", href: "/tasks", icon: ListIcon },
   { title: "Calendar", href: "/calendar", icon: CalendarIcon },
   { title: "Updates", href: "/updates", icon: InboxIcon },
+  { title: "Standup", href: "/standup", icon: MessageSquareTextIcon },
   { title: "Projects", href: "/projects", icon: FolderIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
 ]

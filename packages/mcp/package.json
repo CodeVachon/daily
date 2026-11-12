@@ -9,7 +9,7 @@
   },
   "scripts": {
     "lint": "eslint --max-warnings 0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "varlock codegen && tsc --noEmit",
     "mcp:smoke": "varlock run -- bun scripts/smoke.ts"
   },
   "dependencies": {
@@ -18,6 +18,7 @@
     "@workspace/auth": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/integrations": "workspace:*",
+    "varlock": "^1.24.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

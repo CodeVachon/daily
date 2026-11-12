@@ -12,14 +12,25 @@ FROM node:22-slim AS build
 COPY --from=oven/bun:1.3.9 /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
 
-COPY . .
+# Manifests first, so the install layer is reused until a dependency changes.
+COPY package.json bun.lock .npmrc ./
+COPY apps/web/package.json apps/web/
+COPY packages/auth/package.json packages/auth/
+COPY packages/db/package.json packages/db/
+COPY packages/eslint-config/package.json packages/eslint-config/
+COPY packages/mcp/package.json packages/mcp/
+COPY packages/typescript-config/package.json packages/typescript-config/
+COPY packages/ui/package.json packages/ui/
 # Hoisted (classic) node_modules: Next's standalone file tracing misses
 # packages in Bun's isolated store (e.g. @swc/helpers).
 RUN bun install --frozen-lockfile --linker=hoisted
 
+COPY . .
+
 # The build only needs *some* valid values to load next.config; they are not
 # inlined anywhere (every item is dynamic) and are not kept in the image.
 RUN APP_ENV=production \
+    DATABASE_URL=postgres://build:placeholder@build.invalid:5432/build \
     BETTER_AUTH_URL=https://build.invalid \
     BETTER_AUTH_SECRET=build-placeholder-auth-secret-not-real \
     GITHUB_CLIENT_ID=build-placeholder-client-id \
@@ -60,8 +71,9 @@ COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/daily
 
 USER node
 EXPOSE 3000
+# For the web role (compose disables it for the one-shot migrate role).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
 
 ENTRYPOINT ["daily"]
 CMD ["web"]

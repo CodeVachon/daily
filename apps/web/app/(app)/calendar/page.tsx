@@ -1,5 +1,9 @@
 import { services } from "@workspace/db"
-import { calendarDateIn, type CalendarDate } from "@workspace/db/time"
+import {
+  calendarDateIn,
+  type CalendarDate,
+  type WeekStart,
+} from "@workspace/db/time"
 import {
   Alert,
   AlertDescription,
@@ -155,6 +159,7 @@ interface ViewProps {
   anchor: CalendarDate
   now: Date
   timezone: string
+  weekStartsOn: WeekStart
   /** Shown under the header (e.g. "not connected"). */
   banner: React.ReactNode
 }
@@ -163,8 +168,15 @@ const eventHrefFor =
   (anchor: CalendarDate, view: CalendarView) => (id: string) =>
     calendarHref(anchor, { view, event: id })
 
-async function WeekView({ userId, anchor, now, timezone, banner }: ViewProps) {
-  const week = weekOf(anchor, now, timezone)
+async function WeekView({
+  userId,
+  anchor,
+  now,
+  timezone,
+  weekStartsOn,
+  banner,
+}: ViewProps) {
+  const week = weekOf(anchor, now, timezone, weekStartsOn)
   const layout = layoutWeek(
     await services.calendar.list(userId, week.interval),
     week
@@ -186,8 +198,15 @@ async function WeekView({ userId, anchor, now, timezone, banner }: ViewProps) {
   )
 }
 
-async function MonthView({ userId, anchor, now, timezone, banner }: ViewProps) {
-  const month = monthOf(anchor, now, timezone)
+async function MonthView({
+  userId,
+  anchor,
+  now,
+  timezone,
+  weekStartsOn,
+  banner,
+}: ViewProps) {
+  const month = monthOf(anchor, now, timezone, weekStartsOn)
   const cells = layoutMonth(
     await services.calendar.list(userId, month.interval),
     month
@@ -212,8 +231,9 @@ export default async function CalendarPage({
 }: PageProps<"/calendar">) {
   const { user } = await requireSession()
   const params = await searchParams
-  const [timezone, google] = await Promise.all([
+  const [timezone, weekStartsOn, google] = await Promise.all([
     services.settings.getTimezone(user.id),
+    services.settings.getWeekStart(user.id),
     services.integrations.get(user.id, "google"),
   ])
   const now = new Date()
@@ -228,6 +248,7 @@ export default async function CalendarPage({
         anchor={anchor}
         now={now}
         timezone={timezone}
+        weekStartsOn={weekStartsOn}
         banner={google ? null : <NotConnected />}
       />
       <MeetingSlot

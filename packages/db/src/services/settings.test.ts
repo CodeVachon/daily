@@ -113,3 +113,27 @@ describe("settings appearance", () => {
     ).rejects.toThrow(ValidationError)
   })
 })
+
+describe("settings week start", () => {
+  it("starts weeks on Sunday until I pick another day", async () => {
+    await expect(t.services.settings.getWeekStart(userId)).resolves.toBe(0)
+    await expect(t.services.settings.updateWeekStart(userId, 1)).resolves.toBe(
+      1
+    )
+    await expect(t.services.settings.getWeekStart(userId)).resolves.toBe(1)
+  })
+
+  it("only takes Sunday, Monday or Saturday", async () => {
+    await expect(
+      t.services.settings.updateWeekStart(userId, 3)
+    ).rejects.toBeInstanceOf(ValidationError)
+    await expect(t.services.settings.getWeekStart(userId)).resolves.toBe(1)
+  })
+
+  it("starts a settings row for a new user", async () => {
+    const other = (await t.seed.user()).id
+    await t.services.settings.updateWeekStart(other, 6)
+    await expect(t.services.settings.getWeekStart(other)).resolves.toBe(6)
+    await expect(t.services.settings.getTimezone(other)).resolves.toBe("UTC")
+  })
+})

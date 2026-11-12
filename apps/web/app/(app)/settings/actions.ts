@@ -17,3 +17,15 @@ export async function updateAppearanceAction(patch: AppearancePatch) {
     return appearance
   })
 }
+
+/** Start this user's weeks on Sunday (0), Monday (1) or Saturday (6). */
+export async function updateWeekStartAction(weekStartsOn: number) {
+  return runAsUser(async (actor) => {
+    const day = await services.settings.updateWeekStart(
+      actor.userId,
+      weekStartsOn
+    )
+    refresh()
+    return day
+  })
+}

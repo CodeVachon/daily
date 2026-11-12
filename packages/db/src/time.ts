@@ -25,6 +25,31 @@ export interface Interval {
   end: Date
 }
 
+/** Days a week can start on: Sunday, Monday or Saturday (0 = Sunday). */
+export const WEEK_STARTS = [0, 1, 6] as const
+export type WeekStart = (typeof WEEK_STARTS)[number]
+/** Weeks start on Sunday unless the user picks another day. */
+export const DEFAULT_WEEK_START: WeekStart = 0
+
+export function isWeekStart(value: unknown): value is WeekStart {
+  return (WEEK_STARTS as readonly unknown[]).includes(value)
+}
+
+const WEEK_START_NAMES = { 0: "Sunday", 1: "Monday", 6: "Saturday" } as const
+
+/** "Sunday" */
+export function weekStartName(day: WeekStart): string {
+  return WEEK_START_NAMES[day]
+}
+
+/** The day called `name` ("sunday", any case), or null. */
+export function weekStartNamed(name: string): WeekStart | null {
+  const day = WEEK_STARTS.find(
+    (d) => WEEK_START_NAMES[d].toLowerCase() === name.toLowerCase()
+  )
+  return day ?? null
+}
+
 const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export function isValidTimeZone(timezone: string): boolean {
@@ -104,10 +129,14 @@ export function todayInterval(now: Date, timezone: string): Interval {
   return dayInterval(calendarDateIn(now, timezone), timezone)
 }
 
-/** Monday-to-Monday week containing `now` in `timezone`. */
-export function weekInterval(now: Date, timezone: string): Interval {
+/** The week containing `now` in `timezone`, starting on `weekStartsOn`. */
+export function weekInterval(
+  now: Date,
+  timezone: string,
+  weekStartsOn: WeekStart
+): Interval {
   assertTimeZone(timezone)
-  const start = startOfWeek(now, { weekStartsOn: 1, in: tz(timezone) })
+  const start = startOfWeek(now, { weekStartsOn, in: tz(timezone) })
   return { start: new Date(+start), end: new Date(+addDays(start, 7)) }
 }
 

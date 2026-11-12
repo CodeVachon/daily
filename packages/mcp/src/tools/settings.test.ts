@@ -45,3 +45,18 @@ describe("appearance", () => {
     expect(result.content[0].text).toMatch(/base colour/)
   })
 })
+
+describe("week start", () => {
+  it("starts on Sunday until changed", async () => {
+    expect(await call("get_week_start")).toEqual({ week_starts_on: "Sunday" })
+    expect(await call("set_week_start", { day: "monday" })).toEqual({
+      week_starts_on: "Monday",
+    })
+    expect(await call("get_week_start")).toEqual({ week_starts_on: "Monday" })
+  })
+
+  it("rejects other days", async () => {
+    const result = await h.callTool("set_week_start", { day: "friday" })
+    expect(result.isError).toBe(true)
+  })
+})

@@ -8,10 +8,14 @@ import {
   isDueToday,
   isOverdue,
   isValidTimeZone,
+  isWeekStart,
   parseDue,
   timeZoneLabel,
   todayInterval,
+  WEEK_STARTS,
   weekInterval,
+  weekStartName,
+  weekStartNamed,
   type Due,
 } from "./time"
 
@@ -68,11 +72,32 @@ describe("todayInterval / weekInterval", () => {
     expect(todayInterval(now, PT)).toEqual(dayInterval("2026-11-13", PT))
   })
 
-  it("weeks start Monday in the given zone", () => {
-    expect(weekInterval(now, ET)).toEqual({
+  it("weeks start on the chosen day in the given zone", () => {
+    expect(weekInterval(now, ET, 1)).toEqual({
       start: new Date("2026-11-09T05:00:00Z"),
       end: new Date("2026-11-16T05:00:00Z"),
     })
+    expect(weekInterval(now, ET, 0)).toEqual({
+      start: new Date("2026-11-08T05:00:00Z"),
+      end: new Date("2026-11-15T05:00:00Z"),
+    })
+    expect(weekInterval(now, ET, 6)).toEqual({
+      start: new Date("2026-11-07T05:00:00Z"),
+      end: new Date("2026-11-14T05:00:00Z"),
+    })
+  })
+
+  it("knows which days a week can start on", () => {
+    expect([0, 1, 6].every(isWeekStart)).toBe(true)
+    expect([2, 7, "1", null].some(isWeekStart)).toBe(false)
+    expect(WEEK_STARTS.map(weekStartName)).toEqual([
+      "Sunday",
+      "Monday",
+      "Saturday",
+    ])
+    expect(weekStartNamed("monday")).toBe(1)
+    expect(weekStartNamed("Saturday")).toBe(6)
+    expect(weekStartNamed("friday")).toBeNull()
   })
 })
 

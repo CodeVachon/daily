@@ -33,7 +33,7 @@ describe("parseCalendarDate", () => {
 
 describe("weekOf", () => {
   it("is Monday to Sunday in the user's zone, with today marked", () => {
-    const week = weekOf("2026-11-12", now, TZ)
+    const week = weekOf("2026-11-12", now, TZ, 1)
     expect(week.days.map((d) => `${d.weekday} ${d.day}`)).toEqual([
       "Mon 9",
       "Tue 10",
@@ -57,7 +57,7 @@ describe("weekOf", () => {
   })
 
   it("handles the DST change and titles across months and years", () => {
-    const dst = weekOf("2026-10-30", now, TZ)
+    const dst = weekOf("2026-10-30", now, TZ, 1)
     expect(dst.title).toBe("Oct 26 – Nov 1, 2026")
     expect(dst.isCurrent).toBe(false)
     const sunday = dst.days[6]!
@@ -66,14 +66,35 @@ describe("weekOf", () => {
       (sunday.interval.end.getTime() - sunday.interval.start.getTime()) /
         3_600_000
     ).toBe(25)
-    expect(weekOf("2026-12-31", now, TZ).title).toBe(
+    expect(weekOf("2026-12-31", now, TZ, 1).title).toBe(
       "Dec 28, 2026 – Jan 3, 2027"
     )
+  })
+
+  it("starts on Sunday or Saturday when that's my week", () => {
+    const sunday = weekOf("2026-11-12", now, TZ, 0)
+    expect(sunday.days.map((d) => `${d.weekday} ${d.day}`)).toEqual([
+      "Sun 8",
+      "Mon 9",
+      "Tue 10",
+      "Wed 11",
+      "Thu 12",
+      "Fri 13",
+      "Sat 14",
+    ])
+    expect(sunday).toMatchObject({
+      title: "Nov 8 – 14, 2026",
+      prev: "2026-11-01",
+      next: "2026-11-15",
+    })
+    // A Sunday anchor is the first day of its own week.
+    expect(weekOf("2026-11-15", now, TZ, 0).days[0]!.date).toBe("2026-11-15")
+    expect(weekOf("2026-11-12", now, TZ, 6).days[0]!.weekday).toBe("Sat")
   })
 })
 
 describe("layoutWeek", () => {
-  const week = weekOf("2026-11-12", now, TZ)
+  const week = weekOf("2026-11-12", now, TZ, 1)
   const thursday = 3
 
   it("puts all-day and day-long events in the all-day row, by date", () => {
@@ -175,7 +196,7 @@ describe("positions", () => {
   })
 
   it("marks now on today's column", () => {
-    const week = weekOf("2026-11-12", now, TZ)
+    const week = weekOf("2026-11-12", now, TZ, 1)
     expect(nowPosition(week, hours, now)).toEqual({ dayIndex: 2, top: "40%" })
     expect(nowPosition(week, hours, at("2026-11-11T11:00:00Z"))).toBeNull() // 6 AM, above the grid
     expect(nowPosition(week, hours, at("2026-12-01T17:00:00Z"))).toBeNull()
@@ -224,7 +245,7 @@ describe("calendar links", () => {
 
 describe("monthOf", () => {
   it("covers the month in whole Monday-start weeks", () => {
-    const month = monthOf("2026-11-12", now, TZ)
+    const month = monthOf("2026-11-12", now, TZ, 1)
     expect(month.weeks).toHaveLength(6) // Oct 26 – Dec 6
     expect(month.weeks[0]![0]!.date).toBe("2026-10-26")
     expect(month.weeks[0]![0]!.inMonth).toBe(false)
@@ -245,17 +266,27 @@ describe("monthOf", () => {
   })
 
   it("handles months that start on a Monday and year ends", () => {
-    const feb = monthOf("2027-02-10", now, TZ)
+    const feb = monthOf("2027-02-10", now, TZ, 1)
     expect(feb.weeks).toHaveLength(4) // Feb 2027: Mon 1 – Sun 28
     expect(feb.isCurrent).toBe(false)
-    const dec = monthOf("2026-12-31", now, TZ)
+    const dec = monthOf("2026-12-31", now, TZ, 1)
     expect(dec).toMatchObject({ prev: "2026-11-01", next: "2027-01-01" })
+  })
+
+  it("lays out Sunday-start weeks", () => {
+    const month = monthOf("2026-11-12", now, TZ, 0)
+    expect(month.weeks).toHaveLength(5) // Nov 1 – Dec 5
+    expect(month.weeks[0]![0]).toMatchObject({
+      date: "2026-11-01",
+      weekday: "Sun",
+    })
+    expect(month.weeks.at(-1)!.at(-1)!.date).toBe("2026-12-05")
   })
 })
 
 describe("layoutMonth", () => {
   it("lists each day's events, all-day first, with +N more", () => {
-    const month = monthOf("2026-11-12", now, TZ)
+    const month = monthOf("2026-11-12", now, TZ, 1)
     const day = (h: number) =>
       calendarEvent({
         startAt: at(`2026-11-12T${h}:00:00Z`),

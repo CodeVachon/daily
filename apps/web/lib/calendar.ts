@@ -8,6 +8,7 @@ import {
   weekInterval,
   type CalendarDate,
   type Interval,
+  type WeekStart,
 } from "@workspace/db/time"
 import { addDays, addMonths, format } from "date-fns"
 
@@ -66,17 +67,22 @@ function weekTitle(first: Date, last: Date, timezone: string): string {
   return `${f(first, "MMM d")} – ${f(last, "d, yyyy")}`
 }
 
-/** The Monday-to-Sunday week containing `anchor`, in `timezone`. */
+/** The week containing `anchor`, starting on `weekStartsOn`, in `timezone`. */
 export function weekOf(
   anchor: CalendarDate,
   now: Date,
-  timezone: string
+  timezone: string,
+  weekStartsOn: WeekStart
 ): Week {
-  const interval = weekInterval(dayInterval(anchor, timezone).start, timezone)
+  const interval = weekInterval(
+    dayInterval(anchor, timezone).start,
+    timezone,
+    weekStartsOn
+  )
   const today = calendarDateIn(now, timezone)
-  const monday = new TZDate(+interval.start, timezone)
+  const first = new TZDate(+interval.start, timezone)
   const days = Array.from({ length: 7 }, (_, i): WeekDay => {
-    const start = addDays(monday, i)
+    const start = addDays(first, i)
     const date = calendarDateIn(start, timezone)
     return {
       date,
@@ -86,11 +92,11 @@ export function weekOf(
       interval: dayInterval(date, timezone),
     }
   })
-  const shift = (n: number) => calendarDateIn(addDays(monday, n), timezone)
+  const shift = (n: number) => calendarDateIn(addDays(first, n), timezone)
   return {
     days,
     interval,
-    title: weekTitle(monday, addDays(monday, 6), timezone),
+    title: weekTitle(first, addDays(first, 6), timezone),
     prev: shift(-7),
     next: shift(7),
     today,
@@ -287,7 +293,7 @@ export interface MonthDay extends WeekDay {
 }
 
 export interface Month {
-  /** Monday-start weeks covering the month. */
+  /** Whole weeks covering the month. */
   weeks: MonthDay[][]
   interval: Interval
   /** "November 2026" */
@@ -303,14 +309,15 @@ export interface Month {
 export function monthOf(
   anchor: CalendarDate,
   now: Date,
-  timezone: string
+  timezone: string,
+  weekStartsOn: WeekStart
 ): Month {
   const month = anchor.slice(0, 7)
   const first = `${month}-01`
   const weeks: MonthDay[][] = []
   let date = first
   do {
-    const week = weekOf(date, now, timezone)
+    const week = weekOf(date, now, timezone, weekStartsOn)
     weeks.push(
       week.days.map((d) => ({ ...d, inMonth: d.date.startsWith(month) }))
     )

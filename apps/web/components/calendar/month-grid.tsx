@@ -7,8 +7,6 @@ import { chipTime, meetingTone } from "@/lib/meeting"
 
 import { TONE } from "./tone"
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
 function Chip({
   event,
   href,
@@ -89,7 +87,7 @@ export function MonthGrid({
   return (
     <div className="min-h-0 flex-1 overflow-auto">
       <div className="grid min-w-[42rem] grid-cols-7 border-r border-b">
-        {WEEKDAYS.map((d) => (
+        {(cells[0] ?? []).map(({ day: { weekday: d } }) => (
           <div
             key={d}
             className="border-l py-2 text-center text-sm text-muted-foreground"

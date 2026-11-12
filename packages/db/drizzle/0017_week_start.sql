@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "week_starts_on" smallint DEFAULT 0 NOT NULL;

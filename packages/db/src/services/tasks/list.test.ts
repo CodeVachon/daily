@@ -107,12 +107,24 @@ describe("tasks.list filters", () => {
       "Standup notes",
       "Call plumber",
     ])
+    // Weeks start Sunday by default: Sun Nov 8 – Sat Nov 14.
+    expect(await titles({ due: "week", orderBy: "due" })).toEqual([
+      "File taxes",
+      "Call plumber",
+      "Standup notes",
+    ])
+  })
+
+  it("follows the day my weeks start on", async () => {
+    await t.services.settings.updateWeekStart(me.userId, 1)
+    // Mon Nov 9 – Sun Nov 15.
     expect(await titles({ due: "week", orderBy: "due" })).toEqual([
       "File taxes",
       "Call plumber",
       "Standup notes",
       "Review PR",
     ])
+    await t.services.settings.updateWeekStart(me.userId, 0)
   })
 
   it("finds tasks without a due date", async () => {

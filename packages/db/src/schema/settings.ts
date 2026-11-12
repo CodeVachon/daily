@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { pgTable, smallint, text, timestamp } from "drizzle-orm/pg-core"
 
 import { user } from "./auth"
 
@@ -11,6 +11,8 @@ export const userSettings = pgTable("user_settings", {
   timezone: text().notNull().default("UTC"),
   /** When `timezone` was last set (first report, or travel to another zone). */
   timezoneChangedAt: timestamp({ withTimezone: true }),
+  /** First day of the week: 0 Sunday, 1 Monday, 6 Saturday. */
+  weekStartsOn: smallint().notNull().default(0),
   /** shadcn base colour (neutrals), theme and chart palette; see appearance.ts. */
   baseColor: text().notNull().default("mist"),
   theme: text().notNull().default("sky"),

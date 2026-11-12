@@ -303,12 +303,15 @@ export function createTaskService(db: Database) {
     now = new Date()
   ): Promise<{ tasks: TaskSummary[]; hasMore: boolean }> {
     const filters = listTasksInput.parse(raw)
-    const timezone = await settings.getTimezone(userId)
+    const [timezone, weekStartsOn] = await Promise.all([
+      settings.getTimezone(userId),
+      settings.getWeekStart(userId),
+    ])
     const page = await db
       .select({ id: task.id })
       .from(task)
       .innerJoin(taskStatus, eq(taskStatus.key, task.statusKey))
-      .where(listConditions(userId, filters, now, timezone))
+      .where(listConditions(userId, filters, now, timezone, weekStartsOn))
       .orderBy(...listOrder(filters.orderBy))
       .limit(filters.limit + 1)
       .offset(filters.offset)

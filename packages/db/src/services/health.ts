@@ -1,4 +1,3 @@
-import { count } from "drizzle-orm"
 import { bigint, integer, pgSchema, text } from "drizzle-orm/pg-core"
 
 import journal from "../../drizzle/meta/_journal.json" with { type: "json" }
@@ -14,31 +13,49 @@ const appliedMigrations = pgSchema("drizzle").table("__drizzle_migrations", {
 export interface HealthReport {
   ok: boolean
   database: "up" | "down"
+  /** How many of this build's migrations the database has, out of how many. */
   migrations: { applied: number; expected: number }
+}
+
+/** Postgres "undefined_table": a database nothing has migrated yet. */
+const UNDEFINED_TABLE = "42P01"
+
+/** The Postgres error code, whether thrown bare or wrapped by drizzle. */
+function postgresCode(error: unknown): unknown {
+  const { code, cause } = (error ?? {}) as { code?: unknown; cause?: unknown }
+  return code ?? (cause === undefined ? undefined : postgresCode(cause))
 }
 
 /** Liveness for the container health check and uptime monitoring. */
 export function createHealthService(db: Database) {
-  const expected = journal.entries.length
+  // drizzle records each applied migration with its journal `when`.
+  const expected = journal.entries.map((entry) => entry.when)
+  const report = (
+    database: HealthReport["database"],
+    applied: number
+  ): HealthReport => ({
+    ok: database === "up" && applied === expected.length,
+    database,
+    migrations: { applied, expected: expected.length },
+  })
   return {
-    /** Database reachable and every migration in this build applied. */
+    /**
+     * Database reachable and every migration in this build applied. Matches
+     * the applied set against this build's journal rather than counting rows,
+     * so a database migrated by another build is not mistaken for this one's.
+     */
     async check(): Promise<HealthReport> {
       try {
-        const [row] = await db
-          .select({ applied: count() })
+        const rows = await db
+          .select({ createdAt: appliedMigrations.createdAt })
           .from(appliedMigrations)
-        const applied = row?.applied ?? 0
-        return {
-          ok: applied >= expected,
-          database: "up",
-          migrations: { applied, expected },
-        }
-      } catch {
-        return {
-          ok: false,
-          database: "down",
-          migrations: { applied: 0, expected },
-        }
+        const have = new Set(rows.map((row) => row.createdAt))
+        return report("up", expected.filter((when) => have.has(when)).length)
+      } catch (error) {
+        if (postgresCode(error) === UNDEFINED_TABLE) return report("up", 0)
+        // The response only says "down"; the cause goes to the server log.
+        console.error("health check: database query failed", error)
+        return report("down", 0)
       }
     },
   }

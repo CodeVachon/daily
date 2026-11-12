@@ -1,10 +1,13 @@
 # Production stack on the droplet (docs/adr/0001-production-deployment.md).
 #
-#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose --env-file /etc/daily/daily.env -f docker-compose.prod.yml up -d
 #
 # Every setting comes from one env file (default /etc/daily/daily.env, root-only,
-# mode 600): the app's variables from .env.schema plus POSTGRES_PASSWORD. Set
-# DAILY_ENV_FILE / DAILY_IMAGE / DAILY_WEB_PORT to override (e.g. local testing).
+# mode 600): the app's variables from .env.schema plus POSTGRES_PASSWORD. The
+# app containers get the whole file; postgres gets only POSTGRES_PASSWORD, which
+# compose reads from --env-file, so the app's secrets stay out of the database
+# container. Set DAILY_ENV_FILE / DAILY_IMAGE / DAILY_WEB_PORT to override (e.g.
+# local testing).
 # TLS (Caddy, #57) and backups (#53) are added on top of this.
 
 x-app: &app
@@ -18,8 +21,8 @@ services:
   postgres:
     image: postgres:17
     restart: unless-stopped
-    env_file: ${DAILY_ENV_FILE:-/etc/daily/daily.env}
     environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?pass the env file with --env-file (it must set POSTGRES_PASSWORD)}
       POSTGRES_USER: daily
       POSTGRES_DB: daily
       TZ: UTC
@@ -41,6 +44,8 @@ services:
     <<: *app
     command: migrate
     restart: "no"
+    # The image's HEALTHCHECK probes the web server, which this role never runs.
+    healthcheck: { disable: true }
     depends_on:
       postgres: { condition: service_healthy }
 

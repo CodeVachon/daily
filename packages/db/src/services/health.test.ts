@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import journal from "../../drizzle/meta/_journal.json" with { type: "json" }
 import { createTestDatabase, type TestDatabase } from "../testing"
@@ -10,9 +10,16 @@ beforeAll(async () => {
 })
 afterAll(() => t.close())
 
+const MIGRATIONS = 'drizzle."__drizzle_migrations"'
+const LAST = `id = (select max(id) from ${MIGRATIONS})`
+
+// The tests share one database and run in order: each restores what it
+// changes, until the last two, which leave it missing a migration and then
+// without the bookkeeping table.
 describe("health", () => {
+  const expected = journal.entries.length
+
   it("is ok when every migration is applied", async () => {
-    const expected = journal.entries.length
     await expect(t.services.health.check()).resolves.toEqual({
       ok: true,
       database: "up",
@@ -20,21 +27,73 @@ describe("health", () => {
     })
   })
 
-  it("is not ok when a migration is missing", async () => {
+  it("ignores migrations from a newer build", async () => {
     await t.query(
-      'delete from drizzle."__drizzle_migrations" where id = (select max(id) from drizzle."__drizzle_migrations")'
+      `insert into ${MIGRATIONS} (hash, created_at) values ('newer', 9999999999999)`
     )
-    const report = await t.services.health.check()
-    expect(report).toMatchObject({ ok: false, database: "up" })
-    expect(report.migrations.applied).toBe(report.migrations.expected - 1)
+    await expect(t.services.health.check()).resolves.toEqual({
+      ok: true,
+      database: "up",
+      migrations: { applied: expected, expected },
+    })
+    await t.query(`delete from ${MIGRATIONS} where hash = 'newer'`)
   })
 
-  it("reports the database down when it can't be queried", async () => {
+  it("is not ok when the applied migrations are not this build's", async () => {
+    // Same row count as the journal, but one row is another build's migration.
+    const [last] = await t.query<{ created_at: string }>(
+      `select created_at from ${MIGRATIONS} where ${LAST}`
+    )
+    await t.query(`update ${MIGRATIONS} set created_at = 1 where ${LAST}`)
+    await expect(t.services.health.check()).resolves.toEqual({
+      ok: false,
+      database: "up",
+      migrations: { applied: expected - 1, expected },
+    })
+    await t.query(
+      `update ${MIGRATIONS} set created_at = ${last!.created_at} where ${LAST}`
+    )
+    await expect(t.services.health.check()).resolves.toMatchObject({ ok: true })
+  })
+
+  it("is not ok when a migration is missing", async () => {
+    await t.query(`delete from ${MIGRATIONS} where ${LAST}`)
+    await expect(t.services.health.check()).resolves.toEqual({
+      ok: false,
+      database: "up",
+      migrations: { applied: expected - 1, expected },
+    })
+  })
+
+  it("reports an unmigrated database as up with nothing applied", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    try {
+      await t.query(`drop table ${MIGRATIONS}`)
+      await expect(t.services.health.check()).resolves.toEqual({
+        ok: false,
+        database: "up",
+        migrations: { applied: 0, expected },
+      })
+      expect(log).not.toHaveBeenCalled()
+    } finally {
+      log.mockRestore()
+    }
+  })
+
+  it("reports the database down, and logs why, when it can't be queried", async () => {
     const other = await createTestDatabase()
     await other.close()
-    await expect(createHealthService(other.db).check()).resolves.toMatchObject({
-      ok: false,
-      database: "down",
-    })
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    try {
+      await expect(
+        createHealthService(other.db).check()
+      ).resolves.toMatchObject({ ok: false, database: "down" })
+      expect(log).toHaveBeenCalledWith(
+        "health check: database query failed",
+        expect.anything()
+      )
+    } finally {
+      log.mockRestore()
+    }
   })
 })

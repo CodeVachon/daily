@@ -20,7 +20,12 @@ import {
   type ListTasksInput,
   type StatusCategory,
 } from "../../task-inputs"
-import { calendarDateIn, todayInterval, weekInterval } from "../../time"
+import {
+  calendarDateIn,
+  todayInterval,
+  weekInterval,
+  type WeekStart,
+} from "../../time"
 
 type ListFilters = Required<Pick<ListTasksInput, "deleted">> &
   Omit<ListTasksInput, "deleted">
@@ -47,7 +52,8 @@ function statusFilter(values: string[] | undefined): SQL | undefined {
 function dueFilter(
   window: ListTasksInput["due"],
   now: Date,
-  timezone: string
+  timezone: string,
+  weekStartsOn: WeekStart
 ): SQL | undefined {
   if (!window || window === "any") return undefined
   if (window === "none") return and(isNull(task.dueDate), isNull(task.dueAt))
@@ -62,7 +68,7 @@ function dueFilter(
       and(gte(task.dueAt, now), lt(task.dueAt, end))
     )
   }
-  const week = weekInterval(now, timezone)
+  const week = weekInterval(now, timezone, weekStartsOn)
   const weekEnd = calendarDateIn(new Date(+week.end - 1), timezone)
   return or(
     and(
@@ -101,7 +107,8 @@ export function listConditions(
   userId: string,
   f: ListFilters,
   now: Date,
-  timezone: string
+  timezone: string,
+  weekStartsOn: WeekStart
 ) {
   return and(
     eq(task.userId, userId),
@@ -110,7 +117,7 @@ export function listConditions(
     f.projectId ? eq(task.projectId, f.projectId) : undefined,
     labelFilter(f.labelId),
     f.priority?.length ? inArray(task.priority, f.priority) : undefined,
-    dueFilter(f.due, now, timezone),
+    dueFilter(f.due, now, timezone, weekStartsOn),
     parentFilter(f.parentTaskId),
     textFilter(f.text)
   )

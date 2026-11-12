@@ -1,4 +1,5 @@
 import { ACCENT_COLORS, BASE_COLORS, type Appearance } from "@workspace/db/core"
+import { weekStartName, weekStartNamed } from "@workspace/db/time"
 import { z } from "zod"
 
 import { json, safely, type ToolModule } from "./types"
@@ -21,7 +22,11 @@ const palette = z
     `An accent colour (${ACCENT_COLORS.join(", ")}), or the current base colour for none`
   )
 
-/** The app's look: shadcn base colour, theme and chart palette. */
+const weekStartOutput = z.object({
+  week_starts_on: z.enum(["Sunday", "Monday", "Saturday"]),
+})
+
+/** The app's look (shadcn base colour, theme, chart palette) and week start. */
 export const settingsTools: ToolModule = (server, ctx) => {
   const { settings } = ctx.services
 
@@ -86,6 +91,58 @@ export const settingsTools: ToolModule = (server, ctx) => {
               theme,
               chartColor: chart_color,
             })
+          ),
+        })
+      )
+  )
+
+  server.registerTool(
+    "get_week_start",
+    {
+      title: "Get week start",
+      description:
+        "The day the user's weeks start on (Sunday, Monday or Saturday). It sets the first day of the Calendar's week and month views, and the window of list_tasks due=\"week\".",
+      inputSchema: z.object({}),
+      outputSchema: weekStartOutput,
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () =>
+      json({
+        week_starts_on: weekStartName(await settings.getWeekStart(ctx.userId)),
+      })
+  )
+
+  server.registerTool(
+    "set_week_start",
+    {
+      title: "Set week start",
+      description:
+        "Start the user's weeks on Sunday, Monday or Saturday. Changes the Calendar's week and month views and what counts as \"due this week\".",
+      inputSchema: z.object({
+        day: z
+          .enum(["sunday", "monday", "saturday"])
+          .describe("The first day of the week"),
+      }),
+      outputSchema: weekStartOutput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ day }) =>
+      safely(async () =>
+        json({
+          week_starts_on: weekStartName(
+            await settings.updateWeekStart(
+              ctx.userId,
+              weekStartNamed(day) ?? -1
+            )
           ),
         })
       )

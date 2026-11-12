@@ -1,7 +1,10 @@
 import {
+  CalendarIcon,
   FolderIcon,
+  InboxIcon,
   KanbanSquareIcon,
   ListIcon,
+  MessageSquareTextIcon,
   SettingsIcon,
   type LucideIcon,
 } from "lucide-react"
@@ -16,6 +19,9 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { title: "Board", href: "/board", icon: KanbanSquareIcon },
   { title: "Tasks", href: "/tasks", icon: ListIcon },
+  { title: "Calendar", href: "/calendar", icon: CalendarIcon },
+  { title: "Updates", href: "/updates", icon: InboxIcon },
+  { title: "Standup", href: "/standup", icon: MessageSquareTextIcon },
   { title: "Projects", href: "/projects", icon: FolderIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
 ]
@@ -23,7 +29,10 @@ export const NAV_ITEMS: NavItem[] = [
 /** Tabs on the settings pages. */
 export const SETTINGS_SECTIONS = [
   { title: "Appearance", href: "/settings" },
+  { title: "Calendar", href: "/settings/calendar" },
   { title: "Labels", href: "/settings/labels" },
+  { title: "Templates", href: "/settings/templates" },
+  { title: "Integrations", href: "/settings/integrations" },
   { title: "About", href: "/settings/about" },
 ]
 

@@ -120,6 +120,83 @@ immediately).
 Edit `packages/db/src/schema/*`, then `bun run db:generate` and `bun run db:migrate`
 (`db:push` / `db:studio` are also available).
 
+## Integrations (GitHub, Jira, Google Calendar)
+
+Settings → Integrations connects external systems with your own credentials and lets you
+choose which repositories / projects Daily may look at. Nothing outside that selection is ever
+queried. Credentials are checked with the provider before saving, stored encrypted
+(AES-256-GCM, key `INTEGRATIONS_ENCRYPTION_KEY`; generate one with `openssl rand -base64 32`), and
+never shown again or exposed to agents. Disconnecting deletes them but keeps the selection.
+
+- **GitHub:** a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
+  with read-only **Issues**, **Pull requests** and **Metadata** on the repositories you want
+  (for organisation repos, choose the organisation as the resource owner; it may need approval).
+  A classic token with `repo` also works but sees every repository.
+- **Jira Cloud:** your site (`acme.atlassian.net`), the email you sign in with, and an
+  [Atlassian API token](https://id.atlassian.com/manage-profile/security/api-tokens). Only
+  `*.atlassian.net` sites are accepted.
+
+Changing `INTEGRATIONS_ENCRYPTION_KEY` makes stored credentials unreadable; reconnect each
+integration afterwards.
+
+### Google Calendar
+
+Google is connected with **Connect Google Calendar** (Google's consent page) instead of pasted
+credentials. Daily keeps the refresh token (encrypted like the others), refreshes access tokens
+itself, and selects your primary calendar; choose others in the picker. Disconnecting also asks
+Google to remove Daily's access. It needs an OAuth client, once per deployment:
+
+1. [Create a project](https://console.cloud.google.com/projectcreate) in your Workspace
+   organisation (Internal apps are only offered for projects in an organisation).
+2. [Enable the Google Calendar API](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com).
+3. [Branding](https://console.cloud.google.com/auth/branding): app name "Daily", your email as
+   support and developer contact; **Audience: Internal** (no Google review, tokens don't expire
+   after 7 days).
+4. [Data access](https://console.cloud.google.com/auth/scopes): add
+   `https://www.googleapis.com/auth/calendar.events` (read events, answer invitations) and
+   `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (list your calendars).
+5. [Create an OAuth client](https://console.cloud.google.com/auth/clients/create): **Web
+   application**, authorized redirect URI `${BETTER_AUTH_URL}/api/integrations/google/callback`
+   (e.g. `https://<machine>.<tailnet>.ts.net/api/integrations/google/callback`; add the
+   production domain's too).
+6. Put the client in `.env.local` (or the production env file) and restart:
+
+   ```sh
+   GOOGLE_CLIENT_ID=….apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=…
+   ```
+
+Without them the Google card says it isn't set up; everything else works.
+
+### Sync worker
+
+Links on tasks (GitHub issues/PRs, Jira issues) fetch their title and state when added and on
+**Refresh**. `apps/worker` keeps them fresh in the background: every `SYNC_POLL_SECONDS` (60) it
+refreshes the links that are due: open/draft every 5 minutes, merged/done/closed every 6 hours,
+failing ones every 15 minutes (`packages/db/src/sync-policy.ts`). Only repositories/projects
+selected in Settings → Integrations are asked. Changes after the first sync appear in the task's
+activity as "sync".
+
+It also mirrors the selected Google calendars (`calendar-sync`, every pass): the first sync
+fetches events from 30 days ago to a month ahead with every detail (attendees and their answers,
+Meet link and dial-in, attachments), later passes fetch only what changed (Google sync tokens), and
+a full sync every 7 days rolls that window forward. Deselecting a calendar or
+disconnecting Google drops its events. Open pages refresh when events change.
+
+Meetings you accept (or organize) become tasks: up to two weeks ahead, each meeting with other
+people or a Meet link gets a task labelled "meeting", due at its start, created by the sync system.
+A new title or time updates the task; declining or a cancelled meeting cancels it (accepting again
+reopens it); once the meeting is over the task moves to Done, once (reopen it and it stays open).
+Tasks you finished or deleted are never touched. Answer invitations from the meeting details or the
+Invitations list on Updates (Google tells the organizer). A calendar that
+fails (e.g. you lost access) records why and is retried next pass.
+
+- **Dev:** `bun run dev` starts it with the web app (or `bun run --cwd apps/worker dev` alone).
+- **Production:** the `worker` service in `docker-compose.prod.yml` (`daily worker` in the image).
+  Run one; a Postgres advisory lock stops a second copy from syncing at the same time.
+- **Health:** `/api/health` includes `worker.lastBeatAt` and `worker.stale` (no pass in 5
+  minutes). It doesn't change the status code, so a stopped worker never restarts the web app.
+
 ## MCP server (for Claude agents)
 
 Every app feature also ships MCP tools (see `AGENTS.md`). The server is at
@@ -133,7 +210,11 @@ What agents can do (everything is attributed to the agent in task history; agent
 | Tasks             | `list_statuses`, `create_task`, `update_task`, `move_task`, `get_task`, `list_tasks`, `search_tasks`                                                                      |
 | Collaboration     | `list_comments`, `add_comment`, `edit_comment`, `list_checklist`, `add_checklist_item`, `update_checklist_item`, `set_task_parent`, `list_dependencies`, `add_dependency` |
 | Projects & labels | `list_projects`, `create_project`, `update_project`, `list_labels`, `create_label`, `update_label`, `set_task_labels`                                                     |
-| History           | `get_activity`, `get_updates_since`                                                                                                                                       |
+| History           | `get_activity`, `get_updates_since`, `list_unread_updates`                                                                                                                |
+| Settings          | `get_appearance`, `update_appearance`                                                                                                                                     |
+| Links             | `link_external`, `refresh_links`, `list_task_links`, `find_tasks_by_link` (GitHub issues/PRs, Jira issues; only the user can unlink)                                      |
+| Integrations      | `list_integrations`, `list_integration_resources`, `set_integration_scope` (never credentials: connecting and disconnecting is the user's)                                |
+| Meetings          | `list_meetings`, `get_meeting`, `next_meeting`, `list_invitations` (read-only: your synced Google Calendar meetings, details, dial-in, attachments)                       |
 
 Prompts: `capture_task`, `triage_inbox`, `next_up`. Resource: `daily://task/{number}` (a task as
 Markdown). Tasks are referred to as `#12`; due dates are plain strings in the user's current time
@@ -173,11 +254,12 @@ One Docker image runs every role; the droplet's env file supplies all settings
 
 ```bash
 docker build -t daily --build-arg GIT_SHA=$(git rev-parse HEAD) .
-docker compose --env-file /etc/daily/daily.env -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web
+docker compose --env-file /etc/daily/daily.env -f docker-compose.prod.yml up -d   # postgres, migrate (one-shot), web, worker
 ```
 
 - **Roles** (`docker/entrypoint.sh`): `web` (default, the Next.js standalone
-  server) and `migrate` (applies `packages/db/drizzle`, then exits). Both boot
+  server), `migrate` (applies `packages/db/drizzle`, then exits) and `worker`
+  (the link sync worker, `apps/worker` bundled as `worker.mjs`). All boot
   through `varlock run`, which validates the environment against `.env.schema`
   and exits with a clear message if anything is missing.
 - **No values are baked in.** `.env.schema` sets `@defaultDynamic=true`, so

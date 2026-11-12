@@ -8,10 +8,17 @@ import {
   type AppearancePatch,
 } from "../appearance"
 import type { Database } from "../database"
+import { ValidationError } from "../errors"
 import { userSettings } from "../schema"
-import { isValidTimeZone } from "../time"
+import {
+  DEFAULT_WEEK_START,
+  isValidTimeZone,
+  isWeekStart,
+  type WeekStart,
+} from "../time"
 
 const DEFAULT_TIMEZONE = "UTC"
+const SLACK_MEMBER_ID = /^[UW][A-Z0-9]{6,}$/
 
 export interface TimezoneUpdate {
   timezone: string
@@ -32,7 +39,59 @@ export function createSettingsService(db: Database) {
     return row ? toAppearance(row) : DEFAULT_APPEARANCE
   }
 
+  async function getWeekStart(userId: string): Promise<WeekStart> {
+    const value = (await current(userId))?.weekStartsOn
+    return isWeekStart(value) ? value : DEFAULT_WEEK_START
+  }
+
   return {
+    /** My Slack member ID (U…), or null; {{mention}} uses it. */
+    async getSlackMemberId(userId: string): Promise<string | null> {
+      return (await current(userId))?.slackMemberId ?? null
+    },
+
+    /** Set (or clear, with null or "") my Slack member ID. */
+    async updateSlackMemberId(
+      userId: string,
+      value: string | null
+    ): Promise<string | null> {
+      const slackMemberId = value?.trim().toUpperCase() || null
+      if (slackMemberId && !SLACK_MEMBER_ID.test(slackMemberId))
+        throw new ValidationError(
+          "A Slack member ID looks like U012AB3CD (Slack: your profile > ⋮ > Copy member ID)"
+        )
+      await db
+        .insert(userSettings)
+        .values({ userId, slackMemberId })
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: { slackMemberId },
+        })
+      return slackMemberId
+    },
+
+    /** The day weeks start on (calendar weeks, "due this week"). */
+    getWeekStart,
+
+    /** Start weeks on Sunday (0), Monday (1) or Saturday (6). */
+    async updateWeekStart(
+      userId: string,
+      weekStartsOn: number
+    ): Promise<WeekStart> {
+      if (!isWeekStart(weekStartsOn))
+        throw new ValidationError(
+          "Weeks can start on Sunday (0), Monday (1) or Saturday (6)"
+        )
+      await db
+        .insert(userSettings)
+        .values({ userId, weekStartsOn })
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: { weekStartsOn },
+        })
+      return weekStartsOn
+    },
+
     /** The base colour, theme and chart palette the app is drawn in. */
     getAppearance,
 

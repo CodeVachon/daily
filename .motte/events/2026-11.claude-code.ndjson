@@ -113,3 +113,61 @@
 {"at":"2026-11-10T03:25:53Z","id":51,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
 {"at":"2026-11-10T03:31:37Z","id":63,"by":"claude-code","as":"agent","type":"created","title":"Release workflow: versioned Docker image on GitHub Release; version shown in Settings","state":"Todo"}
 {"at":"2026-11-10T03:35:32Z","id":63,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T13:42:45Z","id":37,"by":"claude-code","as":"agent","type":"title","from":"Encrypted provider connections (OAuth token storage)","to":"Encrypted integration credentials (API tokens) and selected resources"}
+{"at":"2026-11-10T13:42:50Z","id":38,"by":"claude-code","as":"agent","type":"title","from":"Settings > Integrations: OAuth connect flows for GitHub, Atlassian and Linear","to":"Settings > Integrations: enter GitHub/Jira credentials and choose repositories/projects"}
+{"at":"2026-11-10T13:42:50Z","id":37,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-10T13:42:50Z","id":37,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-10T13:44:57Z","id":37,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T13:53:50Z","id":38,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":21}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":27}
+{"at":"2026-11-10T14:37:51Z","id":41,"by":"claude-code","as":"agent","type":"unblocked","blocker":40}
+{"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":21}
+{"at":"2026-11-10T14:37:56Z","id":41,"by":"claude-code","as":"agent","type":"blocked","blocker":27}
+{"at":"2026-11-10T18:45:00Z","id":65,"by":"claude-code","as":"agent","type":"created","title":"Epic: Google Calendar meetings, RSVP, meeting tasks and a calendar view","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":66,"by":"claude-code","as":"agent","type":"created","title":"Google connection: Internal OAuth app, Connect with Google, choose calendars","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":67,"by":"claude-code","as":"agent","type":"created","title":"Calendar sync: cache every event with full details","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":68,"by":"claude-code","as":"agent","type":"created","title":"RSVP: accept, maybe or decline meetings from Daily","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":69,"by":"claude-code","as":"agent","type":"created","title":"Accepted meetings become tasks, kept in sync","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"created","title":"Calendar page: month and week views with meetings and due tasks; drag to reschedule","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"created","title":"MCP tools for meetings (read-only)","state":"Todo"}
+{"at":"2026-11-10T18:45:24Z","id":67,"by":"claude-code","as":"agent","type":"blocked","blocker":66}
+{"at":"2026-11-10T18:45:24Z","id":68,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":69,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":70,"by":"claude-code","as":"agent","type":"blocked","blocker":69}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"blocked","blocker":67}
+{"at":"2026-11-10T18:45:24Z","id":71,"by":"claude-code","as":"agent","type":"blocked","blocker":68}
+{"at":"2026-11-11T20:22:11Z","id":66,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T20:22:11Z","id":66,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T20:36:10Z","id":66,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-11T20:38:30Z","id":67,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T20:38:30Z","id":67,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T20:47:43Z","id":67,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-11T21:23:24Z","id":72,"by":"claude-code","as":"agent","type":"created","title":"Calendar week view: this week's meetings, meeting details, Next meeting line","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":73,"by":"claude-code","as":"agent","type":"created","title":"Calendar month view","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"created","title":"Tasks with due dates on the calendar; drag to reschedule","state":"Todo"}
+{"at":"2026-11-11T21:23:24Z","id":73,"by":"claude-code","as":"agent","type":"blocked","blocker":72}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":72}
+{"at":"2026-11-11T21:23:24Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":73}
+{"at":"2026-11-11T21:23:27Z","id":74,"by":"claude-code","as":"agent","type":"blocked","blocker":69}
+{"at":"2026-11-11T21:23:28Z","id":72,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:23:28Z","id":72,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T21:23:30Z","id":71,"by":"claude-code","as":"agent","type":"title","from":"MCP tools for meetings (read-only)","to":"MCP tool for invitations (read-only)"}
+{"at":"2026-11-11T21:33:00Z","id":72,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-11T21:37:22Z","id":73,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:37:22Z","id":73,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T21:39:56Z","id":68,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:39:56Z","id":68,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-11T21:46:05Z","id":69,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-11T21:46:05Z","id":69,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-12T13:26:24Z","id":75,"by":"claude-code","as":"agent","type":"created","title":"Setting: first day of the week","state":"Todo"}
+{"at":"2026-11-12T13:26:26Z","id":75,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-12T13:26:26Z","id":75,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-12T13:29:21Z","id":75,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-12T14:46:32Z","id":44,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-12T14:46:32Z","id":44,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-12T14:53:01Z","id":44,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}
+{"at":"2026-11-12T18:56:09Z","id":48,"by":"claude-code","as":"agent","type":"state","from":"Todo","to":"In Progress"}
+{"at":"2026-11-12T18:56:09Z","id":48,"by":"claude-code","as":"agent","type":"assigned","from":null,"to":"claude-code"}
+{"at":"2026-11-12T19:02:41Z","id":48,"by":"claude-code","as":"agent","type":"state","from":"In Progress","to":"Done"}

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import journal from "../../drizzle/meta/_journal.json" with { type: "json" }
 import { createTestDatabase, type TestDatabase } from "../testing"
+import { LINK_SYNC_JOB } from "../sync-policy"
 import { createHealthService } from "./health"
 
 let t: TestDatabase
@@ -20,18 +21,27 @@ describe("health", () => {
   const expected = journal.entries.length
 
   it("is ok when every migration is applied", async () => {
-    await expect(t.services.health.check()).resolves.toEqual({
+    await expect(t.services.health.check()).resolves.toMatchObject({
       ok: true,
       database: "up",
       migrations: { applied: expected, expected },
+      worker: { lastBeatAt: null, stale: true },
     })
+  })
+
+  it("reports the sync worker's heartbeat without affecting ok", async () => {
+    await t.services.worker.beat(LINK_SYNC_JOB, { checked: 1 })
+    const report = await t.services.health.check()
+    expect(report.ok).toBe(true)
+    expect(report.worker.stale).toBe(false)
+    expect(report.worker.lastBeatAt).toEqual(expect.any(String))
   })
 
   it("ignores migrations from a newer build", async () => {
     await t.query(
       `insert into ${MIGRATIONS} (hash, created_at) values ('newer', 9999999999999)`
     )
-    await expect(t.services.health.check()).resolves.toEqual({
+    await expect(t.services.health.check()).resolves.toMatchObject({
       ok: true,
       database: "up",
       migrations: { applied: expected, expected },
@@ -45,7 +55,7 @@ describe("health", () => {
       `select created_at from ${MIGRATIONS} where ${LAST}`
     )
     await t.query(`update ${MIGRATIONS} set created_at = 1 where ${LAST}`)
-    await expect(t.services.health.check()).resolves.toEqual({
+    await expect(t.services.health.check()).resolves.toMatchObject({
       ok: false,
       database: "up",
       migrations: { applied: expected - 1, expected },
@@ -58,7 +68,7 @@ describe("health", () => {
 
   it("is not ok when a migration is missing", async () => {
     await t.query(`delete from ${MIGRATIONS} where ${LAST}`)
-    await expect(t.services.health.check()).resolves.toEqual({
+    await expect(t.services.health.check()).resolves.toMatchObject({
       ok: false,
       database: "up",
       migrations: { applied: expected - 1, expected },
@@ -69,7 +79,7 @@ describe("health", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {})
     try {
       await t.query(`drop table ${MIGRATIONS}`)
-      await expect(t.services.health.check()).resolves.toEqual({
+      await expect(t.services.health.check()).resolves.toMatchObject({
         ok: false,
         database: "up",
         migrations: { applied: 0, expected },

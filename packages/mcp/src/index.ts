@@ -1,5 +1,10 @@
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server"
 import type { Services } from "@workspace/db/core"
+import {
+  createIntegrations,
+  type Fetch,
+  type GoogleConfig,
+} from "@workspace/integrations"
 
 import { contextFromAuthInfo, type McpContext } from "./context"
 import { toolModules } from "./tools"
@@ -33,14 +38,30 @@ export function createMcpServer(ctx: McpContext, version = "dev"): McpServer {
   return server
 }
 
+export interface McpHandlerOptions {
+  /** The app's release version, reported in `initialize`. */
+  version?: string
+  /** How integrations reach GitHub/Jira/Google (tests pass a fake). */
+  fetch?: Fetch
+  /** The Google OAuth client, to refresh Google access tokens. */
+  google?: GoogleConfig | null
+}
+
 /**
  * Streamable-HTTP handler: one fresh server per request, built for the caller.
  * `legacy: "stateless"` also answers 2025-era clients (no sessions).
  */
-export function createMcpRequestHandler(services: Services, version?: string) {
+export function createMcpRequestHandler(
+  services: Services,
+  { version, fetch, google }: McpHandlerOptions = {}
+) {
+  const integrations = createIntegrations({ services, fetch, google })
   return createMcpHandler(
     async ({ authInfo }) =>
-      createMcpServer(await contextFromAuthInfo(authInfo, services), version),
+      createMcpServer(
+        await contextFromAuthInfo(authInfo, services, integrations),
+        version
+      ),
     { legacy: "stateless" }
   )
 }

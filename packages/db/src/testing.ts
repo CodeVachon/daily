@@ -8,6 +8,9 @@ import * as schema from "./schema"
 import type { Database } from "./database"
 import { createServices, type Services } from "./services"
 
+// A fixed, throwaway key: tests never touch real credentials.
+const TEST_KEY = Buffer.alloc(32, 7).toString("base64")
+
 const migrationsFolder = fileURLToPath(new URL("../drizzle", import.meta.url))
 
 export interface TestDatabase {
@@ -44,7 +47,13 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   let n = 0
   let position: string | null = null
   return {
-    services: createServices(db),
+    services: createServices(db, {
+      encryptionKey: () => TEST_KEY,
+      listen: async (channel, onPayload) => {
+        const stop = await client.listen(channel, onPayload)
+        return stop
+      },
+    }),
     db,
     seed: {
       async user(overrides = {}) {

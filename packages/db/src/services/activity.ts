@@ -35,7 +35,7 @@ export async function recordEvents(
 
 type Row = typeof taskEvent.$inferSelect
 
-function toEvent(row: Row): TaskEvent {
+export function toEvent(row: Row): TaskEvent {
   return {
     seq: row.seq,
     taskId: row.taskId,

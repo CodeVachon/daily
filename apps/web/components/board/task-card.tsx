@@ -16,14 +16,17 @@ import {
   ArrowUpIcon,
   BanIcon,
   CalendarIcon,
-  ListChecksIcon,
-  ListTreeIcon,
   MinusIcon,
 } from "lucide-react"
 import Link from "next/link"
 
 import { ColorBadge } from "@/components/color-badge"
+import { CompletionSummary } from "@/components/completion-summary"
+import { LinkIcon } from "@/components/link-icon"
+import { useLiveFlash } from "@/components/live-updates"
+import { UnreadDot } from "@/components/unread-dot"
 import type { BoardCard } from "@/lib/board"
+import { MAX_CARD_LINKS, type LinkBadge } from "@/lib/links"
 import { taskHref } from "@/lib/task-form"
 
 const PRIORITY_ICON: Record<Priority, React.ReactNode> = {
@@ -55,19 +58,19 @@ function DueBadge({ due }: { due: NonNullable<BoardCard["due"]> }) {
   )
 }
 
-function Progress({
-  icon,
-  value,
-}: {
-  icon: React.ReactNode
-  value: BoardCard["checklist"]
-}) {
-  if (!value) return null
+/** Linked PRs / issues with their state; the first few, then "+n". */
+function LinkBadges({ links = [] }: { links?: LinkBadge[] }) {
+  const extra = links.length - MAX_CARD_LINKS
   return (
-    <Badge variant="ghost">
-      {icon}
-      {value.done}/{value.total}
-    </Badge>
+    <>
+      {links.slice(0, MAX_CARD_LINKS).map((link) => (
+        <Badge key={link.key} variant={link.variant} title={link.key}>
+          <LinkIcon icon={link.icon} />
+          {link.label}
+        </Badge>
+      ))}
+      {extra > 0 && <Badge variant="ghost">+{extra}</Badge>}
+    </>
   )
 }
 
@@ -85,8 +88,7 @@ function CardBadges({ card }: { card: BoardCard }) {
       {card.labels.map((label) => (
         <ColorBadge key={label.name} chip={label} />
       ))}
-      <Progress icon={<ListChecksIcon />} value={card.checklist} />
-      <Progress icon={<ListTreeIcon />} value={card.subtasks} />
+      <LinkBadges links={card.links} />
     </CardContent>
   )
 }
@@ -108,12 +110,15 @@ export function TaskCard({
     accept: "item",
   })
 
+  const flash = useLiveFlash(card.id)
+
   return (
     <Card
       ref={ref}
       size="sm"
+      data-flash={flash || undefined}
       className={cn(
-        "cursor-grab touch-none select-none",
+        "cursor-grab touch-none transition-shadow duration-700 select-none data-flash:ring-2 data-flash:ring-primary",
         isDragging && "opacity-50"
       )}
     >
@@ -129,6 +134,8 @@ export function TaskCard({
             <span className="text-muted-foreground">#{card.number}</span>{" "}
             {card.title}
           </Link>
+          <CompletionSummary completion={card.completion} />
+          <UnreadDot unread={card.unread} className="mt-1.5 ml-auto" />
         </CardTitle>
       </CardHeader>
       <CardBadges card={card} />

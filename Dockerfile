@@ -35,8 +35,10 @@ RUN APP_ENV=production \
     BETTER_AUTH_SECRET=build-placeholder-auth-secret-not-real \
     GITHUB_CLIENT_ID=build-placeholder-client-id \
     GITHUB_CLIENT_SECRET=build-placeholder-client-secret-not-real \
+    INTEGRATIONS_ENCRYPTION_KEY=YnVpbGQtcGxhY2Vob2xkZXIta2V5LW5vdC1yZWFsISE= \
     bun run --cwd apps/web build \
- && bun run --cwd packages/db build:migrate
+ && bun run --cwd packages/db build:migrate \
+ && bun run --cwd apps/worker build
 
 # ---- runtime ----------------------------------------------------------------
 FROM node:22-slim AS runtime
@@ -62,6 +64,7 @@ WORKDIR /app
 COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=node:node /app/packages/db/dist/migrate.mjs ./migrate.mjs
+COPY --from=build --chown=node:node /app/apps/worker/dist/worker.mjs ./worker.mjs
 COPY --from=build --chown=node:node /app/packages/db/drizzle ./migrations
 COPY --from=build --chown=node:node /app/.env.schema ./.env.schema
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/daily

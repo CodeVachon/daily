@@ -1,5 +1,5 @@
 ---
-id: 64
+id: 76
 title: Resolve code review findings on the production image, release workflow and health check
 state: Done
 assignee: Christopher Vachon
@@ -28,3 +28,7 @@ Verify: bun run check; docker build if docker is available.
 ### 2026-11-11T19:34:48Z — Christopher Vachon (user)
 
 Verified: typecheck, lint, fallow clean; vitest 304/304 with --maxWorkers=2 (default parallelism times out beforeAll hooks in unrelated files on this loaded 4-core machine). Built the image and ran the prod compose stack: health 200, postgres env has only POSTGRES_*, migrate healthcheck NONE, PORT=8080 stays healthy. Kept packages/mcp importing the whole schema: mcp:smoke runs auth+db under its varlock run, so pick=[APP_VERSION] would break it. Compose now needs --env-file for POSTGRES_PASSWORD interpolation.
+
+### 2026-11-12T19:30:00Z — claude-code (agent)
+
+Renumbered from #64 when merging main into drizzle-postgres-better-auth: the branch had already used #64 for "Board and list: show a (done/total) completion summary". Commit e7f78b8 and PR #5 still say #64.

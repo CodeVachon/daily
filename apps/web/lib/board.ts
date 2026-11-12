@@ -1,6 +1,8 @@
 import type { Priority, TaskSummary } from "@workspace/db/core"
 import { formatDue, isDueToday, isOverdue } from "@workspace/db/time"
 
+import type { LinkBadge } from "./links"
+
 interface Status {
   key: string
   name: string
@@ -47,11 +49,46 @@ export interface BoardCard {
   project: Chip | null
   labels: Chip[]
   openBlockers: number
-  checklist: { done: number; total: number } | null
-  subtasks: { done: number; total: number } | null
+  completion: Completion | null
+  /** Linked GitHub/Jira items (added by the board page). */
+  links?: LinkBadge[]
+  /** Changed by an agent or sync since the user last opened it. */
+  unread?: boolean
 }
 
-const progress = (p: { done: number; total: number }) => (p.total ? p : null)
+/** Checklist items and subtasks done, combined, e.g. "(2/3)". */
+export interface Completion {
+  done: number
+  total: number
+  /** "(2/3)" */
+  label: string
+  /** The breakdown, e.g. "1 of 2 checklist items, 1 of 1 subtask done". */
+  detail: string
+}
+
+const plural = (n: number, word: string) => (n === 1 ? word : `${word}s`)
+
+/** The combined completion summary, or null when there's nothing to count. */
+export function completionSummary(
+  progress: TaskSummary["progress"]
+): Completion | null {
+  const { checklist, subtasks } = progress
+  const done = checklist.done + subtasks.done
+  const total = checklist.total + subtasks.total
+  if (total === 0) return null
+  const parts = [
+    checklist.total &&
+      `${checklist.done} of ${checklist.total} ${plural(checklist.total, "checklist item")}`,
+    subtasks.total &&
+      `${subtasks.done} of ${subtasks.total} ${plural(subtasks.total, "subtask")}`,
+  ].filter(Boolean)
+  return {
+    done,
+    total,
+    label: `(${done}/${total})`,
+    detail: `${parts.join(", ")} done`,
+  }
+}
 
 export function toBoardCard(
   task: TaskSummary,
@@ -76,8 +113,7 @@ export function toBoardCard(
     },
     labels: task.labels.map(({ name, color }) => ({ name, color })),
     openBlockers: task.openBlockers,
-    checklist: progress(task.progress.checklist),
-    subtasks: progress(task.progress.subtasks),
+    completion: completionSummary(task.progress),
   }
 }
 

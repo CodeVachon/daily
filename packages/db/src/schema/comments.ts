@@ -3,8 +3,7 @@ import { relations } from "drizzle-orm"
 import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core"
 
 import type { Actor } from "../actor"
-import { user } from "./auth"
-import { task } from "./tasks"
+import { taskOwned } from "./columns"
 
 export const taskComment = pgTable(
   "task_comment",
@@ -12,12 +11,7 @@ export const taskComment = pgTable(
     id: text()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    taskId: text()
-      .notNull()
-      .references(() => task.id, { onDelete: "cascade" }),
-    userId: text()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    ...taskOwned(),
     /** Markdown. */
     body: text().notNull(),
     author: jsonb().$type<Actor>().notNull(),

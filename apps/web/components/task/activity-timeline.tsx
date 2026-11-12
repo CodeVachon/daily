@@ -31,11 +31,18 @@ function ActorAvatar({ type, name }: { type: ActorType; name: string }) {
 }
 
 /** Who changed what, newest first: the user, agents (by name) and sync. */
-export function ActivityTimeline({ entries }: { entries: TimelineEntry[] }) {
+export function ActivityTimeline({
+  entries,
+  title = "Activity",
+}: {
+  entries: TimelineEntry[]
+  /** Heading above the list; null for none. */
+  title?: string | null
+}) {
   if (entries.length === 0) return null
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium">Activity</h2>
+      {title && <h2 className="text-sm font-medium">{title}</h2>}
       <ol className="flex flex-col gap-3">
         {entries.map((entry) => (
           <li key={entry.id} className="flex items-start gap-2 text-sm">

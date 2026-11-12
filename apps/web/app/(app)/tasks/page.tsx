@@ -12,10 +12,12 @@ import { cn } from "@workspace/ui/lib/utils"
 import Link from "next/link"
 
 import { ColorBadge } from "@/components/color-badge"
+import { CompletionSummary } from "@/components/completion-summary"
 import { FilterBar } from "@/components/filter-bar"
 import { PageHeader } from "@/components/page-header"
 import { NewTaskDialog } from "@/components/task/new-task-dialog"
 import { TaskDrawerSlot } from "@/components/task/task-drawer-slot"
+import { UnreadDot } from "@/components/unread-dot"
 import type { Chip } from "@/lib/board"
 import { drawerHref, drawerTask, searchWithoutDrawer } from "@/lib/drawer"
 import { parseFilters, toListInput } from "@/lib/filters"
@@ -41,14 +43,26 @@ function ChipsCell({
   )
 }
 
-function TaskRow({ row, href }: { row: TaskRowView; href: string }) {
+function TaskRow({
+  row,
+  href,
+  unread,
+}: {
+  row: TaskRowView
+  href: string
+  unread: boolean
+}) {
   return (
     <TableRow>
       <TableCell className="text-muted-foreground">#{row.number}</TableCell>
-      <TableCell className="max-w-md truncate">
-        <Link href={href} scroll={false} className="hover:underline">
-          {row.title}
-        </Link>
+      <TableCell className="max-w-md">
+        <div className="flex items-center gap-1.5">
+          <UnreadDot unread={unread} />
+          <Link href={href} scroll={false} className="truncate hover:underline">
+            {row.title}
+          </Link>
+          <CompletionSummary completion={row.completion} />
+        </div>
       </TableCell>
       <TableCell>
         <Badge variant="outline">{row.status}</Badge>
@@ -79,6 +93,10 @@ export default async function TasksPage({
     loadTaskOptions(user.id),
     services.tasks.list(user.id, toListInput(filters)),
   ])
+  const unread = await services.inbox.unreadTaskIds(
+    user.id,
+    tasks.map((t) => t.id)
+  )
   const now = new Date()
 
   return (
@@ -106,6 +124,7 @@ export default async function TasksPage({
               <TaskRow
                 key={task.id}
                 row={toTaskRow(task, now, options.timezone)}
+                unread={unread.has(task.id)}
                 href={drawerHref("/tasks", search, task.number)}
               />
             ))}

@@ -8,6 +8,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -16,11 +17,23 @@ import { CheckCheckIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import type { NextMeetingView } from "@/lib/meeting"
 import { isActive, NAV_ITEMS } from "@/lib/nav"
 
+import { NextMeeting } from "./next-meeting"
 import { UserMenu, type MenuUser } from "./user-menu"
 
-export function AppSidebar({ user }: { user: MenuUser }) {
+export function AppSidebar({
+  user,
+  counts = {},
+  nextMeeting = null,
+}: {
+  user: MenuUser
+  /** Badge numbers by nav href (e.g. unread updates). */
+  counts?: Record<string, number>
+  /** The meeting on now or next, for a line above the user menu. */
+  nextMeeting?: NextMeetingView | null
+}) {
   const pathname = usePathname()
 
   return (
@@ -49,6 +62,13 @@ export function AppSidebar({ user }: { user: MenuUser }) {
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
+                  {Boolean(counts[item.href]) && (
+                    <SidebarMenuBadge
+                      aria-label={`${counts[item.href]} unread`}
+                    >
+                      {counts[item.href]}
+                    </SidebarMenuBadge>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -57,6 +77,7 @@ export function AppSidebar({ user }: { user: MenuUser }) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          {nextMeeting && <NextMeeting meeting={nextMeeting} />}
           <SidebarMenuItem>
             <UserMenu user={user} />
           </SidebarMenuItem>

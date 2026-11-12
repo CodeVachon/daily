@@ -1,5 +1,6 @@
 import type { AuthInfo } from "@modelcontextprotocol/server"
 import type { Actor, Services } from "@workspace/db/core"
+import { createIntegrations, type Integrations } from "@workspace/integrations"
 
 /**
  * Who is calling a tool, and the data services to serve them with. Built from
@@ -18,6 +19,8 @@ export interface McpContext {
   /** The user's current IANA zone, for "today" and for showing times. */
   timezone: string
   services: Services
+  /** External systems (GitHub, Jira) the user connected, via `services`. */
+  integrations: Integrations
 }
 
 /** Verified JWT access-token claims, as `requireMcpAuth` hands them over. */
@@ -58,7 +61,8 @@ export function bearerToken(header: string | null): string {
  */
 export async function contextFromAuthInfo(
   authInfo: AuthInfo | undefined,
-  services: Services
+  services: Services,
+  integrations: Integrations = createIntegrations({ services })
 ): Promise<McpContext> {
   const userId = asString(authInfo?.extra?.userId)
   if (!authInfo || !userId) {
@@ -76,5 +80,6 @@ export async function contextFromAuthInfo(
     actor,
     timezone,
     services,
+    integrations,
   }
 }

@@ -98,6 +98,39 @@ async function seed(userId: string, name: string) {
       "Reconcile **October** invoices against the bank export.\n\n- [ ] Pull statements\n- [ ] Match payments",
     priority: "urgent",
   })
+  // Checklist items and a subtask, so cards and rows show "(done/total)".
+  const pull = await services.checklist.add(me, 3, "Pull statements")
+  await services.checklist.toggle(me, pull.id, true)
+  await services.checklist.add(me, 3, "Match payments")
+  await make("Email the accountant", { parentTaskId: "#3", status: "done" })
+  // Links: one synced PR (state badge), one never synced, one failing.
+  const pr = await services.links.add(
+    me,
+    3,
+    "https://github.com/CodeVachon/daily/pull/3"
+  )
+  await services.links.recordSync(userId, pr.id, {
+    ok: true,
+    state: {
+      kind: "pr",
+      title:
+        "Production Docker image and release workflow, with a title long enough to need truncating in the drawer",
+      state: "merged",
+      stateCategory: "merged",
+      assignee: "codevachon",
+      remoteUpdatedAt: new Date(),
+    },
+  })
+  await services.links.add(claude, 3, "CodeVachon/daily#12")
+  const jira = await services.links.add(
+    me,
+    3,
+    "https://acme.atlassian.net/browse/FIN-42"
+  )
+  await services.links.recordSync(userId, jira.id, {
+    ok: false,
+    error: "Jira rejected the credentials (401)",
+  })
 }
 
 async function sessionCookie(userId: string) {

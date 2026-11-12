@@ -5,6 +5,7 @@ import { NotFoundError } from "@workspace/db/core"
 
 import { toTimeline } from "./activity"
 import { toCommentView } from "./comments"
+import { toLinkView } from "./links"
 import { loadTaskOptions } from "./task-options"
 
 /**
@@ -17,13 +18,15 @@ export async function loadTaskDetail(userId: string, ref: string) {
     throw error
   })
   if (!task) return null
-  const [options, events, checklist, comments, dependencies] =
+  const [options, events, checklist, comments, dependencies, links, unread] =
     await Promise.all([
       loadTaskOptions(userId),
       services.activity.forTask(userId, task.id, 50),
       services.checklist.list(userId, task.id),
       services.comments.list(userId, task.id),
       services.dependencies.list(userId, task.id),
+      services.links.list(userId, task.id),
+      services.inbox.unreadTaskIds(userId, [task.id]),
     ])
   const now = new Date()
   return {
@@ -50,6 +53,9 @@ export async function loadTaskDetail(userId: string, ref: string) {
       open,
     })),
     comments: comments.map((c) => toCommentView(c, userId, now)),
+    links: links.map(toLinkView),
+    /** Changed by an agent or sync since last opened (marked read on view). */
+    unread: unread.has(task.id),
   }
 }
 

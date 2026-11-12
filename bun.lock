@@ -21,13 +21,16 @@
       "name": "web",
       "version": "0.0.1",
       "dependencies": {
+        "@date-fns/tz": "^1.5.0",
         "@dnd-kit/helpers": "^0.5.3",
         "@dnd-kit/react": "^0.5.3",
         "@varlock/nextjs-integration": "^2.0.0",
         "@workspace/auth": "workspace:*",
         "@workspace/db": "workspace:*",
+        "@workspace/integrations": "workspace:*",
         "@workspace/mcp": "workspace:*",
         "@workspace/ui": "workspace:*",
+        "date-fns": "^4.4.0",
         "lucide-react": "^1.70.0",
         "next": "16.4.4",
         "next-themes": "^0.4.6",
@@ -49,6 +52,22 @@
         "@workspace/typescript-config": "workspace:*",
         "eslint": "^10",
         "playwright": "^1.65.0",
+        "typescript": "^5",
+      },
+    },
+    "apps/worker": {
+      "name": "worker",
+      "version": "0.0.0",
+      "dependencies": {
+        "@workspace/db": "workspace:*",
+        "@workspace/integrations": "workspace:*",
+        "varlock": "^1.24.0",
+      },
+      "devDependencies": {
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^10",
         "typescript": "^5",
       },
     },
@@ -109,6 +128,21 @@
         "typescript-eslint": "^8",
       },
     },
+    "packages/integrations": {
+      "name": "@workspace/integrations",
+      "version": "0.0.0",
+      "dependencies": {
+        "@workspace/db": "workspace:*",
+        "zod": "^4.6.7",
+      },
+      "devDependencies": {
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^10",
+        "typescript": "^5",
+      },
+    },
     "packages/mcp": {
       "name": "@workspace/mcp",
       "version": "0.0.0",
@@ -117,6 +151,7 @@
         "@modelcontextprotocol/server": "^2.4.0",
         "@workspace/auth": "workspace:*",
         "@workspace/db": "workspace:*",
+        "@workspace/integrations": "workspace:*",
         "varlock": "^1.24.0",
         "zod": "^4.6.7",
       },
@@ -905,6 +940,8 @@
     "@workspace/db": ["@workspace/db@workspace:packages/db"],
 
     "@workspace/eslint-config": ["@workspace/eslint-config@workspace:packages/eslint-config"],
+
+    "@workspace/integrations": ["@workspace/integrations@workspace:packages/integrations"],
 
     "@workspace/mcp": ["@workspace/mcp@workspace:packages/mcp"],
 
@@ -1751,6 +1788,8 @@
     "why-is-node-running": ["why-is-node-running@3.2.1", "", { "bin": { "why-is-node-running": "cli.js" } }, "sha512-Tb2FUhB4vUsGQlfSquQLYkApkuPAFQXGFzxWKHHumVz2dK+X1RUm/HnID4+TfIGYJ1kTcwOaCk/buYCEJr6YjQ=="],
 
     "word-wrap": ["word-wrap@1.2.5", "", {}, "sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA=="],
+
+    "worker": ["worker@workspace:apps/worker"],
 
     "ws": ["ws@8.22.2", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-/rEZ2ejown2N5gxVTHUu9bVVC7ttu0/Tgzf5hbTOixR3Fs7mbbXgn2DbdbcKgJOmpQMtrIUWivtYuVMnp/W/yA=="],
 

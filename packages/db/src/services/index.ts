@@ -18,6 +18,7 @@ import { createProjectService } from "./projects"
 import { createSettingsService } from "./settings"
 import { createStandupService } from "./standup"
 import { createTaskService } from "./tasks"
+import { createTemplateService } from "./templates"
 import { createUserService } from "./users"
 import { createWorkerService } from "./worker"
 
@@ -40,6 +41,7 @@ export function createServices(db: Database, options: ServiceOptions) {
   const settings = createSettingsService(db)
   const links = createLinkService(db, integrations)
   const dependencies = createDependencyService(db)
+  const templates = createTemplateService(db)
   return {
     activity: createActivityService(db),
     actors: createActorService(db),
@@ -69,12 +71,15 @@ export function createServices(db: Database, options: ServiceOptions) {
     settings,
     /** The standup draft, and the standups I've posted. */
     standup: createStandupService(db, {
+      templates,
       tasks,
       links,
       dependencies,
       settings,
     }),
     tasks,
+    /** Message templates I manage (the standup's Slack text). */
+    templates,
     worker: createWorkerService(db),
   }
 }
@@ -95,4 +100,5 @@ export type { InboxItem } from "./inbox"
 export type { OAuthClientDisplay } from "./oauth-clients"
 export type { TimezoneUpdate } from "./settings"
 export type { StandupDraft, StandupPost } from "./standup"
+export type { MessageTemplate } from "./templates"
 export type { TaskDetail, TaskRef, TaskSummary } from "./tasks"

@@ -54,7 +54,7 @@ export const standupTools: ToolModule = (server, ctx) => {
     {
       title: "Draft standup",
       description:
-        "Draft the user's standup from their tasks: Done (finished since the last standup), In progress, Blocked (with what each waits on) and Up next (not started, due by the end of the next working day, or overdue), each with its GitHub/Jira links. Meeting tasks are left out. Starts from the last recorded standup, or the start of the previous working day. Returns the text (Markdown or Slack mrkdwn) and the sections, so you can refine the wording. Drafting posts nothing.",
+        "Draft the user's standup from their tasks: Done (finished since the last standup), In progress, Blocked (with what each waits on) and Up next (not started, due by the end of the next working day, or overdue), each with its GitHub/Jira links. Meeting tasks are left out. Starts from the last recorded standup, or the start of the previous working day. Returns the text (Markdown, or Slack mrkdwn from the user's standup template with their @mention) and the sections, so you can refine the wording. Drafting posts nothing.",
       inputSchema: z.object({
         since: z.iso
           .datetime({ offset: true })

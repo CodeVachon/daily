@@ -18,6 +18,7 @@ import {
 } from "../time"
 
 const DEFAULT_TIMEZONE = "UTC"
+const SLACK_MEMBER_ID = /^[UW][A-Z0-9]{6,}$/
 
 export interface TimezoneUpdate {
   timezone: string
@@ -44,6 +45,31 @@ export function createSettingsService(db: Database) {
   }
 
   return {
+    /** My Slack member ID (U…), or null; {{mention}} uses it. */
+    async getSlackMemberId(userId: string): Promise<string | null> {
+      return (await current(userId))?.slackMemberId ?? null
+    },
+
+    /** Set (or clear, with null or "") my Slack member ID. */
+    async updateSlackMemberId(
+      userId: string,
+      value: string | null
+    ): Promise<string | null> {
+      const slackMemberId = value?.trim().toUpperCase() || null
+      if (slackMemberId && !SLACK_MEMBER_ID.test(slackMemberId))
+        throw new ValidationError(
+          "A Slack member ID looks like U012AB3CD (Slack: your profile > ⋮ > Copy member ID)"
+        )
+      await db
+        .insert(userSettings)
+        .values({ userId, slackMemberId })
+        .onConflictDoUpdate({
+          target: userSettings.userId,
+          set: { slackMemberId },
+        })
+      return slackMemberId
+    },
+
     /** The day weeks start on (calendar weeks, "due this week"). */
     getWeekStart,
 

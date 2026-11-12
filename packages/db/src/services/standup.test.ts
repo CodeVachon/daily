@@ -88,7 +88,31 @@ describe("standup", () => {
       `- #${shipped.number} Ship login · [acme/web#4](https://github.com/acme/web/pull/4) merged`
     )
     expect(draft.slack).toContain("*Done*")
+    expect(draft.slack).toContain(
+      `• #${shipped.number} Ship login · <https://github.com/acme/web/pull/4|acme/web#4> merged`
+    )
     expect(draft.markdown).not.toContain("Standup meeting")
+  })
+
+  it("writes the Slack text from my template, with my mention", async () => {
+    await t.services.settings.updateSlackMemberId(me.userId, "U012AB3CD")
+    await t.services.templates.update(
+      me,
+      "standup",
+      "{{mention}} {{#in_progress}}{{title}}{{/in_progress}}"
+    )
+    const draft = await t.services.standup.draft(me.userId, window())
+    expect(draft.slack).toBe("<@U012AB3CD> Write docs")
+    expect(
+      await t.services.standup.preview(
+        me.userId,
+        "{{#done}}{{number}}{{/done}}",
+        window()
+      )
+    ).toMatch(/^\d+$/)
+    await expect(
+      t.services.standup.preview(me.userId, "{{nope}}")
+    ).rejects.toBeInstanceOf(ValidationError)
   })
 
   it("leaves out work finished before the window", async () => {

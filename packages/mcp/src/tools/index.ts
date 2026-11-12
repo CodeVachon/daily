@@ -8,6 +8,7 @@ import { settingsTools } from "./settings"
 import { standupTools } from "./standup"
 import { systemTools } from "./system"
 import { taskTools } from "./tasks"
+import { templateTools } from "./templates"
 import type { ToolModule } from "./types"
 import { workflowModule } from "./workflows"
 
@@ -26,5 +27,6 @@ export const toolModules: ToolModule[] = [
   linkTools,
   meetingTools,
   standupTools,
+  templateTools,
   workflowModule,
 ]

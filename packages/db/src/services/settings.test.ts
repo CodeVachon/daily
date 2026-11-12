@@ -137,3 +137,29 @@ describe("settings week start", () => {
     await expect(t.services.settings.getTimezone(other)).resolves.toBe("UTC")
   })
 })
+
+describe("settings Slack member ID", () => {
+  it("is unset until I give one, then normalized", async () => {
+    await expect(t.services.settings.getSlackMemberId(userId)).resolves.toBe(
+      null
+    )
+    await expect(
+      t.services.settings.updateSlackMemberId(userId, " u012ab3cd ")
+    ).resolves.toBe("U012AB3CD")
+    await expect(t.services.settings.getSlackMemberId(userId)).resolves.toBe(
+      "U012AB3CD"
+    )
+  })
+
+  it("clears with an empty value, and rejects something else", async () => {
+    await expect(
+      t.services.settings.updateSlackMemberId(userId, "@chris")
+    ).rejects.toBeInstanceOf(ValidationError)
+    await expect(
+      t.services.settings.updateSlackMemberId(userId, "")
+    ).resolves.toBe(null)
+    await expect(t.services.settings.getSlackMemberId(userId)).resolves.toBe(
+      null
+    )
+  })
+})

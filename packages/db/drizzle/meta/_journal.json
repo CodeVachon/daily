@@ -134,6 +134,13 @@
       "when": 1794494858243,
       "tag": "0018_standup_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794509826478,
+      "tag": "0019_message_templates",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,7 @@ export type {
   InboxItem,
   DueLink,
   LinkChip,
+  MessageTemplate,
   RemoteState,
   WorkerStatus,
   SyncResult,

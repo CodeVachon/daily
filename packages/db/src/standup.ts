@@ -1,5 +1,5 @@
 // The standup (motte #44). Database-free: which section a task belongs in,
-// where "since the last standup" starts, and the text in Markdown or Slack.
+// where "since the last standup" starts, and the text in Markdown.
 import type { StatusCategory } from "./task-inputs"
 import {
   calendarDateIn,
@@ -121,35 +121,8 @@ export function standupSection(
   return due && due <= upNextUntil(w.now, w.timezone) ? "upNext" : null
 }
 
-export type StandupFormat = "markdown" | "slack"
-
-/** Slack treats &, < and > as control characters. */
-const slackEscape = (text: string) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-
-interface Style {
-  bold: (text: string) => string
-  link: (text: string, url: string) => string
-  text: (text: string) => string
-  bullet: string
-}
-
-const STYLES: Record<StandupFormat, Style> = {
-  markdown: {
-    bold: (t) => `**${t}**`,
-    link: (t, url) => `[${t}](${url})`,
-    text: (t) => t,
-    bullet: "-",
-  },
-  slack: {
-    bold: (t) => `*${t}*`,
-    link: (t, url) => `<${url}|${slackEscape(t)}>`,
-    text: slackEscape,
-    bullet: "•",
-  },
-}
-
-function dueNote(item: StandupItem, w: StandupWindow): string | null {
+/** "due today", "overdue (Tue, Nov 10)" or "due Fri, Nov 13". */
+export function dueNote(item: StandupItem, w: StandupWindow): string | null {
   if (!item.due) return null
   const when = formatDue(item.due, w.timezone)
   if (isOverdue(item.due, w.now, w.timezone)) return `overdue (${when})`
@@ -161,29 +134,29 @@ function dueNote(item: StandupItem, w: StandupWindow): string | null {
 function itemLine(
   item: StandupItem,
   section: StandupSection,
-  s: Style,
   w: StandupWindow
 ): string {
   const links = item.links.map(
-    (l) => s.link(l.key, l.url) + (l.state ? ` ${s.text(l.state)}` : "")
+    (l) => `[${l.key}](${l.url})` + (l.state ? ` ${l.state}` : "")
   )
-  const waiting = item.blockedBy.map((b) => `#${b.number} ${s.text(b.title)}`)
+  const waiting = item.blockedBy.map((b) => `#${b.number} ${b.title}`)
   const notes = [
     section === "upNext" ? dueNote(item, w) : null,
     links.length ? links.join(", ") : null,
     waiting.length ? `waiting on ${waiting.join(", ")}` : null,
   ].filter(Boolean)
-  const head = `${s.bullet} #${item.number} ${s.text(item.title)}`
+  const head = `- #${item.number} ${item.title}`
   return notes.length ? `${head} · ${notes.join(" · ")}` : head
 }
 
-/** The standup as Markdown or Slack mrkdwn; empty sections are left out. */
+/**
+ * The standup as Markdown; empty sections are left out. (Slack text comes
+ * from the user's template; see standup-template.ts.)
+ */
 export function formatStandup(
   sections: StandupSections,
-  format: StandupFormat,
   w: StandupWindow
 ): string {
-  const s = STYLES[format]
   const date = formatDue(
     { kind: "date", date: calendarDateIn(w.now, w.timezone) },
     w.timezone
@@ -191,10 +164,10 @@ export function formatStandup(
   const blocks = STANDUP_SECTIONS.filter((key) => sections[key].length).map(
     (key) =>
       [
-        s.bold(TITLES[key]),
-        ...sections[key].map((item) => itemLine(item, key, s, w)),
+        `**${TITLES[key]}**`,
+        ...sections[key].map((item) => itemLine(item, key, w)),
       ].join("\n")
   )
   const body = blocks.length ? blocks : ["Nothing to report."]
-  return [s.bold(`Standup · ${date}`), ...body].join("\n\n")
+  return [`**Standup · ${date}**`, ...body].join("\n\n")
 }

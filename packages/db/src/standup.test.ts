@@ -150,7 +150,7 @@ describe("formatStandup", () => {
   })
 
   it("writes Markdown, leaving out empty sections", () => {
-    expect(formatStandup(full, "markdown", window)).toBe(
+    expect(formatStandup(full, window)).toBe(
       [
         "**Standup · Thu, Nov 12**",
         "**Done**\n- #12 Fix login · [acme/web#4](https://github.com/acme/web/pull/4) merged",
@@ -160,17 +160,8 @@ describe("formatStandup", () => {
     )
   })
 
-  it("writes Slack mrkdwn, escaping control characters", () => {
-    const text = formatStandup(full, "slack", window)
-    expect(text).toContain("*Standup · Thu, Nov 12*")
-    expect(text).toContain(
-      "• #12 Fix login · <https://github.com/acme/web/pull/4|acme/web#4> merged"
-    )
-    expect(text).toContain("• #9 Deploy &lt;prod&gt; &amp; ship")
-  })
-
   it("says so when there's nothing to report", () => {
-    expect(formatStandup(sections(), "markdown", window)).toBe(
+    expect(formatStandup(sections(), window)).toBe(
       "**Standup · Thu, Nov 12**\n\nNothing to report."
     )
   })

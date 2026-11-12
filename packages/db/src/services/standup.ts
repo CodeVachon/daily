@@ -11,14 +11,24 @@ import {
   standupSection,
   STANDUP_SECTIONS,
   type StandupSections,
+  type StandupWindow,
 } from "../standup"
+import { standupContext, STANDUP_SCHEMA } from "../standup-template"
+import { renderTemplate } from "../templates"
 import type { ListTasksInput } from "../task-inputs"
 import type { createDependencyService } from "./dependencies"
 import type { createLinkService } from "./links"
 import type { createSettingsService } from "./settings"
 import type { createTaskService, TaskSummary } from "./tasks"
+import type { createTemplateService } from "./templates"
+
+interface DraftOptions {
+  since?: Date
+  now?: Date
+}
 
 interface Deps {
+  templates: ReturnType<typeof createTemplateService>
   tasks: ReturnType<typeof createTaskService>
   links: ReturnType<typeof createLinkService>
   dependencies: ReturnType<typeof createDependencyService>
@@ -97,66 +107,111 @@ export function createStandupService(db: Database, deps: Deps) {
       .map(({ number, title }) => ({ number, title }))
   }
 
+  async function sectionsFor(
+    userId: string,
+    window: StandupWindow
+  ): Promise<StandupSections> {
+    const { since, now } = window
+    const candidates = [
+      ...(await recentlyDone(userId, since, now)),
+      ...(await collect(userId, { status: ["open", "active"] }, now)),
+    ].filter((t) => !t.labels.some((l) => l.name === MEETING_LABEL))
+    const placed = candidates
+      .map((t) => ({
+        t,
+        section: standupSection(
+          {
+            statusKey: t.status.key,
+            category: t.status.category,
+            completedAt: t.completedAt,
+            due: t.due,
+            openBlockers: t.openBlockers,
+          },
+          window
+        ),
+      }))
+      .filter((p) => p.section !== null)
+    const chips = await deps.links.chipsForTasks(
+      userId,
+      placed.map((p) => p.t.id)
+    )
+    const sections = Object.fromEntries(
+      STANDUP_SECTIONS.map((key) => [key, []])
+    ) as unknown as StandupSections
+    for (const { t, section } of placed) {
+      sections[section!].push({
+        number: t.number,
+        title: t.title,
+        due: t.due,
+        links: (chips[t.id] ?? []).map(({ key, url, state }) => ({
+          key,
+          url,
+          state,
+        })),
+        blockedBy: await blockersOf(userId, t),
+      })
+    }
+    return sections
+  }
+
+  async function windowFor(
+    userId: string,
+    options: DraftOptions
+  ): Promise<StandupWindow> {
+    const now = options.now ?? new Date()
+    const timezone = await deps.settings.getTimezone(userId)
+    const since =
+      options.since ?? defaultSince(now, timezone, await lastPostedAt(userId))
+    if (options.since && since >= now) {
+      throw new ValidationError("A standup's start has to be in the past")
+    }
+    return { since, now, timezone }
+  }
+
+  /** The Slack text: `body` (default: my standup template) with the draft. */
+  async function slackText(
+    userId: string,
+    sections: StandupSections,
+    window: StandupWindow,
+    body?: string
+  ): Promise<string> {
+    const [template, memberId] = await Promise.all([
+      body ?? deps.templates.get(userId, "standup").then((t) => t.body),
+      deps.settings.getSlackMemberId(userId),
+    ])
+    return renderTemplate(
+      template,
+      STANDUP_SCHEMA,
+      standupContext(sections, window, memberId)
+    )
+  }
+
   return {
     async draft(
       userId: string,
-      options: { since?: Date; now?: Date } = {}
+      options: DraftOptions = {}
     ): Promise<StandupDraft> {
-      const now = options.now ?? new Date()
-      const timezone = await deps.settings.getTimezone(userId)
-      const since =
-        options.since ?? defaultSince(now, timezone, await lastPostedAt(userId))
-      if (options.since && since >= now) {
-        throw new ValidationError("A standup's start has to be in the past")
-      }
-      const window = { since, now, timezone }
-      const candidates = [
-        ...(await recentlyDone(userId, since, now)),
-        ...(await collect(userId, { status: ["open", "active"] }, now)),
-      ].filter((t) => !t.labels.some((l) => l.name === MEETING_LABEL))
-      const placed = candidates
-        .map((t) => ({
-          t,
-          section: standupSection(
-            {
-              statusKey: t.status.key,
-              category: t.status.category,
-              completedAt: t.completedAt,
-              due: t.due,
-              openBlockers: t.openBlockers,
-            },
-            window
-          ),
-        }))
-        .filter((p) => p.section !== null)
-      const chips = await deps.links.chipsForTasks(
-        userId,
-        placed.map((p) => p.t.id)
-      )
-      const sections = Object.fromEntries(
-        STANDUP_SECTIONS.map((key) => [key, []])
-      ) as unknown as StandupSections
-      for (const { t, section } of placed) {
-        sections[section!].push({
-          number: t.number,
-          title: t.title,
-          due: t.due,
-          links: (chips[t.id] ?? []).map(({ key, url, state }) => ({
-            key,
-            url,
-            state,
-          })),
-          blockedBy: await blockersOf(userId, t),
-        })
-      }
+      const window = await windowFor(userId, options)
+      const sections = await sectionsFor(userId, window)
       return {
-        since,
-        until: now,
-        timezone,
+        since: window.since,
+        until: window.now,
+        timezone: window.timezone,
         sections,
-        markdown: formatStandup(sections, "markdown", window),
-        slack: formatStandup(sections, "slack", window),
+        markdown: formatStandup(sections, window),
+        slack: await slackText(userId, sections, window),
       }
+    },
+
+    /** A standup template body rendered with today's draft (not saved). */
+    async preview(
+      userId: string,
+      body: string,
+      options: DraftOptions = {}
+    ): Promise<string> {
+      deps.templates.validate("standup", body)
+      const window = await windowFor(userId, options)
+      return slackText(userId, await sectionsFor(userId, window), window, body)
     },
 
     /** "I posted it": the next draft starts from here. */
